@@ -17,7 +17,7 @@ Everything uses one green-on-black theme. No blue anywhere.
 | Dim | `#4f7f5a` |
 | Charcoal panels | `#0a0e14` |
 
-Fonts: the X11 session uses **DejaVu Sans Mono** (regular; Bold only for emphasis) with **Symbols Nerd Font** for icons, see [Fonts](#fonts). The Wayland sessions use JetBrains Mono Nerd Font for text and Symbols Nerd Font Mono for the waybar icons. Menus are one-line dmenu style on pure black.
+Fonts: the X11 session uses **DejaVu Sans Mono** (regular; Bold only for emphasis) with **Symbols Nerd Font** for icons, see [Fonts](#fonts). The Wayland sessions and the apps (GTK, Qt, foot, bemenu, fuzzel, dunst, qutebrowser UI, Emacs, Zed) use the same DejaVu Sans Mono, with Symbols Nerd Font Mono for icons. `.config/fontconfig/fonts.conf` makes it the default for monospace, sans-serif, serif and system-ui; web pages still use their own fonts. Menus are one-line dmenu style on pure black.
 
 > The bspwm-wl compositor source lives in a separate private repo. This repo only holds its config (`.config/bspwm-wl`).
 
@@ -33,9 +33,9 @@ The repo mirrors `$HOME`, so every path here is the path it installs to.
   bspwm-wl/      bspwmrc, rules, flags, bin/ (wl-* helpers), waybar/, wallselect.lua, solid/
   bspwm/         X11 session: bspwmrc, theme, sxhkdrc, polybar/, rofi/, scripts/
   niri/          config.kdl, waybar/, bin/
-  fontconfig/    conf.d
+  fontconfig/    fonts.conf (DejaVu Sans Mono as the default family), conf.d (emoji)
   xdg-desktop-portal(-wlr)/   screen-sharing portal config
-  foot/ nvim/ doom/ zed/ qutebrowser/ vifm/ nnn/plugins/ mpv/ dunst/ waybar/ river/ ...
+  foot/ nvim/ doom/ zed/ qutebrowser/ vifm/ nnn/plugins/ mpv/ dunst/ fuzzel/ gtk-3.0/ gtk-4.0/ qt5ct/ qt6ct/ ...
 .local/bin/      launchers and helpers (bsp-pip, bsp-pin, bspwm-sel, chromium-wl, floorp, slack, ...)
 .local/share/    applications/*.desktop, wayland-sessions, wallpapers (two), icons/hicolor, emoji
 guix-config/       config.scm (system), my-packages/ (local Guix channel: fonts, niri-session...), NOTES.md
@@ -83,7 +83,7 @@ Before reconfiguring a new machine, edit `guix-config/config.scm` for its host n
 Not included, supply them yourself:
 
 - **Wallpapers.** Only the two current ones are in `.local/share/wallpapers/`. Drop your own images there; every session's wallpaper picker reads that folder.
-- **Fonts** in `~/.local/share/fonts`: Symbols Nerd Font for X11 (see [Fonts](#fonts)). DejaVu Sans Mono comes from Guix, JetBrains Mono Nerd Font (Wayland) from `guix-config/my-packages`.
+- **Fonts** in `~/.local/share/fonts`: Symbols Nerd Font for X11 (see [Fonts](#fonts)). DejaVu Sans Mono comes from Guix (`font-dejavu`).
 - **Secrets.** Any value set to `REPLACE_ME` needs your own key, for example in `.config/zed/settings.json` and `.config/transmission-daemon/settings.json`.
 - **Doom Emacs core.** Clone Doom into `~/.config/emacs`, then run `doom sync`. `.config/doom` holds the personal config.
 
@@ -310,6 +310,8 @@ _In the loops below, `$k` is h/j/k/l or the arrow keys, and `$dir` is west/south
 
 Mouse: Super + left-drag moves a window, and Super + right-drag resizes it. Focus follows the mouse, and a click raises the window. The mouse is set up left-handed.
 
+Bar: clicking the dots (󰇙) between the Guix logo and the workspaces opens the window switcher (`wl-winswitch`). In Niri the same dots open the overview (`niri msg action toggle-overview`).
+
 X11 bspwm uses mostly the same keys, listed under [X11 keybindings](#x11-keybindings). Niri's equivalents are in `.config/niri/config.kdl`.
 
 ## X11 bspwm
@@ -337,7 +339,7 @@ Start it from the display manager's **bspwm** entry, or with `startx`/`.xsession
 
 Requirements:
 
-- **DejaVu Sans Mono**: the text font everywhere in the X11 session (Guix: `font-dejavu`).
+- **DejaVu Sans Mono**: the text font everywhere, in every session and app (Guix: `font-dejavu`). `.config/fontconfig/fonts.conf` sets it as the default family.
 - **Symbols Nerd Font** (families `Symbols Nerd Font` and `Symbols Nerd Font Mono`): icons in the bar, menus and notifications (polybar and all three waybars). Get `NerdFontsSymbolsOnly.zip` from the [ryanoasis/nerd-fonts releases](https://github.com/ryanoasis/nerd-fonts/releases), unzip it into `~/.local/share/fonts/NerdFontsSymbolsOnly/` and run `fc-cache -f`. Font files are not in this repo.
 
 Text uses the regular weight (DejaVu calls it *Book*); **Bold** is used only for emphasis.
@@ -365,7 +367,7 @@ All sizes are in **points**, so they follow the screen DPI. At login `scripts/dp
 
 To force a value, put a number in `~/.config/bspwm/dpi` (for example `echo 120 > ~/.config/bspwm/dpi`) or export `BSPWM_DPI=120` before starting the session. `dpi` with no argument prints the value it would use.
 
-Reference look at 96 DPI: 11 pt text, bar 16.5 pt = 22 px (the waybars in bspwm-wl, niri and river are 22 px too). At 144 DPI the bar is 33 px. Polybar's `dpi` and rofi's `dpi` are set to the session DPI, the cursor is 24 px x DPI/96, and GTK/Qt get it through xsettingsd and `QT_FONT_DPI`.
+Reference look at 96 DPI: 11 pt text, bar 16.5 pt = 22 px (the bspwm-wl and niri waybars are 22 px too). At 144 DPI the bar is 33 px. Polybar's `dpi` and rofi's `dpi` are set to the session DPI, the cursor is 24 px x DPI/96, and GTK/Qt get it through xsettingsd and `QT_FONT_DPI`.
 
 Bar text and icons are centred with per-font vertical offsets in `theme` (`BAR_YOFF_TEXT`, `BAR_YOFF_ICON`, `BAR_YOFF_ICON_BIG`, pixels at 96 DPI, + = down). `theme-apply` scales them with the DPI (3/2/3 at 96 DPI become 5/3/5 at 144). If you change the font, rerun `theme-apply` and nudge these until digits and icons line up.
 
@@ -378,11 +380,10 @@ Apps that do **not** follow the session DPI (fixed sizes, change them by hand):
 | GTK 2 apps | `gtk-font-name` in `.gtkrc-2.0` |
 | bspwm-wl and niri bars | `font-size` in `.config/bspwm-wl/waybar/style.css`, `.config/niri/waybar/style.css` |
 | Wayland notifications | `font` in `.config/dunst/dunstrc` (X11 uses the generated one) |
-| river | `xrdb` line in `.config/river/init`, wmenu font in `.config/river/menu-opts`, `.config/waybar/style.css` |
 
 ### Not carried over from the old setup
 
-The style chooser, eww widgets, weather and update-count modules, animated wallpapers and the rice selector are gone. Network uses an `nmtui` popup, bluetooth a `bluetui` popup. The icon theme is **Papirus-Dark** (Guix `papirus-icon-theme`) and the cursor **Adwaita** (`adwaita-icon-theme`), set in `theme` (`ICON_THEME`, `CURSOR_THEME`), GTK 2/3/4 settings, qt5ct/qt6ct, `.Xresources`, `.icons/default` and the niri/river configs; GTK is Adwaita-dark with our green `gtk.css`. `scripts/lock` uses `i3lock` if installed and falls back to `slock`. `kbd-layout`, `pass-menu` and `android-mount` need `setxkbmap`, `pass` and `simple-mtpfs`.
+The style chooser, eww widgets, weather and update-count modules, animated wallpapers and the rice selector are gone. Network uses an `nmtui` popup, bluetooth a `bluetui` popup. The icon theme is **Papirus-Dark** (Guix `papirus-icon-theme`) and the cursor **Adwaita** (`adwaita-icon-theme`), set in `theme` (`ICON_THEME`, `CURSOR_THEME`), GTK 2/3/4 settings, qt5ct/qt6ct, `.Xresources`, `.icons/default` and the niri config; GTK is Adwaita-dark with our green `gtk.css`. `scripts/lock` uses `i3lock` if installed and falls back to `slock`. `kbd-layout`, `pass-menu` and `android-mount` need `setxkbmap`, `pass` and `simple-mtpfs`.
 
 ### X11 keybindings
 
@@ -431,6 +432,7 @@ From `.config/bspwm/sxhkdrc` (press `super + F1` for the same list in a menu). `
 | `super + alt + x` | password store |
 | `super + alt + p` | power menu |
 | `~button3` | desktop right-click menu |
+| click the bar dots (󰇙) | window list (rofi, dmenu theme) |
 
 ### session
 

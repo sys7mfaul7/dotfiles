@@ -3,7 +3,7 @@
 case "$1" in
 --hide) bspc node focused.window -g hidden=on ;;
 --menu) sel=$(for n in $(bspc query -N -n .hidden.window); do bspc query -T -n "$n" | jq -r '"\(.id)  \(.client.className)"'; done | \
-          BEMENU_BACKEND=wayland bemenu -p 'hidden' -H 22 --fn 'JetBrains Mono Bold 11' --tb '#000000' --tf '#00ff41' \
+          BEMENU_BACKEND=wayland bemenu -p 'hidden' -H 22 --fn 'DejaVu Sans Mono, Symbols Nerd Font Mono 11' --tb '#000000' --tf '#00ff41' \
           --fb '#000000' --ff '#c0ffc0' --nb '#000000' --nf '#c0ffc0' --hb '#1f6f2f' --hf '#c0ffc0' --ab '#000000' --af '#c0ffc0' -B 0) || exit 0
         id=${sel%% *}; bspc node "$id" -d focused; bspc node "$id" -g hidden=off; bspc node -f "$id" ;;
 esac

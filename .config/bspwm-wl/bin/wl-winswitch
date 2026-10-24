@@ -5,7 +5,7 @@ for d in $(bspc query -D --names); do
   for n in $(bspc query -N -d "$d" -n .window); do
     bspc query -T -n "$n" | jq -r --arg d "$d" '"\(.id)\t[\($d)]  \(.client.className)\(if .client.shown then "" else " (hidden)" end)"'
   done; done | awk -F'\t' '{c[$2]++; l=$2; if (c[$2]>1) l=l" #"c[$2]; print $1"\t"l}' > "$map"
-sel=$(cut -f2- "$map" | BEMENU_BACKEND=wayland bemenu -i -p 'window' -H 22 --fn 'JetBrains Mono Bold 11' \
+sel=$(cut -f2- "$map" | BEMENU_BACKEND=wayland bemenu -i -p 'window' -H 22 --fn 'DejaVu Sans Mono, Symbols Nerd Font Mono 11' \
   --tb '#000000' --tf '#00ff41' --fb '#000000' --ff '#c0ffc0' --nb '#000000' --nf '#c0ffc0' \
   --hb '#1f6f2f' --hf '#c0ffc0' --ab '#000000' --af '#c0ffc0' -B 0) || exit 0
 id=$(awk -F'\t' -v s="$sel" '$2==s{print $1; exit}' "$map"); [ -n "$id" ] || exit 0

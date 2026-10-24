@@ -35,7 +35,8 @@
  },
  "custom/dots": {
   "format": " <span color='#578a29' size=\"10pt\">󰇙</span> ",
-  "tooltip": false
+  "tooltip": false,
+  "on-click": "niri msg action toggle-overview"
  },
  "niri/workspaces": {
   "format": "{icon}",

@@ -4,7 +4,7 @@
 #  bsp-group into <dir>    : merge focused window and neighbor in <dir> into one group
 #  bsp-group next|prev     : cycle tabs in focused group
 is_tabbed() { xprop -id "$1" WM_CLASS 2>/dev/null | grep -q "\"tabbed\""; }
-new_group() { tabbed -c -d -n tabbed -p s+1 -o "#0a0e14" -O "#5fbf5f" -t "#1f6f2f" -T "#c0ffc0" -u "#1a2a1f" -U "#2f5a2f" -f "JetBrainsMono Nerd Font:size=11" 2>/dev/null | head -1; }
+new_group() { tabbed -c -d -n tabbed -p s+1 -o "#0a0e14" -O "#5fbf5f" -t "#1f6f2f" -T "#c0ffc0" -u "#1a2a1f" -U "#2f5a2f" -f "DejaVu Sans Mono:size=11" 2>/dev/null | head -1; }
 add() { xdotool windowunmap "$1"; xdotool windowreparent "$1" "$2"; }
 ungroup() { for c in $(xwininfo -children -id "$1" | grep -oE "^ +0x[0-9a-f]+" ); do xdotool windowreparent "$c" "$(xwininfo -root | awk "/Window id/{print \$4}")"; done; }
 f=$(bspc query -N -n focused) || exit 0

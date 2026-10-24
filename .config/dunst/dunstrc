@@ -16,7 +16,7 @@
     separator_color = frame
     corner_radius = 0
     transparency = 0
-    font = JetBrainsMono NF Medium 9
+    font = DejaVu Sans Mono, Symbols Nerd Font Mono 9
     markup = full
     format = "<b>%s</b>\n%b"
     alignment = left

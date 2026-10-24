@@ -15,18 +15,18 @@ error    = "#ff5555"
 border   = "#1a3a22"
 
 # ── Fonts (4K 32" @ DPI 144) ─────────────────────────────────────────
-font_ui  = "12pt JetBrainsMono Nerd Font"
-font_web = "12pt JetBrainsMono Nerd Font"
-font_sm  = "11pt JetBrainsMono Nerd Font"
+font_ui  = "12pt DejaVu Sans Mono"
+font_web = "12pt DejaVu Sans Mono"
+font_sm  = "11pt DejaVu Sans Mono"
 
-c.fonts.default_family = ["JetBrainsMono Nerd Font", "DejaVu Sans Mono", "monospace"]
+c.fonts.default_family = ["DejaVu Sans Mono", "Symbols Nerd Font Mono", "monospace"]
 c.fonts.default_size = "12pt"
 c.fonts.completion.entry = font_ui
 c.fonts.completion.category = "bold " + font_ui
 c.fonts.statusbar = font_ui
 c.fonts.tabs.selected = font_ui
 c.fonts.tabs.unselected = font_ui
-c.fonts.hints = "bold 13pt JetBrainsMono Nerd Font"
+c.fonts.hints = "bold 13pt DejaVu Sans Mono"
 c.fonts.keyhint = font_ui
 c.fonts.prompts = font_ui
 c.fonts.downloads = font_sm
@@ -34,10 +34,10 @@ c.fonts.messages.info = font_ui
 c.fonts.messages.error = font_ui
 c.fonts.messages.warning = font_ui
 c.fonts.contextmenu = font_ui
-c.fonts.web.family.standard = "DejaVu Sans"
-c.fonts.web.family.fixed = "JetBrainsMono Nerd Font"
-c.fonts.web.family.serif = "Liberation Serif"
-c.fonts.web.family.sans_serif = "Liberation Sans"
+c.fonts.web.family.standard = "DejaVu Sans Mono"
+c.fonts.web.family.fixed = "DejaVu Sans Mono"
+c.fonts.web.family.serif = "DejaVu Sans Mono"
+c.fonts.web.family.sans_serif = "DejaVu Sans Mono"
 c.fonts.web.size.default = 16
 c.fonts.web.size.default_fixed = 14
 

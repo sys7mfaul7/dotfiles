@@ -49,12 +49,10 @@
      ;; --- virtualization ---
      "qemu" "virt-manager" "virt-viewer" "ovmf-x86-64" "swtpm"
      "docker-compose" "htop" "btop"
-     ;; --- Wayland sessions (bspwm-wl, niri, river): wallpaper, idle, lock, bar, tools ---
+     ;; --- Wayland sessions (bspwm-wl, niri): wallpaper, idle, lock, bar, tools ---
      "swaybg" "swayidle" "swaylock" "waybar" "wl-clipboard" "grim" "slurp"
      "fuzzel" "wlr-randr" "xdg-desktop-portal" "xdg-desktop-portal-wlr"
-     "xdg-desktop-portal-gtk" "pipewire" "wireplumber" "xorg-server-xwayland"
-     ;; --- river (Wayland) session: river-classic ships riverctl + rivertile ---
-     "river-classic")))
+     "xdg-desktop-portal-gtk" "pipewire" "wireplumber" "xorg-server-xwayland")))
 
 (operating-system
   (locale "en_US.utf8")

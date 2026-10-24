@@ -32,7 +32,7 @@
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
 ;; `load-theme' function. This is the default:
-(setq doom-theme 'doom-one)
+;; (setq doom-theme 'doom-one)  ; replaced by doom-h4ck3r below
 ;; Specify both a dark and light theme, like so and Doom will choose which one
 ;; to load based on your system light/dark setting:
 ;;
@@ -84,3 +84,13 @@
 ;; unified system clipboard
 (setq select-enable-clipboard t
       select-enable-primary nil)
+
+;;; --- Green matrix look (theme file: themes/doom-h4ck3r-theme.el) ---
+(setq doom-theme 'doom-h4ck3r)
+(setq doom-font (font-spec :family "DejaVu Sans Mono" :size 10.0)          ; float = points
+      doom-variable-pitch-font (font-spec :family "DejaVu Sans Mono" :size 10.0)
+      doom-serif-font (font-spec :family "DejaVu Sans Mono" :size 10.0)
+      doom-symbol-font (font-spec :family "Symbols Nerd Font Mono")
+      doom-big-font (font-spec :family "DejaVu Sans Mono" :size 15.0))
+;; Emacs 31 (X11/GTK under Xwayland) supports alpha-background; text stays opaque.
+(add-to-list 'default-frame-alist '(alpha-background . 90))

@@ -75,7 +75,7 @@
   "minimap": {
     "show": "always",
   },
-  "buffer_font_weight": 100.0,
+  "buffer_font_weight": 400.0,
   "use_system_window_tabs": false,
   "project_panel": {
     "button": true,
@@ -145,12 +145,12 @@
   },
   "vim_mode": true,
   "base_keymap": "Cursor",
-  "ui_font_family": "JetBrainsMono Nerd Font",
+  "ui_font_family": "DejaVu Sans Mono",
   "ui_font_size": 15.0,
-  "buffer_font_family": "JetBrainsMono Nerd Font",
+  "buffer_font_family": "DejaVu Sans Mono",
   "buffer_font_size": 15.0,
   "terminal": {
-    "font_family": "JetBrainsMono Nerd Font",
+    "font_family": "DejaVu Sans Mono",
     "font_size": 15.0,
     //"env":"",
     //"detect_venv":""

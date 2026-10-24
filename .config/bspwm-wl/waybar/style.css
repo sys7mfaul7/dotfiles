@@ -1,4 +1,4 @@
-* { font-family: "JetBrains Mono", "Symbols Nerd Font Mono"; font-weight: bold; font-size: 11pt; min-height: 0; border: none; border-radius: 0; box-shadow: none; }
+* { font-family: "DejaVu Sans Mono", "Symbols Nerd Font Mono"; font-weight: normal; font-size: 11pt; min-height: 0; border: none; border-radius: 0; box-shadow: none; }
 window#waybar { background: #000000; color: #c0ffc0; }
 tooltip { background: #000000; border: 1px solid #1f6f2f; color: #c0ffc0; }
 /* gtk.css has "label, button label { color:#c0ffc0 }", which beats the colour
@@ -19,3 +19,4 @@ tooltip { background: #000000; border: 1px solid #1f6f2f; color: #c0ffc0; }
 #custom-launcher { padding: 0 6px 0 8px; }
 #network, #custom-colorpicker, #custom-bluetooth, #battery, #cpu, #memory, #disk, #pulseaudio, #custom-updates, #custom-clock, #tray { padding: 0 6px; }
 #custom-power { padding: 0 10px 0 6px; }
+#workspaces button.active, #workspaces button.focused { font-weight: bold; }   /* emphasis: focused workspace */

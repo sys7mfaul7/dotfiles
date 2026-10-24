@@ -11,11 +11,11 @@
 [ -n "$WAYLAND_DISPLAY" ] && export BSPWM_SOCKET="${BSPWM_SOCKET:-/run/user/1000/bspwmwayland-0_0_0-socket}"
 prompt() {
   if [ -n "$WAYLAND_DISPLAY" ]; then
-    : | BEMENU_BACKEND=wayland bemenu -p "$1" -H 22 --fn 'JetBrains Mono Bold 11' \
+    : | BEMENU_BACKEND=wayland bemenu -p "$1" -H 22 --fn 'DejaVu Sans Mono, Symbols Nerd Font Mono 11' \
       --tb '#000000' --tf '#00ff41' --fb '#000000' --ff '#c0ffc0' --nb '#000000' --nf '#c0ffc0' \
       --hb '#1f6f2f' --hf '#c0ffc0' --ab '#000000' --af '#c0ffc0' -B 0
   else
-    : | dmenu -p "$1" -fn 'JetBrains Mono:bold:size=11' -nb '#000000' -nf '#c0ffc0' -sb '#1f6f2f' -sf '#c0ffc0'
+    : | dmenu -p "$1" -fn 'DejaVu Sans Mono:size=11' -nb '#000000' -nf '#c0ffc0' -sb '#1f6f2f' -sf '#c0ffc0'
   fi
 }
 default_name() { # position among this monitor's desktops -> default name

@@ -37,7 +37,8 @@
  },
  "custom/dots": {
   "format": " <span rise='1pt' color='#578a29' size=\"10pt\">󰇙</span> ",
-  "tooltip": false
+  "tooltip": false,
+  "on-click": "$HOME/.config/bspwm-wl/bin/wl-winswitch"
  },
  "ext/workspaces": {
   "format": "{icon}",
