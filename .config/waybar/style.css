@@ -1,4 +1,4 @@
-* { font-family: "JetBrains Mono", "JetBrainsMono Nerd Font", "Font Awesome 6 Free", "Material Design Icons Desktop"; font-weight: bold; font-size: 14px; min-height: 0; border: none; border-radius: 0; }
+* { font-family: "JetBrains Mono", "JetBrainsMono Nerd Font", "Symbols Nerd Font Mono"; font-weight: bold; font-size: 14px; min-height: 0; border: none; border-radius: 0; }
 window#waybar { background: #000000; color: #c0ffc0; }
 #workspaces button { padding: 0 5px; color: #4f7f5a; background: transparent; }
 #workspaces button.focused { color: #00ff41; }

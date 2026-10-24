@@ -54,7 +54,7 @@ layout {
 }
 
 cursor {
-    xcursor-theme "Qogirr-Dark"
+    xcursor-theme "Adwaita"
     xcursor-size 24
     hide-when-typing
 }

@@ -14,10 +14,9 @@ else
     dpi=144 cur=36
 fi
 echo "Xft.dpi: $dpi" | xrdb -merge
-for xs in "$HOME/.config/bspwm/generated/xsettingsd" "$HOME/.config/bspwm/config/xsettingsd"; do
-    [ -f "$xs" ] || continue
+xs="$HOME/.config/bspwm/generated/xsettingsd"   # written by theme-apply
+if [ -f "$xs" ]; then
     sed -i "s|^Xft/DPI .*|Xft/DPI $((dpi * 1024))|; s|^Gtk/CursorThemeSize .*|Gtk/CursorThemeSize $cur|" "$xs"
     pkill -HUP -x xsettingsd 2>/dev/null
-    break
-done
+fi
 echo "$dpi" >"$HOME/.cache/display-dpi"

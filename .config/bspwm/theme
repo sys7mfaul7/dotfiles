@@ -41,8 +41,8 @@ BAR_YOFF_ICON_BIG="3"
 
 # ---- desktop bits ---------------------------------------------------------
 GTK_THEME_NAME="Adwaita-dark"   # green overrides live in ~/.config/gtk-3.0/gtk.css
-ICON_THEME="Adwaita"
-CURSOR_THEME="Qogirr-Dark"
+ICON_THEME="Papirus-Dark"
+CURSOR_THEME="Adwaita"
 CURSOR_SIZE="auto"              # auto = 24 at 96 DPI, scaled with DPI; or a number
 TERMINAL="xterm"                # default; Super+Alt+T picks another (saved in ~/.config/bspwm/terminal)
 WALLPAPER_DIR="$HOME/.local/share/wallpapers"

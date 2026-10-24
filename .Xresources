@@ -75,7 +75,7 @@ Updating*selectToClipboard: true
 Updating*termName: xterm-256color
 XTerm*VT100.translations: #override <Btn2Down>: ignore()\n<Btn2Up>: ignore()\nCtrl Shift <Key>C: copy-selection(CLIPBOARD)\nCtrl Shift <Key>X: copy-selection(CLIPBOARD)\nCtrl Shift <Key>V: insert-selection(CLIPBOARD)\nButton1 <Btn4Down>: scroll-back(3,line,m) select-extend()\nButton1 <Btn5Down>: scroll-forw(3,line,m) select-extend()
 FloaTerm*VT100.translations: #override <Btn2Down>: ignore()\n<Btn2Up>: ignore()\nCtrl Shift <Key>C: copy-selection(CLIPBOARD)\nCtrl Shift <Key>X: copy-selection(CLIPBOARD)\nCtrl Shift <Key>V: insert-selection(CLIPBOARD)\nButton1 <Btn4Down>: scroll-back(3,line,m) select-extend()\nButton1 <Btn5Down>: scroll-forw(3,line,m) select-extend()
-Xcursor.theme: Qogirr-Dark
+Xcursor.theme: Adwaita
 Xcursor.size: 36
 XTerm*saveLines: 10000
 FloaTerm*saveLines: 10000

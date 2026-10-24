@@ -1,4 +1,4 @@
-* { font-family: "JetBrains Mono", "Font Awesome 6 Free", "Material Design Icons Desktop"; font-weight: bold; font-size: 11pt; min-height: 0; border: none; border-radius: 0; box-shadow: none; }
+* { font-family: "JetBrains Mono", "Symbols Nerd Font Mono"; font-weight: bold; font-size: 11pt; min-height: 0; border: none; border-radius: 0; box-shadow: none; }
 window#waybar { background: #000000; color: #c0ffc0; }
 tooltip { background: #000000; border: 1px solid #1f6f2f; color: #c0ffc0; }
 /* gtk.css has "label, button label { color:#c0ffc0 }", which beats the colour

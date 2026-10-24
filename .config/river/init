@@ -5,7 +5,7 @@ if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then eval "$(dbus-launch --sh-syntax --ex
 echo "export DBUS_SESSION_BUS_ADDRESS='$DBUS_SESSION_BUS_ADDRESS'" > "$XDG_RUNTIME_DIR/dbus-env"
 export XDG_CURRENT_DESKTOP=river XDG_SESSION_TYPE=wayland XDG_SESSION_DESKTOP=river
 export ELECTRON_OZONE_PLATFORM_HINT=auto MOZ_ENABLE_WAYLAND=1 GTK_THEME=Adwaita:dark
-export XCURSOR_THEME=Qogirr-Dark XCURSOR_SIZE=24 QT_QPA_PLATFORM="wayland;xcb"
+export XCURSOR_THEME=Adwaita XCURSOR_SIZE=24 QT_QPA_PLATFORM="wayland;xcb"
 dbus-update-activation-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_SESSION_DESKTOP ELECTRON_OZONE_PLATFORM_HINT MOZ_ENABLE_WAYLAND GTK_THEME XCURSOR_THEME XCURSOR_SIZE QT_QPA_PLATFORM
 
 M=Super
@@ -18,7 +18,7 @@ rc border-width 2
 rc border-color-focused 0xc0ffc0
 rc border-color-unfocused 0x1a2a1f
 rc border-color-urgent 0x00ff41
-rc xcursor-theme Qogirr-Dark 24
+rc xcursor-theme Adwaita 24
 
 # ---------- input ----------
 rc set-repeat 45 220

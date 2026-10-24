@@ -7,7 +7,7 @@ export XDG_DATA_DIRS="$HOME/.local/share/flatpak/exports/share:${XDG_DATA_DIRS:-
 export XDG_CURRENT_DESKTOP=niri XDG_SESSION_DESKTOP=niri XDG_SESSION_TYPE=wayland
 export MOZ_ENABLE_WAYLAND=1 QT_QPA_PLATFORM="wayland;xcb" GDK_BACKEND="wayland,x11"
 export ELECTRON_OZONE_PLATFORM_HINT=auto _JAVA_AWT_WM_NONREPARENTING=1
-export XCURSOR_THEME=Qogirr-Dark XCURSOR_SIZE=24
+export XCURSOR_THEME=Adwaita XCURSOR_SIZE=24
 # DISPLAY is set by niri itself once xwayland-satellite is up (on-demand X11).
 unset DISPLAY WAYLAND_DISPLAY BSPWM_SOCKET
 N="$HOME/.guix-profile/bin/niri"; [ -x "$N" ] || N=niri

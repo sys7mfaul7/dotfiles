@@ -17,7 +17,7 @@ Everything uses one green-on-black theme. No blue anywhere.
 | Dim | `#4f7f5a` |
 | Charcoal panels | `#0a0e14` |
 
-Fonts: the X11 session uses **DejaVu Sans Mono** (regular; Bold only for emphasis) with **Symbols Nerd Font** for icons, see [Fonts](#fonts). The Wayland sessions use JetBrains Mono Nerd Font. Menus are one-line dmenu style on pure black.
+Fonts: the X11 session uses **DejaVu Sans Mono** (regular; Bold only for emphasis) with **Symbols Nerd Font** for icons, see [Fonts](#fonts). The Wayland sessions use JetBrains Mono Nerd Font for text and Symbols Nerd Font Mono for the waybar icons. Menus are one-line dmenu style on pure black.
 
 > The bspwm-wl compositor source lives in a separate private repo. This repo only holds its config (`.config/bspwm-wl`).
 
@@ -332,7 +332,7 @@ Start it from the display manager's **bspwm** entry, or with `startx`/`.xsession
 Requirements:
 
 - **DejaVu Sans Mono**: the text font everywhere in the X11 session (Guix: `font-dejavu`).
-- **Symbols Nerd Font** (families `Symbols Nerd Font` and `Symbols Nerd Font Mono`): icons in the bar, menus and notifications. Get `NerdFontsSymbolsOnly.zip` from the [ryanoasis/nerd-fonts releases](https://github.com/ryanoasis/nerd-fonts/releases), unzip it into `~/.local/share/fonts/NerdFontsSymbolsOnly/` and run `fc-cache -f`. Font files are not in this repo.
+- **Symbols Nerd Font** (families `Symbols Nerd Font` and `Symbols Nerd Font Mono`): icons in the bar, menus and notifications (polybar and all three waybars). Get `NerdFontsSymbolsOnly.zip` from the [ryanoasis/nerd-fonts releases](https://github.com/ryanoasis/nerd-fonts/releases), unzip it into `~/.local/share/fonts/NerdFontsSymbolsOnly/` and run `fc-cache -f`. Font files are not in this repo.
 
 Text uses the regular weight (DejaVu calls it *Book*); **Bold** is used only for emphasis.
 
@@ -376,7 +376,7 @@ Apps that do **not** follow the session DPI (fixed sizes, change them by hand):
 
 ### Not carried over from the old setup
 
-The style chooser, eww widgets, weather and update-count modules, animated wallpapers and the rice selector are gone. Network uses an `nmtui` popup, bluetooth a `bluetui` popup. Icons default to Adwaita and GTK to Adwaita-dark with our green `gtk.css`. `scripts/lock` uses `i3lock` if installed and falls back to `slock`. `kbd-layout`, `pass-menu` and `android-mount` need `setxkbmap`, `pass` and `simple-mtpfs`.
+The style chooser, eww widgets, weather and update-count modules, animated wallpapers and the rice selector are gone. Network uses an `nmtui` popup, bluetooth a `bluetui` popup. The icon theme is **Papirus-Dark** (Guix `papirus-icon-theme`) and the cursor **Adwaita** (`adwaita-icon-theme`), set in `theme` (`ICON_THEME`, `CURSOR_THEME`), GTK 2/3/4 settings, qt5ct/qt6ct, `.Xresources`, `.icons/default` and the niri/river configs; GTK is Adwaita-dark with our green `gtk.css`. `scripts/lock` uses `i3lock` if installed and falls back to `slock`. `kbd-layout`, `pass-menu` and `android-mount` need `setxkbmap`, `pass` and `simple-mtpfs`.
 
 ### X11 keybindings
 
