@@ -16,6 +16,9 @@ DPI=$(cat "$HOME/.cache/display-dpi" 2>/dev/null || echo 96)
 # pango's default weight, so it is left out rather than spelled.
 case $FONT_STYLE in Book|Regular|"") PS="" ;; *) PS="$FONT_STYLE " ;; esac
 PF="$FONT_FAMILY, $ICON_FONT $PS"            # text + icon fallback
+# bar font offsets: given in px at 96 DPI, polybar wants device px
+yoff() { awk -v v="${1:-0}" -v d="$DPI" 'BEGIN { x = v * d / 96; printf "%d", (x < 0 ? x - 0.5 : x + 0.5) }'; }
+YT=$(yoff "$BAR_YOFF_TEXT"); YI=$(yoff "$BAR_YOFF_ICON"); YB=$(yoff "$BAR_YOFF_ICON_BIG")
 CUR=$CURSOR_SIZE; [ "$CUR" = auto ] && CUR=$((24 * DPI / 96))
 
 put theme.rasi <<RASI
@@ -39,10 +42,10 @@ sel    = $C_SEL
 dim    = $C_DIM
 urgent = $C_URGENT
 height = ${BAR_HEIGHT_PT}pt
-font-text     = $FONT_FAMILY:style=$FONT_STYLE:size=$FONT_SIZE;1
-font-emph     = $FONT_FAMILY:style=$FONT_EMPH_STYLE:size=$FONT_SIZE;1
-font-icon     = $ICON_FONT:size=$((FONT_SIZE - 1));2
-font-icon-big = $ICON_FONT:size=$((FONT_SIZE + 2));3
+font-text     = $FONT_FAMILY:style=$FONT_STYLE:size=$FONT_SIZE;$YT
+font-emph     = $FONT_FAMILY:style=$FONT_EMPH_STYLE:size=$FONT_SIZE;$YT
+font-icon     = $ICON_FONT:size=$((FONT_SIZE - 1));$YI
+font-icon-big = $ICON_FONT:size=$((FONT_SIZE + 2));$YB
 PB
 
 put dunstrc <<DUNST

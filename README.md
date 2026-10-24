@@ -361,6 +361,8 @@ To force a value, put a number in `~/.config/bspwm/dpi` (for example `echo 120 >
 
 Reference look at 96 DPI: 11 pt text, bar 19.5 pt = 26 px. At 144 DPI the bar is 39 px. Polybar's `dpi` and rofi's `dpi` are set to the session DPI, the cursor is 24 px x DPI/96, and GTK/Qt get it through xsettingsd and `QT_FONT_DPI`.
 
+Bar text and icons are centred with per-font vertical offsets in `theme` (`BAR_YOFF_TEXT`, `BAR_YOFF_ICON`, `BAR_YOFF_ICON_BIG`, pixels at 96 DPI, + = down). `theme-apply` scales them with the DPI (3/2/3 at 96 DPI become 5/3/5 at 144). If you change the font, rerun `theme-apply` and nudge these until digits and icons line up.
+
 Apps that do **not** follow the session DPI (fixed sizes, change them by hand):
 
 | App | Where the size is set |

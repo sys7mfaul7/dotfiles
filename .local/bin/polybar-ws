@@ -1,19 +1,21 @@
 #!/bin/sh
-# polybar-ws : workspaces with shades: empty dim, occupied mid, previous bright, focused #c0ffc0 (icon)
+# polybar-ws : workspaces with shades: empty dim, occupied mid, previous bright,
+# focused = its number in #c0ffc0 on the selection green #1f6f2f
 # part of sys7mfaul7 dotfiles
-E="#2f5a2f"; O="#5fbf5f"; P="#8fef8f"; F="#c0ffc0"; U="#ff5f5f"
-ICON="󱓇"
+E="#2f5a2f"; O="#5fbf5f"; P="#8fef8f"; F="#c0ffc0"; U="#ff5f5f"; SEL="#1f6f2f"
 draw() {
   prev=$(bspc query -D -d last --names 2>/dev/null)
   out=""
   for d in $(bspc query -D --names); do
     [ "$d" = M ] && continue   # hidden minimize desktop (bsp-minimize)
-    if [ "$d" = "$(bspc query -D -d focused --names)" ]; then c=$F; t="%{T3}$ICON%{T-}"
+    b=""
+    if [ "$d" = "$(bspc query -D -d focused --names)" ]; then c=$F; t=$d; b=$SEL
     elif bspc query -D -d "$d.urgent" >/dev/null 2>&1; then c=$U; t=$d
     elif [ "$d" = "$prev" ]; then c=$P; t=$d
     elif bspc query -D -d "$d.occupied" >/dev/null 2>&1; then c=$O; t=$d
     else c=$E; t=$d; fi
-    l=$t; [ "$t" = 10 ] && l=0; out="$out%{A1:bspc desktop -f $d:}%{F$c} $l %{F-}%{A}"
+    l=$t; [ "$t" = 10 ] && l=0; if [ -n "$b" ]; then out="$out%{A1:bspc desktop -f $d:}%{B$b}%{F$c} $l %{F-}%{B-}%{A}"
+    else out="$out%{A1:bspc desktop -f $d:}%{F$c} $l %{F-}%{A}"; fi
   done
   echo "%{A4:bspc desktop -f prev.local:}%{A5:bspc desktop -f next.local:}$out%{A}%{A}"
 }
