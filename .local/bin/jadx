@@ -1,0 +1,2 @@
+#!/bin/sh
+exec flatpak run --command=jadx com.github.skylot.jadx "$@"

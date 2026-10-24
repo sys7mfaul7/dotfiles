@@ -1,0 +1,261 @@
+#!/bin/sh
+export PATH="$HOME/.local/bin:$PATH"
+# bspwm-wl config (Wayland). Re-runnable: Super+Alt+R reloads it.
+bspc monitor -d 1 2 3 4 5 6 7 8 9 10
+# Minimize tray desktop (holding area for Super+M)
+bspc query -D --names | grep -qx M || bspc monitor focused -a M
+bspc config border_width 2
+bspc config window_gap 5
+bspc config focused_border_color '#c0ffc0'
+bspc config active_border_color  '#1a2a1f'
+bspc config normal_border_color  '#1a2a1f'
+bspc config presel_feedback true
+bspc config presel_feedback_color '#1f6f2f'
+bspc config split_ratio 0.5
+bspc config borderless_monocle true
+bspc config gapless_monocle true
+bspc config focus_follows_pointer true
+bspc config raise_floating_on_click true   # click raises floats; FFM must not (needs compositor patch on wl)
+bspc config pointer_modifier mod4   # Super+left move, Super+right resize, Super+middle drag (tiled->float)
+
+bspc keybind -c
+# Commands run with the compositor env, which lacks ~/.local/bin; prepend it.
+K() { bspc keybind -a "$1" "PATH=\"\$HOME/.local/bin:\$PATH\"; export PATH; $2"; }
+# KE: like K but repeats while held (Hyprland binde); falls back to K on old binaries
+KE() { bspc keybind -a -e "$1" "PATH=\"\$HOME/.local/bin:\$PATH\"; export PATH; $2" 2>/dev/null || K "$1" "$2"; }
+WB="$HOME/.config/bspwm-wl/bin"
+X11B="$HOME/.local/bin"
+# ---- apps / launchers ----
+K 'super + t'                'foot'
+K 'super + slash'            'colorpick'
+K 'super + shift + t'        'foot --app-id=foot-float'
+K 'super + ctrl + t'         'foot'
+K 'super + ctrl + shift + t' 'foot --app-id=foot-float'
+K 'super + space'            '$HOME/.local/bin/bspwm-wl-apps'
+K 'super + ctrl + space'     '$HOME/.local/bin/bspwm-wl-menu'
+# File managers: d=vifm, alt=nnn; +shift floating, +ctrl sudo
+K 'super + d'                      'fm-term vifm tiled user'
+K 'super + shift + d'              'fm-term vifm float user'
+K 'super + ctrl + d'               'fm-term vifm tiled sudo'
+K 'super + ctrl + shift + d'       'fm-term vifm float sudo'
+K 'super + alt + d'                'fm-term nnn tiled user'
+K 'super + alt + shift + d'        'fm-term nnn float user'
+K 'super + alt + ctrl + d'         'fm-term nnn tiled sudo'
+K 'super + alt + ctrl + shift + d' 'fm-term nnn float sudo'
+K 'super + c'                "$WB/wl-calc"
+K 'super + b'                'chromium-wl'
+K 'super + shift + b'        'bspc rule -a chromium-browser -o state=floating center=on rectangle=1204x1152+0+0 && chromium-wl'
+K 'super + ctrl + b'         'qutebrowser'
+K 'super + ctrl + shift + b' 'bspc rule -a qutebrowser -o state=floating center=on rectangle=1204x1152+0+0 && qutebrowser'
+K 'super + ctrl + e'         'emacs'
+K 'super + ctrl + shift + e' 'bspc rule -a emacs -o state=floating center=on && bspc rule -a Emacs -o state=floating center=on && emacs'
+K 'super + y'                'foot -e nnn'
+K 'super + m'                "$WB/wl-minimize"
+K 'super + n'                'foot -e nvim'
+K 'super + shift + n'        'foot --app-id=foot-float -e nvim'
+K 'super + e'                'zed'
+K 'super + shift + e'        'bspc rule -a dev.zed.Zed -o state=floating center=on rectangle=1600x900+0+0; zed'
+K 'super + v'                "$WB/wl-clip"
+K 'super + alt + c'          "$WB/wl-clip"
+K 'super + alt + v'          'pavucontrol'
+K 'super + alt + n'          "$WB/wl-bartui network"
+K 'super + alt + b'          'bt-menu'
+K 'super + alt + p'          "$WB/wl-powermenu"
+K 'super + alt + s'          "$WB/wl-shot area"
+K 'super + alt + o'          "$WB/wl-scratchterm"
+K 'super + alt + h'          'pkill -USR1 -x .waybar-real'
+K 'super + alt + u'          'pkill -USR1 -x .waybar-real'
+K 'ctrl + alt + w'           "$WB/wl-barreset"
+# ---- session ----
+K 'ctrl + super + alt + p'   'loginctl poweroff'
+K 'ctrl + super + alt + Delete' 'loginctl reboot'
+K 'ctrl + super + alt + q'   'bspc quit'
+K 'super + alt + q'          'bspc quit'
+K 'ctrl + super + alt + l'   'swaylock -f -c 000000 --inside-color 000000 --ring-color 1f6f2f --key-hl-color 00ff41 --text-color c0ffc0'
+K 'ctrl + super + alt + k'   'bspc node -k'
+K 'ctrl + super + alt + s'   "$HOME/.config/bspwm-wl/bspwmrc"
+K 'ctrl + alt + b'           "$HOME/.config/bspwm-wl/bspwmrc && dunstify -u low bspwm-wl 'keys reloaded'"
+# ---- media keys ----
+K 'XF86MonBrightnessUp'      "$HOME/.local/bin/sys-brightness up"
+K 'XF86MonBrightnessDown'    "$HOME/.local/bin/sys-brightness down"
+K 'XF86AudioRaiseVolume'     "$HOME/.local/bin/sys-volume up"
+K 'XF86AudioLowerVolume'     "$HOME/.local/bin/sys-volume down"
+K 'XF86AudioMute'            "$HOME/.local/bin/sys-volume mute"
+K 'XF86AudioNext'            "$HOME/.local/bin/sys-media next"
+K 'XF86AudioPrev'            "$HOME/.local/bin/sys-media prev"
+K 'XF86AudioPlay'            "$HOME/.local/bin/sys-media toggle"
+K 'XF86AudioStop'            "$HOME/.local/bin/sys-media stop"
+# ---- close / state / flags ----
+K 'super + shift + w'        "$X11B/bspwm-sel kill"
+K 'super + w'                "$X11B/bspwm-sel close"
+K 'super + q'                'bspc rule -a qalculate-gtk -o state=floating center=on && bspc rule -a Qalculate-gtk -o state=floating center=on && qalculate-gtk'
+K 'ctrl + alt + q'           'bspc quit'
+K 'super + shift + alt + w' 'bspc query -N -d -n .window | xargs -r -I id -n 1 bspc node id -c'
+K 'super + f'                "$X11B/bspwm-sel float"
+K 'super + shift + f'        'bspc node -t ~fullscreen'
+K 'ctrl + alt + h'           "$WB/wl-hidenode --menu"
+K 'super + p'                "$X11B/bspwm-sel pin"
+K 'super + shift + p'        'bsp-pip'
+K 'super + shift + alt + p' 'bsp-pip --big'
+# ---- layout ----
+K 'super + u'                'bspc node @parent -R 90'
+K 'super + ctrl + alt + b'   'bspc node @/ -B'
+K 'super + equal'            "$WB/wl-center"
+K 'super + shift + equal'    "$WB/wl-center fit"
+K 'super + plus'             "$WB/wl-center fit"
+K 'super + a'                'bspc node -f @parent'
+K 'super + shift + a'        'bspc node -f @first.leaf || bspc node -f last.local.leaf'
+# ---- desktops ----
+K 'super + bracketleft'      'bspc desktop -f prev'
+K 'super + bracketright'     'bspc desktop -f next'
+K 'super + r'                'bspc node @/ --rotate 90'
+K 'super + shift + r'        'bspc node @/ --rotate -90'
+K 'super + apostrophe'       'bspc desktop -f last'
+K 'super + shift + apostrophe' 'bspc desktop -f last'
+K 'ctrl + alt + l'           "$WB/wl-blank"
+K 'super + Prior'            'bspc desktop -f next.local'
+K 'super + Next'             'bspc desktop -f prev.local'
+K 'super + shift + Prior'    "$X11B/bspwm-sel shift next"
+K 'super + shift + Next'     "$X11B/bspwm-sel shift prev"
+K 'super + alt + shift + Prior' "$X11B/bspwm-sel shiftfollow next"
+K 'super + alt + shift + Next' "$X11B/bspwm-sel shiftfollow prev"
+for i in 1 2 3 4 5 6 7 8 9 0; do
+  n=$i; [ "$i" = 0 ] && n=10
+  K "super + $i"               "bspc desktop -f ^$n"
+  K "super + ctrl + $i"        "bspc node -d ^$n"
+  K "super + shift + $i"       "$X11B/bspwm-sel send $i"
+  K "super + alt + shift + $i" "$X11B/bspwm-sel sendfollow $i"
+done
+# ---- focus / cycle ----
+K 'alt + Tab'                'bspc node -f prev.local.!hidden.window'
+K 'alt + shift + Tab'        'bspc node -f next.local.!hidden.window'
+K 'super + Tab'              "$WB/wl-winswitch"
+K 'super + shift + Tab'      "$WB/wl-winswitch"
+K 'super + ctrl + Tab'       'bspc node -f next.local.!hidden.window'
+K 'super + ctrl + shift + Tab' 'bspc node -f prev.local.!hidden.window'
+for d in h:west j:south k:north l:east Left:west Down:south Up:north Right:east; do
+  k=${d%%:*}; dir=${d#*:}
+  K "super + $k"         "bspc node -f $dir.!sticky.!hidden.local"
+  KE "super + shift + $k" "$WB/wl-smartmove $dir"
+done
+for d in Left:west Down:south Up:north Right:east; do
+  k=${d%%:*}; dir=${d#*:}
+  K "ctrl + alt + $k"            "bspc node -s $dir.local"
+  K "super + alt + $k"           "bspc node -p ~$dir"
+  K "super + alt + shift + $k"   "$WB/wl-edge $dir"
+done
+# ---- preselection ----
+K 'super + ctrl + v'         'bspc node -p south'
+K 'super + ctrl + q'         'bspc node -p cancel'
+K 'super + alt + Escape'     "bspc node -p cancel; $WB/wl-smartmove cancel"
+K 'super + Return'           "$X11B/bspwm-sel toggle"
+K 'super + shift + Escape'    "$X11B/bspwm-sel clear"
+# ---- resize ----
+KE 'super + ctrl + Up'        "$X11B/bspwm-cresize shrink v"
+KE 'super + ctrl + Down'      "$X11B/bspwm-cresize grow v"
+KE 'super + ctrl + Left'      "$X11B/bspwm-cresize shrink h"
+KE 'super + ctrl + Right'     "$X11B/bspwm-cresize grow h"
+KE 'super + KP_Add'           "$X11B/bspwm-resize grow"
+KE 'super + minus'            "$X11B/bspwm-resize shrink"
+KE 'super + KP_Subtract'      "$X11B/bspwm-resize shrink"
+KE 'super + alt + plus'       'bspc node -z top_right 20 -20; bspc node -z bottom_left -20 20'
+KE 'super + alt + minus'      'bspc node -z top_right -20 20; bspc node -z bottom_left 20 -20'
+KE 'super + ctrl + plus'      'bspc node -z top_left -50 -25; bspc node -z bottom_right 50 25'
+KE 'super + ctrl + minus'     'bspc node -z top_left 50 25; bspc node -z bottom_right -50 -25'
+# ---- scratchpad ----
+K 'super + s'                "$WB/wl-scratch toggle"
+K 'super + shift + s'        "$WB/wl-scratch add"
+K 'super + ctrl + s'         "$WB/wl-scratch remove"
+# ---- desktop rename / equal columns ----
+K 'super + ctrl + r'         "$WB/wl-rename"            # type a name; "-" or "reset" = default number; Esc cancels
+K 'super + ctrl + equal'     "$WB/wl-eqcols"            # equal-width columns on this desktop
+K 'super + ctrl + alt + equal' "$WB/wl-eqcols -r"   # equal columns + equal rows in each column
+# ---- window stacking / minimize / floats / opacity / emoji ----
+K 'super + shift + bracketleft'  "$WB/wl-stack raise"
+K 'super + shift + bracketright' "$WB/wl-stack lower"
+K 'super + i'                "$WB/wl-hidefloats"
+K 'super + o'                "$WB/wl-opacity"
+K 'super + shift + grave'            "$WB/wl-emoji"
+K 'super + alt + w'          "$WB/wl-wallselect"
+K 'super + ctrl + w'         "$WB/wl-wallpaper toggle"   # wallpaper on/off (plain black)
+# ---- screenshots ----
+K 'Print'                    "$WB/wl-shot area"
+K 'shift + Print'            "$WB/wl-shot full"
+K 'super + Print'            "$WB/wl-shot area"
+K 'super + shift + Print'      "$WB/wl-shot window"
+
+# Clear all rules (this fork: -r head repeatedly; -r '*' is cause-match only)
+# 'rule -r head' exits 0 even with no rules, so loop on rule -l (capped)
+n=0; while [ -n "$(bspc rule -l 2>/dev/null)" ] && [ $n -lt 500 ]; do bspc rule -r head; n=$((n+1)); done
+# App rules from ~/.config/bspwm-wl/rules (one line per app)
+RULES="$HOME/.config/bspwm-wl/rules"
+if [ -f "$RULES" ]; then
+  # Prefer jq; fall back to python3 so thin PATHs still reload rules
+  if command -v jq >/dev/null 2>&1; then
+    eval "$(bspc query -T -m focused | jq -r '.rectangle|"MW=\(.width) MH=\(.height)"')"
+  elif command -v python3 >/dev/null 2>&1; then
+    eval "$(bspc query -T -m focused | python3 -c 'import json,sys; r=json.load(sys.stdin)["rectangle"]; print("MW=%d MH=%d" % (r["width"], r["height"]))')"
+  else
+    MW=3440 MH=1440
+  fi
+  while read app rest; do   # no -r: "\ " escapes a space in titles
+    case "$app" in ''|\#*) continue ;; esac
+    args=""
+    for kv in $rest; do
+      case "$kv" in
+        size=*%x*%) w=${kv#size=}; w=${w%%\%*}; h=${kv##*x}; h=${h%\%}
+                    args="$args rectangle=$((MW*w/100))x$((MH*h/100))+0+0" ;;
+        size=*)     args="$args rectangle=${kv#size=}+0+0" ;;
+        opacity=*)  ;;
+        *)          args="$args $kv" ;;
+      esac
+    done
+    # shellcheck disable=SC2086
+    bspc rule -a "$app" $args || echo "rules: bad line for $app" >&2
+  done < "$RULES"
+fi
+
+# Autostart (only once per session)
+if [ -z "$BSPWM_WL_STARTED" ]; then
+  export BSPWM_WL_STARTED=1
+  export XDG_DATA_DIRS="$HOME/.local/share/flatpak/exports/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+  L="$HOME/.local/state/bspwm-wl"
+  PGA=$HOME/.guix-profile/libexec/polkit-gnome-authentication-agent-1; [ -x "$PGA" ] || PGA=/run/current-system/profile/libexec/polkit-gnome-authentication-agent-1
+  [ -x "$PGA" ] && ! pgrep -f polkit-gnome-authentication-agent >/dev/null && "$PGA" >"$L/polkit.log" 2>&1 &
+  # removable media: automount USB/SD to /run/media/$USER, notify, tray icon when devices present
+  command -v udiskie >/dev/null && ! pgrep -x .udiskie-real >/dev/null && ! pgrep -x udiskie >/dev/null && udiskie --automount --notify --smart-tray >"$L/udiskie.log" 2>&1 &
+  command -v transmission-daemon >/dev/null && ! pgrep -x transmission-da >/dev/null && transmission-daemon -w "$HOME/Downloads/torrents" >/dev/null 2>&1
+  # Let D-Bus-activated services (dunst, portals) see this Wayland session
+  dbus-update-activation-environment XDG_DATA_DIRS WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE 2>/dev/null
+  # Monitors: every enabled output -> max refresh at native res + VRR
+  # (BSPWM_WL_HZ=60 caps the rate, BSPWM_WL_VRR=1 enables adaptive sync)
+  command -v wlr-randr >/dev/null && "$WB/wl-maxrate" >"$L/wlr-randr.log" 2>&1
+  # Re-apply max refresh after a monitor reconnect (hotplug comes back at 60Hz)
+  pgrep -f "bspwm-wl/bin/wl-hotplug" >/dev/null || "$WB/wl-hotplug" >/dev/null 2>&1 &
+  # Idle: blank the screen (output power off, no lock) after 15 min; input wakes it
+  command -v swayidle >/dev/null && command -v wlopm >/dev/null && ! pgrep -x swayidle >/dev/null && \
+    "$WB/wl-idle" 900 >"$L/swayidle.log" 2>&1 &
+  # Same wallpaper as X11 bspwm (choice saved in ~/.config/bspwm-wl/wallpaper)
+  W=
+  [ -f "$HOME/.config/bspwm-wl/wallpaper" ] && W=$(cat "$HOME/.config/bspwm-wl/wallpaper")
+  [ -f "$W" ] || W="$HOME/.local/share/wallpapers/sys7mfaul7-03c-glitch-clear.jpg"
+  S="${W%.*}-3440.png"; [ -f "$S" ] && W="$S"
+  command -v swaybg >/dev/null && swaybg -m fill -i "$W" >"$L/swaybg.log" 2>&1 &
+  # waybar in a respawn loop; the loop ends when the compositor is gone
+  # flock: a bspwmrc re-run (reload) must not start a 2nd respawn loop (duplicate bars)
+  ( flock -n 9 || exit 0
+    while pgrep -x bspwm-wl >/dev/null; do
+      waybar -c "$HOME/.config/bspwm-wl/waybar/config.jsonc" -s "$HOME/.config/bspwm-wl/waybar/style.css" >>"$L/waybar.log" 2>&1
+      echo "--- waybar exited $? at $(date +%T), respawning" >>"$L/waybar.log"; sleep 2
+    done ) 9>"${XDG_RUNTIME_DIR:-/tmp}/bspwm-wl-waybar.lock" &
+  command -v cliphist >/dev/null && wl-paste --watch cliphist store >/dev/null 2>&1 &
+  command -v dunst >/dev/null && dunst >"$L/dunst.log" 2>&1 &
+fi
+
+# Screen sharing: PipeWire + wlr screencast portal
+( S="$HOME/.local/state/bspwm-wl"
+  [ -S "$XDG_RUNTIME_DIR/pipewire-0" ] || { pkill -x pipewire; pkill -x wireplumber; sleep 1; pipewire >"$S/pipewire.log" 2>&1 & sleep 1; }
+  pgrep -x wireplumber >/dev/null || wireplumber >"$S/wireplumber.log" 2>&1 &
+  for i in 1 2 3 4 5; do sleep 2; /run/current-system/profile/libexec/xdg-desktop-portal-wlr >>"$S/portal-wlr.log" 2>&1 &
+    sleep 2; pgrep -f xdg-desktop-portal-wlr >/dev/null && break; done
+) &

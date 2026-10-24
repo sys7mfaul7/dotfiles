@@ -1,0 +1,43 @@
+# ~/.config/bspwm/theme : the ONE place to change the X11 session's look.
+# part of sys7mfaul7 dotfiles
+#
+# Plain shell variables. bspwmrc sources this file and exports everything, then
+# scripts/theme-apply writes the derived files (rofi colours, dunst config,
+# xsettingsd, jgmenu, polybar colours/fonts) into ~/.config/bspwm/generated/.
+# After editing: Ctrl+Super+Alt+S (reload) or re-login.
+
+# ---- font (text) ----------------------------------------------------------
+FONT_FAMILY="DejaVu Sans Mono"   # any family from: fc-list : family
+FONT_STYLE="Book"                # normal text weight (DejaVu calls Regular "Book")
+FONT_EMPH_STYLE="Bold"           # used only for emphasis (headings, focused items)
+FONT_SIZE="11"                   # POINTS, not pixels: scales with the screen's DPI
+# DPI is worked out at login by scripts/dpi from the monitor's physical size.
+# To force a value put a number (e.g. 120) in ~/.config/bspwm/dpi, or export BSPWM_DPI.
+# Icon fallback for bar glyphs (needs a Nerd Font installed)
+ICON_FONT="Symbols Nerd Font Mono"
+
+# ---- colours (no blue) ----------------------------------------------------
+C_BG="#000000"        # backgrounds
+C_BG_ALT="#0a0e14"    # charcoal panels
+C_FG="#c0ffc0"        # text
+C_ACCENT="#00ff41"    # accent / focus
+C_SEL="#1f6f2f"       # selection
+C_DIM="#4f7f5a"       # dim / inactive
+C_URGENT="#ff5f5f"    # urgent / errors
+
+# ---- window manager -------------------------------------------------------
+BORDER_WIDTH="2"
+BORDER_NORMAL="#1a2a1f"
+BORDER_FOCUSED="#c0ffc0"
+WINDOW_GAP="5"
+BAR_HEIGHT_PT="19.5"  # bar height in points (19.5pt = 26px at 96 DPI)
+BAR_GAP_PX="6"        # air between bar and windows; top_padding = bar px + this
+SIDE_PADDING="1"
+
+# ---- desktop bits ---------------------------------------------------------
+GTK_THEME_NAME="Adwaita-dark"   # green overrides live in ~/.config/gtk-3.0/gtk.css
+ICON_THEME="Adwaita"
+CURSOR_THEME="Qogirr-Dark"
+CURSOR_SIZE="auto"              # auto = 24 at 96 DPI, scaled with DPI; or a number
+TERMINAL="xterm"                # default; Super+Alt+T picks another (saved in ~/.config/bspwm/terminal)
+WALLPAPER_DIR="$HOME/.local/share/wallpapers"

@@ -1,0 +1,51 @@
+#!/bin/sh
+# emoji-core MENU... : pick emoji via MENU; copy + try paste into focused app.
+LIST="${EMOJI_LIST:-$HOME/.local/share/emoji/emoji.txt}"
+[ -f "$LIST" ] || { echo "missing $LIST" >&2; exit 1; }
+
+# Session tools often live outside thin PATHs
+PATH="$HOME/.local/bin:/gnu/store/fzdjryd290bcifs6xw522ap9s9vf9fkj-profile/bin:$PATH"
+# Probe running session for wl-clipboard if still missing
+if ! command -v wl-copy >/dev/null 2>&1; then
+  for d in /gnu/store/*/bin; do
+    [ -x "$d/wl-copy" ] || continue
+    PATH="$d:$PATH"
+    break
+  done
+fi
+
+sel=$(cat "$LIST" | "$@") || exit 0
+[ -z "$sel" ] && exit 0
+emoji=$(printf '%s\n' "$sel" | awk '{print $1; exit}')
+[ -z "$emoji" ] && exit 0
+
+copy() {
+  if command -v wl-copy >/dev/null 2>&1; then
+    printf %s "$emoji" | wl-copy 2>/dev/null && return 0
+  fi
+  if command -v xclip >/dev/null 2>&1; then
+    printf %s "$emoji" | xclip -selection clipboard && return 0
+  fi
+  if command -v xsel >/dev/null 2>&1; then
+    printf %s "$emoji" | xsel --clipboard --input && return 0
+  fi
+  return 1
+}
+
+paste_it() {
+  sleep 0.12
+  if command -v wtype >/dev/null 2>&1; then
+    wtype -- "$emoji" 2>/dev/null && return 0
+  fi
+  if command -v ydotool >/dev/null 2>&1; then
+    # Ctrl+v after copy
+    ydotool key 29:1 47:1 47:0 29:0 2>/dev/null && return 0
+  fi
+  if command -v xdotool >/dev/null 2>&1; then
+    xdotool type --clearmodifiers --delay 0 -- "$emoji" 2>/dev/null && return 0
+  fi
+  return 1
+}
+
+copy || true
+paste_it || true

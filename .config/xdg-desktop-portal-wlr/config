@@ -1,0 +1,7 @@
+[screencast]
+# dmenu chooser lists monitors AND windows (window sharing needs bspwm-wl with
+# ext-foreign-toplevel-list + ext-image-copy-capture, i.e. the .bak-capture+ build).
+# Old output-only picker: chooser_type=simple / chooser_cmd=slurp -f %o -or -b 000000aa -c 00ff41
+chooser_type=dmenu
+chooser_cmd=/home/USER/.config/bspwm-wl/bin/wl-castpick
+max_fps=60

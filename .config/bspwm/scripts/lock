@@ -1,0 +1,13 @@
+#!/bin/sh
+# lock : lock the X11 screen (Ctrl+Super+Alt+L, power menu)
+# part of sys7mfaul7 dotfiles
+# Uses i3lock in the theme colours if installed, otherwise slock (black screen).
+. "$HOME/.config/bspwm/theme"
+pgrep -x i3lock >/dev/null || pgrep -x slock >/dev/null && exit 0
+if command -v i3lock >/dev/null; then
+    exec i3lock -n -c "${C_BG#\#}"
+elif command -v slock >/dev/null; then
+    exec slock
+else
+    dunstify -u critical lock "no screen locker installed (i3lock or slock)"
+fi

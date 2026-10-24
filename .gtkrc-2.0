@@ -1,0 +1,7 @@
+# ~/.gtkrc-2.0 : GTK2 apps follow the same choices as GTK3
+# part of sys7mfaul7 dotfiles
+gtk-theme-name="Adwaita-dark"
+gtk-icon-theme-name="Adwaita"
+gtk-cursor-theme-name="Qogirr-Dark"
+gtk-cursor-theme-size=24
+gtk-font-name="DejaVu Sans Mono 11"

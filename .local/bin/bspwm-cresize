@@ -1,0 +1,9 @@
+#!/bin/sh
+# bspwm-cresize grow|shrink h|v : resize focused window symmetrically about its center (20px per side)
+s=20; [ "$1" = shrink ] && s=-20
+n=$(( -s ))
+case $2 in
+  h) bspc node -z left $n 0 2>/dev/null; bspc node -z right $s 0 2>/dev/null ;;
+  v) bspc node -z top 0 $n 2>/dev/null;  bspc node -z bottom 0 $s 2>/dev/null ;;
+esac
+exit 0

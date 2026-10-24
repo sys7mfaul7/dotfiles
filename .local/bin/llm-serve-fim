@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# FIM autocomplete server (llama.vim) on :8081 — Qwen2.5-Coder-7B, Vulkan
+MODEL="${LLM_FIM_MODEL:-$HOME/models/Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf}"
+exec llama-server -m "$MODEL" --host 127.0.0.1 --port 8081 -ngl 99 -c 8192 \
+  -t "$(nproc)" --alias fim "$@"

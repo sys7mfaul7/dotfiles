@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Grok Bot
+Exec=/home/USER/.local/bin/grokbot %U
+Icon=/home/USER/.local/opt/grokbot/squashfs-root/grok-bot.png
+Type=Application
+Categories=Utility;
+MimeType=x-scheme-handler/grokbot;x-scheme-handler/sand;

@@ -1,0 +1,45 @@
+--- a/src/main-win.c	2026-10-16 09:08:18.252617629 -0500
++++ b/src/main-win.c	2026-10-16 09:14:50.150164112 -0500
+@@ -2500,7 +2500,41 @@
+             return TRUE;
+         }
+     }
+-    else if(evt->keyval == '/' || evt->keyval == '~')
++    else if(modifier == 0 && (evt->keyval == GDK_KEY_Left || evt->keyval == GDK_KEY_KP_Left
++                              || evt->keyval == GDK_KEY_Right || evt->keyval == GDK_KEY_KP_Right))
++    {
++        /* local: vifm/nnn-style navigation in the folder view (all view modes):
++         * Left = parent folder, Right = open selected folder/file.
++         * Text entries (address bar, inline rename) keep their Left/Right. */
++        GtkWidget *focus = gtk_window_get_focus(GTK_WINDOW(win));
++        if (focus && win->folder_view && !GTK_IS_EDITABLE(focus) &&
++            (focus == GTK_WIDGET(win->folder_view) ||
++             gtk_widget_is_ancestor(focus, GTK_WIDGET(win->folder_view))))
++        {
++            if (evt->keyval == GDK_KEY_Left || evt->keyval == GDK_KEY_KP_Left)
++                on_go_up(NULL, win);
++            else
++            {
++                /* Same as Enter: activate the item under the keyboard cursor
++                 * (works even when it is focused but not selected). */
++                gboolean ret = FALSE;
++                if (GTK_IS_TREE_VIEW(focus))
++                    g_signal_emit_by_name(focus, "select-cursor-row", TRUE, &ret);
++                else if (g_signal_lookup("activate-cursor-item", G_OBJECT_TYPE(focus)))
++                    g_signal_emit_by_name(focus, "activate-cursor-item", &ret);
++                else
++                    on_open(NULL, win);
++            }
++            return TRUE;
++        }
++    }
++    if(modifier == GDK_MOD1_MASK && (evt->keyval == GDK_KEY_d || evt->keyval == GDK_KEY_D))
++    {
++        /* local: Alt+D focuses the address bar, like a browser. */
++        on_location(NULL, win);
++        return TRUE;
++    }
++    if((modifier & ~GDK_SHIFT_MASK) == 0 && (evt->keyval == '/' || evt->keyval == '~'))
+     {
+         if (!gtk_widget_is_focus(GTK_WIDGET(win->location)))
+         {

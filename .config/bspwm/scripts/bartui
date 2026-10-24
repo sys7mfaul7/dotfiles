@@ -1,0 +1,34 @@
+#!/bin/sh
+# bartui : small terminal popups opened from the bar (click again to close)
+# part of sys7mfaul7 dotfiles
+#   bartui audio | network | bluetooth | top | calendar
+. "$HOME/.config/bspwm/theme"
+have() { command -v "$1" >/dev/null 2>&1; }
+
+# close the popup if it is already open, else open it
+popup() {  # $1 instance name, $2 title, rest = command
+    inst=$1 title=$2; shift 2
+    ids=$(xdotool search --classname "^$inst\$" 2>/dev/null)
+    if [ -n "$ids" ]; then
+        for w in $ids; do xdotool windowclose "$w" 2>/dev/null || xdo close "$w"; done
+        exit 0
+    fi
+    exec xterm -name "$inst" -class BarTUI -T "$title" \
+        -bg "$C_BG" -fg "$C_FG" -cr "$C_ACCENT" -fa "$FONT_FAMILY:size=$FONT_SIZE" \
+        ${GEOM:+-geometry "$GEOM"} -e "$@"
+}
+
+case "$1" in
+    audio)
+        if have wiremix; then popup BarTUI-audio Audio wiremix
+        elif have pulsemixer; then popup BarTUI-audio Audio pulsemixer
+        else exec pavucontrol; fi ;;
+    network)     popup BarTUI-net Network nmtui ;;
+    network-gui) exec nm-connection-editor ;;
+    bluetooth)
+        if have bluetui; then popup BarTUI-bt Bluetooth bluetui
+        else popup BarTUI-bt Bluetooth bluetoothctl; fi ;;
+    top)      popup BarTUI-top btop btop ;;
+    calendar) GEOM=66x11 popup BarCal Calendar sh -c 'cal -3 --color=always; read -r _' ;;
+    *) echo "usage: bartui audio|network|bluetooth|top|calendar" >&2; exit 1 ;;
+esac

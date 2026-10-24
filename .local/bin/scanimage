@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# wrapper: SANE/brscan4 env for Guix, see ~/.config/sane/scan-env.sh
+. "$HOME/.config/sane/scan-env.sh"
+exec "$HOME/.guix-profile/bin/scanimage" "$@"

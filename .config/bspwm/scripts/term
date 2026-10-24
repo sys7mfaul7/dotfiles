@@ -1,0 +1,41 @@
+#!/bin/sh
+# term : open the chosen terminal
+# part of sys7mfaul7 dotfiles
+#   term              tiled terminal                (Super+T)
+#   term --float      floating, half the screen     (Super+Shift+T)
+#   term --run CMD..  terminal running CMD
+#   term --pick       choose the terminal program   (Super+Alt+T)
+# Choice is kept in ~/.config/bspwm/terminal (default: TERMINAL from theme).
+B="$HOME/.config/bspwm"
+. "$B/theme"
+SAVE="$B/terminal"
+T=$(cat "$SAVE" 2>/dev/null); [ -n "$T" ] || T=$TERMINAL
+
+# open terminal $T with WM class $1 (may be empty) running the rest
+launch() {
+    cls=$1; shift
+    case $T in
+        xterm)     c=-class   e=-e ;;
+        foot)      c=--app-id e=   ;;
+        alacritty) c=--class  e=-e ;;
+        kitty)     c=--class  e=   ;;
+        st)        c=-c       e=-e ;;
+        *)         c=         e=-e ;;
+    esac
+    [ $# -gt 0 ] && [ -n "$e" ] && set -- "$e" "$@"
+    [ -n "$cls" ] && [ -n "$c" ] && set -- "$c" "$cls" "$@"
+    exec "$T" "$@"
+}
+
+case "$1" in
+    --pick)
+        list=""
+        for t in xterm foot alacritty kitty st ghostty; do
+            command -v "$t" >/dev/null && list="$list$t\n"
+        done
+        c=$(printf "$list" | rofi -dmenu -p "terminal ($T)" -theme "$B/rofi/dmenu.rasi") || exit 0
+        [ -n "$c" ] && printf '%s\n' "$c" >"$SAVE" ;;
+    --float) shift; launch FloaTerm "$@" ;;
+    --run)   shift; launch "" "$@" ;;
+    *)       launch "" ;;
+esac

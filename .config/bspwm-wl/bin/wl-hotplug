@@ -1,0 +1,27 @@
+#!/bin/sh
+# wl-hotplug : the compositor brings a reconnected monitor (power-cycle, DP
+# HPD bounce) back on its EDID-preferred 60Hz mode, and switched on. Watch
+# DRM udev events and
+#  - while wl-idle has the screen blanked: blank it again;
+#  - otherwise: re-run wl-maxrate if the current mode is not the max one.
+WB=$(dirname "$(readlink -f "$0")")
+L="$HOME/.local/state/bspwm-wl"
+F="${XDG_RUNTIME_DIR:-/tmp}/wl-idle.blanked"
+cur() { wlr-randr --json 2>/dev/null | jq -r '.[] | select(.enabled) | "\(.name) \(.modes[] | select(.current) | "\(.width)x\(.height)@\(.refresh)Hz")"' | sort; }
+want() { "$WB/wl-maxrate" --dry-run 2>/dev/null | sed -n 's/^+ wlr-randr --output \([^ ]*\) --mode \([^ ]*\)$/\1 \2/p' | sort; }
+udevadm monitor --udev --subsystem-match=drm 2>/dev/null | while read -r line; do
+  case $line in
+    *change*)
+      sleep 3
+      if [ -e "$F" ]; then
+        echo "--- $(date '+%F %T') hotplug while blanked: re-blank" >>"$L/wlr-randr.log"
+        wlopm --off '*' >>"$L/wlr-randr.log" 2>&1
+        continue
+      fi
+      c=$(cur); w=$(want)
+      if [ -n "$w" ] && [ "$c" != "$w" ]; then
+        echo "--- $(date '+%F %T') hotplug: [$c] -> [$w]" >>"$L/wlr-randr.log"
+        "$WB/wl-maxrate" >>"$L/wlr-randr.log" 2>&1
+      fi ;;
+  esac
+done

@@ -1,0 +1,36 @@
+#!/bin/sh
+# bspwm-sel ACTION [ARG]: act on all marked windows (any desktop), else the focused window.
+# Works in X11 bspwm and bspwm-wl. Actions: toggle send sendfollow close kill shift float pin clear
+wl() { [ -n "$WAYLAND_DISPLAY" ] && [ "$XDG_CURRENT_DESKTOP" = bspwm-wl ]; }
+marked=$(bspc query -N -n .marked.window 2>/dev/null)
+targets=${marked:-$(bspc query -N -n focused.window 2>/dev/null)}
+clear_marks() { for t in $(bspc query -N -n .marked 2>/dev/null); do bspc node "$t" -g marked=off; done; }
+repaint() { wl || "$HOME/.local/bin/bsp-pin-borders" once >/dev/null 2>&1 || true; }
+case "$1" in
+  toggle)  # focused window has a preselection -> leave a blank receptacle there
+           if bspc query -N -n 'focused.window.!automatic' >/dev/null 2>&1; then
+             bspc node focused -i; exit 0
+           fi
+           # pending smart-move edge preselection -> move into it
+           "$HOME/.config/bspwm-wl/bin/wl-smartmove" commit 2>/dev/null && exit 0
+           bspc node -n 'newest.!automatic.local' --follow 2>/dev/null && exit 0
+           # otherwise fill a receptacle on this desktop
+           r=$(bspc query -N -n 'any.local.leaf.!window' 2>/dev/null) && { bspc node -n "$r" --follow; exit 0; }
+           bspc query -N -n focused.window >/dev/null && bspc node -g marked ;;
+  send)    n=$2; [ "$n" = 0 ] && n=10
+           for t in $targets; do bspc node "$t" -d "^$n"; done; clear_marks ;;
+  sendfollow) n=$2; [ "$n" = 0 ] && n=10
+           for t in $targets; do bspc node "$t" -d "^$n"; done; clear_marks; bspc desktop -f "^$n" ;;
+  shift|shiftfollow) d=$(bspc query -D -d "$2.local") || exit 0
+           for t in $targets; do bspc node "$t" -d "$d"; done; clear_marks; [ "$1" = shiftfollow ] && bspc desktop -f "$d" ;;
+  close)   for t in $targets; do bspc node "$t" -c; done; clear_marks ;;
+  kill)    for t in $targets; do bspc node "$t" -k; done; clear_marks ;;
+  float)   if [ -z "$marked" ]; then
+             if wl; then exec "$HOME/.config/bspwm-wl/bin/wl-float"; else exec bspc node -t ~floating; fi
+           fi
+           for t in $targets; do bspc node "$t" -t ~floating; done ;;
+  pin)     for t in $targets; do "$HOME/.local/bin/bsp-pin" "$t"; done ;;
+  clear)   clear_marks ;;
+  *) echo "usage: bspwm-sel toggle|send N|sendfollow N|shift[follow] prev|next|close|kill|float|pin|clear" >&2; exit 1 ;;
+esac
+repaint

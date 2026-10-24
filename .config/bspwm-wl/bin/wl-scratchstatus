@@ -1,0 +1,32 @@
+#!/bin/sh
+# wl-scratchstatus : waybar "S" indicator (event-driven via bspc subscribe).
+# Tracks: Super+S scratchpad list, Super+M minimize tray list, Super+Alt+O drop-down term.
+#   on    = at least one of them is shown   -> bright S
+#   off   = they exist but are all hidden    -> dim S
+#   empty = nothing in any scratchpad       -> no S (module hidden)
+export BSPWM_SOCKET="${BSPWM_SOCKET:-/run/user/1000/bspwmwayland-0_0_0-socket}"
+R="${XDG_RUNTIME_DIR:-/tmp}"
+F=$(mktemp -u "$R/wl-scratchstatus.XXXXXX"); mkfifo "$F" || exit 1
+bspc subscribe node_add node_remove node_transfer node_flag node_state desktop_focus >"$F" 2>/dev/null & SP=$!
+trap 'kill $SP 2>/dev/null; rm -f "$F"; exit 0' EXIT INT TERM PIPE HUP
+last=__none__
+ids() { # list files hold 0x.. ids; print decimal, comma separated
+  cat "$R/bspwm-wl-scratchpad" "$R/bspwm-wl-minimize" 2>/dev/null | while read -r i; do
+    case "$i" in 0x*|[0-9]*) printf '%d,' "$i" 2>/dev/null;; esac; done
+}
+show() {
+  out=$(bspc wm -d 2>/dev/null | jq -c --arg ids "$(ids)" '
+    ($ids | split(",") | map(select(. != "") | tonumber)) as $L
+    | [.. | objects | select(.client? != null)
+       | select((.id as $i | $L | index($i)) or .client.className == "scratchpad")]
+    | (map(select(.hidden | not)) | length) as $on | length as $n
+    | if $n == 0 then {text:"", class:"empty", tooltip:"scratchpad empty"}
+      elif $on > 0 then {text:"S", class:"on", tooltip:"scratchpad shown (\($on)/\($n))"}
+      else {text:"S", class:"off", tooltip:"scratchpad hidden (\($n))"} end' 2>/dev/null)
+  [ -n "$out" ] || out='{"text":"","class":"empty"}'
+  [ "$out" = "$last" ] && return 0
+  last=$out
+  printf '%s\n' "$out" || exit 0
+}
+show
+while read -r _; do show; kill -0 $PPID 2>/dev/null || exit 0; done <"$F"

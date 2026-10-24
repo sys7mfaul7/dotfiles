@@ -1,0 +1,23 @@
+#!/bin/sh
+# Hyprland-style movewindow: tiled -> if the neighbor in dir lines up exactly with
+# us across the move (same-sized side-by-side pair), swap; otherwise split the
+# neighbor across the move and land on the side we came from. floating -> nudge 20px
+dir=$1
+if bspc query -N -n focused.floating >/dev/null; then
+  case $dir in west) bspc node -v -20 0;; east) bspc node -v 20 0;; north) bspc node -v 0 -20;; south) bspc node -v 0 20;; esac
+  exit
+fi
+t=$(bspc query -N -n "$dir.local.!floating.window") || exit 0
+w=$(bspc query -N -n focused)
+rect() { bspc query -T -n "$1" | sed -n 's/.*"rectangle":{"x":\(-\{0,1\}[0-9]*\),"y":\(-\{0,1\}[0-9]*\),"width":\([0-9]*\),"height":\([0-9]*\)}.*/\1 \2 \3 \4/p' | head -1; }
+set -- $(rect "$w") $(rect "$t")
+wx=$1 wy=$2 ww=$3 wh=$4 tx=$5 ty=$6 tw=$7 th=$8
+case $dir in
+  north|south)
+    if [ "$wx" -eq "$tx" ] && [ "$ww" -eq "$tw" ]; then bspc node -s "$t" --follow; exit; fi
+    if [ $((wx+ww/2)) -ge $((tx+tw/2)) ]; then p=east; else p=west; fi ;;
+  *)
+    if [ "$wy" -eq "$ty" ] && [ "$wh" -eq "$th" ]; then bspc node -s "$t" --follow; exit; fi
+    if [ $((wy+wh/2)) -ge $((ty+th/2)) ]; then p=south; else p=north; fi ;;
+esac
+bspc node "$t" -p "$p" && bspc node "$w" -n "$t" && bspc node "$w" -f

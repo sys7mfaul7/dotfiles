@@ -1,0 +1,9 @@
+#!/bin/sh
+# wallpaper-restore : put back the last wallpaper chosen in any session.
+# part of sys7mfaul7 dotfiles
+# The choice is shared with bspwm-wl / Niri through ~/.config/bspwm-wl/wallpaper
+# (written by wl-wallpaper). Falls back to the first image in $WALLPAPER_DIR.
+. "$HOME/.config/bspwm/theme"
+w=$(cat "$HOME/.config/bspwm-wl/wallpaper" 2>/dev/null)
+[ -f "$w" ] || w=$(find "$WALLPAPER_DIR" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.png' \) 2>/dev/null | sort | head -n 1)
+if [ -f "$w" ]; then feh --no-fehbg --bg-fill "$w"; else xsetroot -solid "$C_BG"; fi

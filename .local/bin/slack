@@ -1,0 +1,21 @@
+#!/bin/sh
+[ -z "$DBUS_SESSION_BUS_ADDRESS" ] && [ -r "$XDG_RUNTIME_DIR/dbus-env" ] && . "$XDG_RUNTIME_DIR/dbus-env"
+export DISPLAY="${DISPLAY:-:0}"
+export XAUTHORITY="${XAUTHORITY:-$HOME/.Xauthority}"
+export GTK_THEME="${GTK_THEME:-Adwaita:dark}"
+export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket
+APP="$HOME/.local/opt/slack/app"
+WL_ARGS=""; WL_FLAGS=""
+if [ -n "$WAYLAND_DISPLAY" ] && [ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]; then
+  WL_ARGS="--share=$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY --preserve=^WAYLAND_DISPLAY wayland"
+  WL_FLAGS="--ozone-platform=wayland --enable-features=WaylandWindowDecorations,WebRTCPipeWireCapturer"
+fi
+RT=""; [ -n "$XDG_RUNTIME_DIR" ] && [ -d "$XDG_RUNTIME_DIR" ] && RT="--share=$XDG_RUNTIME_DIR --preserve=^XDG_RUNTIME_DIR"
+exec guix shell --container --emulate-fhs --network --share="$HOME" \
+  --share=/tmp --share=/run/dbus --share=/dev/shm --expose="$XAUTHORITY" --share=/dev/dri $RT \
+  --preserve=^DISPLAY --preserve=^XAUTHORITY --preserve=^DBUS_SESSION_BUS_ADDRESS --preserve=^GTK_THEME --preserve=^DBUS_SYSTEM_BUS_ADDRESS \
+  gtk+ nss nspr alsa-lib libxkbcommon mesa libdrm libxscrnsaver libxtst cups at-spi2-core \
+  dbus expat libsecret eudev coreutils bash glibc-locales fontconfig font-dejavu \
+  nss-certs libxcomposite libxdamage libxrandr libxext libx11 libxcb libxfixes libxkbfile pango cairo \
+  gdk-pixbuf glib libnotify gcc-toolchain libxshmfence pulseaudio pipewire xdg-utils $WL_ARGS -- \
+  "$APP/slack" --no-sandbox --disable-gpu --force-dark-mode $WL_FLAGS "$@"

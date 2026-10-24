@@ -1,0 +1,3 @@
+#!/bin/sh
+export SAL_USE_VCLPLUGIN=gtk3
+exec /run/current-system/profile/bin/soffice "$@"

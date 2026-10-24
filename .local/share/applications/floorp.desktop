@@ -1,0 +1,21 @@
+[Desktop Entry]
+Type=Application
+Name=Floorp
+GenericName=Web Browser
+Comment=Firefox-based browser (official tarball, Guix FHS container)
+Exec=/home/USER/.local/bin/floorp %u
+Icon=/home/USER/.local/opt/floorp/browser/chrome/icons/default/default128.png
+Terminal=false
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
+StartupNotify=true
+StartupWMClass=floorp
+Actions=new-window;new-private-window;
+
+[Desktop Action new-window]
+Name=New Window
+Exec=/home/USER/.local/bin/floorp --new-window %u
+
+[Desktop Action new-private-window]
+Name=New Private Window
+Exec=/home/USER/.local/bin/floorp --private-window %u

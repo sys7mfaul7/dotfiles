@@ -1,0 +1,20 @@
+#!/bin/sh
+# Toggle hide/show all floating windows on the focused desktop.
+export BSPWM_SOCKET="${BSPWM_SOCKET:-/run/user/1000/bspwmwayland-0_0_0-socket}"
+F="${XDG_RUNTIME_DIR:-/tmp}/bspwm-wl-hidefloats"
+if [ -f "$F" ] && [ -s "$F" ]; then
+  while read -r id; do
+    bspc query -N -n "$id" >/dev/null 2>&1 && bspc node "$id" -g hidden=off
+  done <"$F"
+  rm -f "$F"
+else
+  : >"$F"
+  for id in $(bspc query -N -d focused -n '.floating.window.!hidden' 2>/dev/null); do
+    echo "$id" >>"$F"
+    bspc node "$id" -g hidden=on
+  done
+  if [ ! -s "$F" ]; then
+    rm -f "$F"
+    dunstify -t 1200 "Floats" "no floating windows to hide"
+  fi
+fi

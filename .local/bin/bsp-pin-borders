@@ -1,0 +1,28 @@
+#!/bin/sh
+# bsp-pin-borders : X11 border painter for marked and pinned (sticky) windows.
+# part of sys7mfaul7 dotfiles
+# Marked = orange #ff6000 (wins over pinned); pinned = yellow #ffe600 when
+# focused, dark yellow #7a6e00 when not.
+# Repaints all windows when marks exist or just cleared, so unmarked ones get bspwm's colors back.
+command -v chwb >/dev/null || exit 0
+S="${XDG_RUNTIME_DIR:-/tmp}/bsp-mark-painted"
+hex() { printf '0x%s' "$(bspc config "$1" | tr -d '#')"; }
+paint() {
+  f=$(bspc query -N -n focused.window 2>/dev/null)
+  m=$(bspc query -N -n .marked.window 2>/dev/null)
+  if [ -n "$m" ] || [ -f "$S" ]; then
+    fc=$(hex focused_border_color); nc=$(hex normal_border_color)
+    for id in $(bspc query -N -n .window.!hidden 2>/dev/null); do
+      [ "$id" = "$f" ] && chwb "$fc" "$id" || chwb "$nc" "$id"
+    done
+    for id in $m; do chwb 0xff6000 "$id"; done
+    if [ -n "$m" ]; then : >"$S"; else rm -f "$S"; fi
+  fi
+  for id in $(bspc query -N -n .sticky.window 2>/dev/null); do
+    case " $(echo $m) " in *" $id "*) continue;; esac
+    if [ "$id" = "$f" ]; then chwb 0xffe600 "$id"; else chwb 0x7a6e00 "$id"; fi
+  done
+}
+paint
+[ "$1" = once ] && exit 0
+bspc subscribe node_focus node_flag node_state node_add desktop_focus node_geometry | while read -r _; do paint; done

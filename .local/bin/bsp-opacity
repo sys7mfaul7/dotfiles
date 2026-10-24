@@ -1,0 +1,12 @@
+#!/bin/sh
+# Toggle opacity: terminals 0.88<->1.0, other windows 1.0<->0.88
+id=$(bspc query -N -n focused) || exit 0
+if xprop -id "$id" _NET_WM_WINDOW_OPACITY | grep -q "= "; then
+  xprop -id "$id" -remove _NET_WM_WINDOW_OPACITY
+else
+  case $(xprop -id "$id" WM_CLASS) in
+    *XTerm*|*FloaTerm*|*Updating*|*foot*) v=4294967295 ;;
+    *) v=3779571220 ;;
+  esac
+  xprop -id "$id" -f _NET_WM_WINDOW_OPACITY 32c -set _NET_WM_WINDOW_OPACITY $v
+fi

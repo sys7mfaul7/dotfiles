@@ -1,0 +1,14 @@
+#!/bin/sh
+# pass-menu : copy a password from the password store   (Super+Alt+X)
+# part of sys7mfaul7 dotfiles
+# Shift+Return types it instead of copying. Clipboard clears after 45 s (pass).
+command -v pass >/dev/null || { dunstify -u normal pass "pass is not installed"; exit 1; }
+S="${PASSWORD_STORE_DIR:-$HOME/.password-store}"
+entry=$(cd "$S" 2>/dev/null && find . -name '*.gpg' | sed 's|^\./||; s|\.gpg$||' | sort |
+    rofi -dmenu -i -p pass -kb-custom-1 Shift+Return -theme "$HOME/.config/bspwm/rofi/dmenu.rasi")
+rc=$?
+[ -n "$entry" ] || exit 0
+case $rc in
+    0)  pass show -c "$entry" >/dev/null && dunstify -u low -r 9004 pass "copied: $entry" ;;
+    10) pass show "$entry" | head -n1 | tr -d '\n' | xdotool type --clearmodifiers --file - ;;
+esac

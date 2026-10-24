@@ -1,0 +1,12 @@
+#!/bin/sh
+# kbd-layout : choose the keyboard layout   (Super+Alt+K)
+# part of sys7mfaul7 dotfiles
+# Layouts offered come from ~/.config/bspwm/layouts (one "layout[:variant]"
+# per line), else a short default list. Needs setxkbmap.
+command -v setxkbmap >/dev/null || { dunstify -u normal keyboard "setxkbmap is not installed"; exit 1; }
+L="$HOME/.config/bspwm/layouts"
+cur=$(setxkbmap -query | awk '/^layout/ {print $2}')
+list=$( [ -s "$L" ] && cat "$L" || printf 'us\nus:intl\nes\nde\nfr\ngb\n' )
+c=$(printf '%s\n' "$list" | rofi -dmenu -p "layout ($cur)" -theme "$HOME/.config/bspwm/rofi/dmenu.rasi") || exit 0
+setxkbmap "${c%%:*}" $( [ "$c" != "${c%%:*}" ] && echo "-variant ${c#*:}") &&
+    dunstify -u low -r 9002 keyboard "layout: $c"

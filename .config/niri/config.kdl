@@ -1,0 +1,306 @@
+// niri config (sys7mfaul7) - mirrors bspwm-wl where niri allows.
+// Palette: text #c0ffc0, accent #00ff41, selection #1f6f2f, dim #4f7f5a, bg #000000.
+// Reload: Ctrl+Alt+B (niri also live-reloads on save).  Validate: niri validate
+
+input {
+    keyboard {
+        xkb { layout "us"; }
+        repeat-delay 220
+        repeat-rate 45
+    }
+    mouse {
+        left-handed
+        accel-profile "flat"
+    }
+    touchpad {
+        tap
+        left-handed
+        natural-scroll
+    }
+    focus-follows-mouse max-scroll-amount="0%"
+    workspace-auto-back-and-forth
+}
+
+output "DP-1" {
+    mode "3440x1440@240.000"
+    scale 1
+    // VRR off (no variable-refresh-rate line), as on bspwm-wl (OLED flicker)
+}
+
+layout {
+    gaps 5
+    center-focused-column "never"
+    background-color "#000000"
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+        proportion 1.0
+    }
+    default-column-width { proportion 0.5; }
+    focus-ring { off; }
+    border {
+        width 2
+        active-color "#00ff41"
+        inactive-color "#1f6f2f"
+        urgent-color "#ff5f5f"
+    }
+    shadow { off; }
+    tab-indicator {
+        active-color "#00ff41"
+        inactive-color "#1f6f2f"
+    }
+    insert-hint { color "#1f6f2f80"; }
+}
+
+cursor {
+    xcursor-theme "Qogirr-Dark"
+    xcursor-size 24
+    hide-when-typing
+}
+
+// X11 apps: niri starts xwayland-satellite on demand and exports DISPLAY itself.
+xwayland-satellite { path "xwayland-satellite"; }
+
+prefer-no-csd
+screenshot-path "~/Pictures/ScreenShots/Shot-%Y-%m-%d-%H%M%S.png"
+hotkey-overlay { skip-at-startup; }
+overview { backdrop-color "#000000"; }
+
+// Ten persistent workspaces, like bspwm-wl desktops 1..10 (niri keeps one extra empty one at the end).
+workspace "1"
+workspace "2"
+workspace "3"
+workspace "4"
+workspace "5"
+workspace "6"
+workspace "7"
+workspace "8"
+workspace "9"
+workspace "10"
+
+spawn-at-startup "sh" "-c" "exec ~/.config/niri/bin/niri-autostart"
+
+recent-windows {
+    highlight {
+        active-color "#1f6f2f"
+        urgent-color "#ff5f5f"
+    }
+    binds {
+        Alt+Tab         { next-window; }
+        Alt+Shift+Tab   { previous-window; }
+    }
+}
+
+// ---- window rules -------------------------------------------------------
+window-rule {
+    match app-id=r#"blueman"#
+    match app-id=r#"pavucontrol"#
+    match app-id=r#"nm-connection-editor"#
+    match app-id=r#"^BarTUI"#
+    match app-id=r#"^BarCal$"#
+    match app-id=r#"^foot-float$"#
+    match app-id=r#"^scratchpad$"#
+    match app-id=r#"^KeyHelp$"#
+    match app-id=r#"qalculate"#
+    match app-id=r#"^mpv$"#
+    match app-id=r#"^(Viewnior|nsxiv|feh|zenity)$"#
+    match app-id=r#"^1Password$"#
+    match app-id=r#"polkit-gnome"#
+    match app-id=r#"^wl-wallselect$"#
+    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
+    open-floating true
+}
+window-rule {
+    match app-id=r#"^BarTUI-net$"#
+    default-column-width { fixed 820; }
+    default-window-height { fixed 560; }
+}
+window-rule {
+    match app-id=r#"^(foot-float|scratchpad|KeyHelp)$"#
+    default-column-width { proportion 0.35; }
+    default-window-height { proportion 0.5; }
+}
+window-rule {
+    match app-id=r#"^wl-wallselect$"#
+    default-column-width { fixed 2064; }
+    default-window-height { fixed 864; }
+}
+window-rule {
+    match app-id=r#"^1Password$"#
+    block-out-from "screencast"
+}
+
+// ---- binds (Mod = Super) -------------------------------------------------
+binds {
+    Mod+Shift+Slash { show-hotkey-overlay; }
+
+    // apps (same keys as bspwm-wl)
+    Mod+T            hotkey-overlay-title="Terminal: foot" { spawn "foot"; }
+    Mod+Return       { spawn "foot"; }
+    Mod+Shift+T      { spawn "foot" "--app-id=foot-float"; }
+    Mod+Space        hotkey-overlay-title="Apps: bspwm-wl-apps" { spawn-sh "~/.local/bin/bspwm-wl-apps"; }
+    Mod+Ctrl+Space   { spawn-sh "bspwm-wl-menu"; }
+    Mod+Alt+Space    hotkey-overlay-title="Run: fuzzel" { spawn "fuzzel"; }
+    Mod+D            hotkey-overlay-title="Files: vifm" { spawn-sh "fm-term vifm tiled user"; }
+    Mod+Alt+D        { spawn-sh "fm-term nnn tiled user"; }
+    Mod+C            { spawn-sh "~/.config/bspwm-wl/bin/wl-calc"; }
+    Mod+Q            { spawn "qalculate-gtk"; }
+    Mod+B            hotkey-overlay-title="Browser: chromium-wl" { spawn-sh "chromium-wl"; }
+    Mod+Shift+B      { spawn "qutebrowser"; }
+    Mod+Ctrl+B       { spawn "qutebrowser"; }
+    Mod+Ctrl+E       { spawn "emacs"; }
+    Mod+E            { spawn "zed"; }
+    Mod+Y            { spawn "foot" "-e" "nnn"; }
+    Mod+N            { spawn "foot" "-e" "nvim"; }
+    Mod+V            { spawn-sh "~/.config/bspwm-wl/bin/wl-clip"; }
+    Mod+Alt+V        { spawn "pavucontrol"; }
+    Mod+Alt+N        { spawn-sh "~/.config/bspwm-wl/bin/wl-bartui network"; }
+    Mod+Alt+B        { spawn-sh "~/.local/bin/bt-menu"; }
+    Mod+Alt+P        { spawn-sh "~/.config/bspwm-wl/bin/wl-powermenu"; }
+    Mod+Alt+W        { spawn-sh "~/.config/bspwm-wl/bin/wl-wallselect"; }
+    Mod+Ctrl+W       { spawn-sh "~/.config/bspwm-wl/bin/wl-wallpaper toggle"; }
+    Mod+grave        { spawn-sh "~/.config/bspwm-wl/bin/wl-emoji"; }
+    Mod+Shift+grave  { spawn-sh "~/.config/bspwm-wl/bin/wl-emoji"; }
+    Mod+Alt+H        { spawn-sh "pkill -USR1 -x .waybar-real"; }
+    Mod+Alt+U        { spawn-sh "pkill -USR1 -x .waybar-real"; }
+    Ctrl+Alt+B       hotkey-overlay-title="Reload niri config" { spawn-sh "niri msg action load-config-file && dunstify -u low niri 'config reloaded'"; }
+
+    // screenshots (saved to ~/Pictures/ScreenShots + clipboard)
+    Print            { spawn-sh "~/.config/bspwm-wl/bin/wl-shot area"; }
+    Mod+Print        { spawn-sh "~/.config/bspwm-wl/bin/wl-shot area"; }
+    Mod+Alt+S        { spawn-sh "~/.config/bspwm-wl/bin/wl-shot area"; }
+    Shift+Print      { spawn-sh "~/.config/bspwm-wl/bin/wl-shot full"; }
+    Mod+Shift+Print  { screenshot-window; }
+
+    // session
+    Ctrl+Mod+Alt+L   hotkey-overlay-title="Lock: swaylock" { spawn "swaylock" "-f" "-c" "000000" "--inside-color" "000000" "--ring-color" "1f6f2f" "--key-hl-color" "00ff41" "--text-color" "c0ffc0"; }
+    Ctrl+Mod+Alt+P   { spawn "loginctl" "poweroff"; }
+    Ctrl+Mod+Alt+Delete { spawn "loginctl" "reboot"; }
+    Mod+Alt+Q        { quit; }
+    Ctrl+Alt+Delete  { quit; }
+    Ctrl+Alt+L       { power-off-monitors; }
+    Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
+
+    // media / hardware keys (bspwm scripts: notifications + icons)
+    XF86AudioRaiseVolume  allow-when-locked=true { spawn-sh "~/.local/bin/sys-volume up"; }
+    XF86AudioLowerVolume  allow-when-locked=true { spawn-sh "~/.local/bin/sys-volume down"; }
+    XF86AudioMute         allow-when-locked=true { spawn-sh "~/.local/bin/sys-volume mute"; }
+    XF86AudioMicMute      allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
+    XF86AudioNext         allow-when-locked=true { spawn-sh "~/.local/bin/sys-media next"; }
+    XF86AudioPrev         allow-when-locked=true { spawn-sh "~/.local/bin/sys-media prev"; }
+    XF86AudioPlay         allow-when-locked=true { spawn-sh "~/.local/bin/sys-media toggle"; }
+    XF86AudioPause        allow-when-locked=true { spawn-sh "~/.local/bin/sys-media toggle"; }
+    XF86AudioStop         allow-when-locked=true { spawn-sh "~/.local/bin/sys-media stop"; }
+    XF86MonBrightnessUp   allow-when-locked=true { spawn-sh "~/.local/bin/sys-brightness up"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn-sh "~/.local/bin/sys-brightness down"; }
+
+    // windows
+    Mod+W repeat=false       { close-window; }
+    Mod+Shift+W repeat=false { close-window; }
+    Mod+F                    { toggle-window-floating; }
+    Mod+Shift+V              { switch-focus-between-floating-and-tiling; }
+    Mod+Shift+F              { fullscreen-window; }
+    Mod+M                    { maximize-column; }
+    Mod+Ctrl+F               { expand-column-to-available-width; }
+    Mod+Equal                { center-column; }
+    Mod+R                    { switch-preset-column-width; }
+    Mod+Shift+R              { switch-preset-column-width-back; }
+    Mod+Alt+T                { toggle-column-tabbed-display; }
+    Mod+Tab repeat=false     hotkey-overlay-title="Overview" { toggle-overview; }
+
+    // focus (arrows + hjkl)
+    Mod+Left  { focus-column-left; }
+    Mod+Right { focus-column-right; }
+    Mod+Up    { focus-window-or-workspace-up; }
+    Mod+Down  { focus-window-or-workspace-down; }
+    Mod+H     { focus-column-left; }
+    Mod+L     { focus-column-right; }
+    Mod+K     { focus-window-or-workspace-up; }
+    Mod+J     { focus-window-or-workspace-down; }
+    Mod+Home  { focus-column-first; }
+    Mod+End   { focus-column-last; }
+
+    // move (Super+Shift = bspwm move/swap)
+    Mod+Shift+Left  { move-column-left; }
+    Mod+Shift+Right { move-column-right; }
+    Mod+Shift+Up    { move-window-up-or-to-workspace-up; }
+    Mod+Shift+Down  { move-window-down-or-to-workspace-down; }
+    Mod+Shift+H     { move-column-left; }
+    Mod+Shift+L     { move-column-right; }
+    Mod+Shift+K     { move-window-up-or-to-workspace-up; }
+    Mod+Shift+J     { move-window-down-or-to-workspace-down; }
+
+    // stack into / out of columns (closest thing to bspwm presel)
+    Mod+Alt+Left    { consume-or-expel-window-left; }
+    Mod+Alt+Right   { consume-or-expel-window-right; }
+    Mod+Comma       { consume-window-into-column; }
+    Mod+Period      { expel-window-from-column; }
+
+    // resize (Super+Ctrl+Arrows, Super+minus / keypad +)
+    Mod+Ctrl+Left   { set-column-width "-5%"; }
+    Mod+Ctrl+Right  { set-column-width "+5%"; }
+    Mod+Ctrl+Up     { set-window-height "-5%"; }
+    Mod+Ctrl+Down   { set-window-height "+5%"; }
+    Mod+Minus       { set-column-width "-10%"; }
+    Mod+KP_Add      { set-column-width "+10%"; }
+    Mod+Shift+Minus { set-window-height "-10%"; }
+    Mod+Ctrl+R      { reset-window-height; }
+
+    // workspaces 1..0
+    Mod+1 { focus-workspace "1"; }
+    Mod+2 { focus-workspace "2"; }
+    Mod+3 { focus-workspace "3"; }
+    Mod+4 { focus-workspace "4"; }
+    Mod+5 { focus-workspace "5"; }
+    Mod+6 { focus-workspace "6"; }
+    Mod+7 { focus-workspace "7"; }
+    Mod+8 { focus-workspace "8"; }
+    Mod+9 { focus-workspace "9"; }
+    Mod+0 { focus-workspace "10"; }
+    // send (stay)
+    Mod+Shift+1 { move-window-to-workspace "1" focus=false; }
+    Mod+Shift+2 { move-window-to-workspace "2" focus=false; }
+    Mod+Shift+3 { move-window-to-workspace "3" focus=false; }
+    Mod+Shift+4 { move-window-to-workspace "4" focus=false; }
+    Mod+Shift+5 { move-window-to-workspace "5" focus=false; }
+    Mod+Shift+6 { move-window-to-workspace "6" focus=false; }
+    Mod+Shift+7 { move-window-to-workspace "7" focus=false; }
+    Mod+Shift+8 { move-window-to-workspace "8" focus=false; }
+    Mod+Shift+9 { move-window-to-workspace "9" focus=false; }
+    Mod+Shift+0 { move-window-to-workspace "10" focus=false; }
+    // send + follow
+    Mod+Alt+Shift+1 { move-window-to-workspace "1"; }
+    Mod+Alt+Shift+2 { move-window-to-workspace "2"; }
+    Mod+Alt+Shift+3 { move-window-to-workspace "3"; }
+    Mod+Alt+Shift+4 { move-window-to-workspace "4"; }
+    Mod+Alt+Shift+5 { move-window-to-workspace "5"; }
+    Mod+Alt+Shift+6 { move-window-to-workspace "6"; }
+    Mod+Alt+Shift+7 { move-window-to-workspace "7"; }
+    Mod+Alt+Shift+8 { move-window-to-workspace "8"; }
+    Mod+Alt+Shift+9 { move-window-to-workspace "9"; }
+    Mod+Alt+Shift+0 { move-window-to-workspace "10"; }
+    // move whole column (stay)
+    Mod+Ctrl+1 { move-column-to-workspace "1" focus=false; }
+    Mod+Ctrl+2 { move-column-to-workspace "2" focus=false; }
+    Mod+Ctrl+3 { move-column-to-workspace "3" focus=false; }
+    Mod+Ctrl+4 { move-column-to-workspace "4" focus=false; }
+    Mod+Ctrl+5 { move-column-to-workspace "5" focus=false; }
+    Mod+Ctrl+6 { move-column-to-workspace "6" focus=false; }
+    Mod+Ctrl+7 { move-column-to-workspace "7" focus=false; }
+    Mod+Ctrl+8 { move-column-to-workspace "8" focus=false; }
+    Mod+Ctrl+9 { move-column-to-workspace "9" focus=false; }
+    Mod+Ctrl+0 { move-column-to-workspace "10" focus=false; }
+    Mod+BracketLeft  { focus-workspace-up; }
+    Mod+BracketRight { focus-workspace-down; }
+    Mod+Page_Up      { focus-workspace-up; }
+    Mod+Page_Down    { focus-workspace-down; }
+    Mod+Apostrophe   { focus-workspace-previous; }
+    Mod+Shift+Apostrophe { focus-workspace-previous; }
+
+    // mouse wheel (Super+wheel = workspaces, Super+Shift+wheel = columns)
+    Mod+WheelScrollDown cooldown-ms=150 { focus-workspace-down; }
+    Mod+WheelScrollUp   cooldown-ms=150 { focus-workspace-up; }
+    Mod+Shift+WheelScrollDown { focus-column-right; }
+    Mod+Shift+WheelScrollUp   { focus-column-left; }
+}

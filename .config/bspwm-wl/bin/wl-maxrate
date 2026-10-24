@@ -1,0 +1,23 @@
+#!/bin/sh
+# wl-maxrate [--dry-run] : for every enabled output, switch to the highest
+# refresh rate at its preferred (native) resolution, then enable adaptive
+# sync (VRR) as a separate step so a VRR refusal can't block the mode change.
+#   BSPWM_WL_VRR=1  -> enable VRR (off by default: OLED flicker)      BSPWM_WL_HZ=60 -> cap refresh at 60-ish
+DRY=0; [ "$1" = --dry-run ] && DRY=1
+run() { echo "+ $*"; [ $DRY = 1 ] || "$@"; }
+VRR=disabled; [ "${BSPWM_WL_VRR:-0}" = 1 ] && VRR=enabled
+CAP="${BSPWM_WL_HZ:-100000}"
+wlr-randr --json | jq -r --argjson cap "$CAP" '
+  .[] | select(.enabled) | . as $o
+  | ([.modes[] | select(.preferred)][0] // [.modes[] | select(.current)][0]) as $p
+  | [.modes[] | select(.width == $p.width and .height == $p.height and .refresh <= ($cap + 0.5))]
+  | max_by(.refresh)
+  | "\($o.name) \(.width)x\(.height)@\(.refresh)Hz \($o.adaptive_sync)"' |
+while read -r out mode cur_vrr; do
+  run wlr-randr --output "$out" --mode "$mode"
+  if [ "$VRR" = enabled ]; then
+    run wlr-randr --output "$out" --adaptive-sync enabled || echo "VRR refused on $out" >&2
+  elif [ "$cur_vrr" = true ]; then
+    run wlr-randr --output "$out" --adaptive-sync disabled
+  fi
+done

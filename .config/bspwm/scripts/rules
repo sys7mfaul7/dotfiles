@@ -1,0 +1,33 @@
+#!/bin/sh
+# rules : bspwm external_rules_command - per-app window placement
+# part of sys7mfaul7 dotfiles
+# bspwm calls: rules <wid> <class> <instance> <consequences>
+# Print bspc rule settings for the new window; print nothing to leave it alone.
+cls=$2 inst=$3
+
+# size as a share of the focused monitor: frac W H  ->  WxH+0+0
+frac() {
+    bspc query -T -m focused | jq -r --argjson w "$1" --argjson h "$2" \
+        '.rectangle | "\(.width*$w|floor)x\(.height*$h|floor)+0+0"'
+}
+float_c() { echo "state=floating center=on $*"; }
+
+# instance names first (they are more specific than the class)
+case "$inst" in
+    BarTUI-*)  float_c "focus=on rectangle=$(frac 0.5 0.6)"; exit ;;
+    BarCal)
+        x=$(bspc query -T -m focused | jq -r '.rectangle | .x + .width - 720')
+        echo "state=floating focus=on rectangle=560x250+${x}+50"; exit ;;
+    YaziTerm)  float_c "rectangle=900x342+0+0"; exit ;;
+    MusicTerm) float_c "rectangle=656x343+0+0"; exit ;;
+    KeyHelp)   float_c "focus=on rectangle=$(frac 0.4 0.7)"; exit ;;
+    scratchterm) exit ;;   # placed by scripts/scratchterm itself
+esac
+
+case "$cls" in
+    FloaTerm)            float_c "rectangle=$(frac 0.5 0.5)" ;;
+    mpv)                 float_c "focus=on rectangle=723x407+0+0" ;;
+    Viewnior|nsxiv)      float_c "focus=on" ;;
+    Pavucontrol|pavucontrol) float_c ;;
+    Qalculate-gtk)       float_c ;;
+esac

@@ -1,0 +1,45 @@
+#!/bin/sh
+# monitors : switch off unplugged outputs, run every connected one at its
+# preferred mode and highest refresh, place them left to right and hand out
+# desktops 1-10 (one screen: all ten; two: 1-5 / 6-10; more: split evenly).
+# part of sys7mfaul7 dotfiles
+xr=$(xrandr --query)
+printf '%s\n' "$xr" | awk '$2=="disconnected"{print $1}' | while read -r o; do xrandr --output "$o" --off; done
+
+# primary first, then the rest in xrandr order
+outs=$(printf '%s\n' "$xr" | awk '$2=="connected" && $3=="primary"{print $1}')
+outs="$outs $(printf '%s\n' "$xr" | awk '$2=="connected" && $3!="primary"{print $1}')"
+set -- $outs
+[ $# -gt 0 ] || exit 0
+
+# fastest refresh offered for the preferred (+) mode of output $1
+best_rate() {
+    printf '%s\n' "$xr" | awk -v o="$1" '
+        $1==o {on=1; next}
+        on && /^[^ ]/ {exit}
+        on && /\+/ { r=0; for(i=2;i<=NF;i++){v=$i; gsub(/[*+]/,"",v); if(v+0>r) r=v+0}
+                     print $1, r; exit }'
+}
+
+prev=""; first=1
+for o in "$@"; do
+    set -- $(best_rate "$o")
+    mode=$1 rate=$2
+    args="--output $o --auto"
+    [ -n "$mode" ] && args="--output $o --mode $mode"
+    [ -n "$rate" ] && [ "$rate" != 0 ] && args="$args --rate $rate"
+    if [ $first = 1 ]; then args="$args --primary --pos 0x0"; first=0
+    else args="$args --right-of $prev"; fi
+    xrandr $args 2>/dev/null || xrandr --output "$o" --auto
+    prev=$o
+done
+
+mons=$(bspc query -M --names)
+n=$(printf '%s\n' "$mons" | wc -l)
+i=0; per=$(( (10 + n - 1) / n )); start=1
+for m in $mons; do
+    i=$((i + 1))
+    end=$((start + per - 1)); [ $i = "$n" ] && end=10; [ $end -gt 10 ] && end=10
+    bspc monitor "$m" -d $(seq "$start" "$end")
+    start=$((end + 1))
+done

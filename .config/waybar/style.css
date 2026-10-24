@@ -1,0 +1,25 @@
+* { font-family: "JetBrains Mono", "JetBrainsMono Nerd Font", "Font Awesome 6 Free", "Material Design Icons Desktop"; font-weight: bold; font-size: 14px; min-height: 0; border: none; border-radius: 0; }
+window#waybar { background: #000000; color: #c0ffc0; }
+#workspaces button { padding: 0 5px; color: #4f7f5a; background: transparent; }
+#workspaces button.focused { color: #00ff41; }
+#workspaces button.urgent { color: #000000; background: #00ff41; }
+#workspaces button:hover { background: #1f6f2f; color: #c0ffc0; box-shadow: none; }
+#mode { color: #000000; background: #00ff41; padding: 0 8px; }
+#window { color: #c0ffc0; }
+#network, #cpu, #memory, #pulseaudio, #custom-date { padding: 0 8px; color: #c0ffc0; }
+#network, #custom-date { color: #00ff41; }
+tooltip { background: #000000; border: 1px solid #1f6f2f; color: #c0ffc0; }
+#workspaces button { color: #2f5a2f; }
+#workspaces button.persistent { color: #2f5a2f; }
+#workspaces button:not(.persistent) { color: #5fbf5f; }
+#workspaces button.visible { color: #8fef8f; }
+#workspaces button.focused { color: #c0ffc0; font-size: 17px; }
+#workspaces button.urgent { color: #000000; background: #00ff41; }
+#custom-launcher { color: #76EA00; font-size: 18px; padding: 0 10px 0 12px; }
+#custom-power { color: #6DDE00; padding: 0 14px 0 8px; }
+/* river tags (look like the bspwm workspaces) */
+#tags button { padding: 0 5px; min-width: 0; color: #2f5a2f; background: transparent; border: none; box-shadow: none; }
+#tags button.occupied { color: #5fbf5f; }
+#tags button.focused { color: #c0ffc0; font-size: 17px; }
+#tags button.urgent { color: #000000; background: #00ff41; }
+#tags button:hover { background: #1f6f2f; color: #c0ffc0; }

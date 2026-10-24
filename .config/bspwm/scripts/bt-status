@@ -1,0 +1,18 @@
+#!/bin/sh
+# bt-status : bluetooth icon for the bar; "bt-status toggle" powers it on/off
+# part of sys7mfaul7 dotfiles
+# Prints nothing when the machine has no bluetooth adapter.
+. "$HOME/.config/bspwm/theme"
+ls /sys/class/bluetooth/* >/dev/null 2>&1 || exit 0
+bt() { timeout 2 bluetoothctl "$@" 2>/dev/null; }
+powered() { bt show | grep -q 'Powered: yes'; }
+
+if [ "$1" = toggle ]; then
+    if powered; then bt power off; else bt power on; fi >/dev/null
+    exit 0
+fi
+off="%{F$C_DIM}󰂲%{F-}"
+command -v bluetoothctl >/dev/null && bt show >/dev/null || { echo "$off"; exit 0; }
+powered || { echo "$off"; exit 0; }
+n=$(bt devices Connected | grep -c '^Device')
+if [ "$n" -gt 0 ]; then echo "%{F$C_ACCENT}󰂱%{F-} $n"; else echo "%{F$C_ACCENT}󰂯%{F-}"; fi

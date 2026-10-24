@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+# scan2image - scan from the Brother MFC-9130CW (brscan4 network driver) to an image/PDF.
+set -euo pipefail
+. "$HOME/.config/sane/scan-env.sh"
+SCANIMAGE="$HOME/.guix-profile/bin/scanimage"
+DIR="$HOME/Pictures/scans"
+
+usage() { cat <<USAGE
+Usage: scan2image [FILE] [options]
+
+Scans from the Brother MFC-9130CW. Default: flatbed, 300 dpi, color, letter,
+saved as ~/Pictures/scans/scan-YYYYmmdd-HHMMSS.png. The FILE extension
+(.png .jpg .tif .pdf .pnm) picks the format.
+
+Options:
+  -r, --res DPI     resolution: 100 150 200 300 400 600 1200 (default 300)
+  -c, --color       24-bit color (default)
+  -g, --gray        grayscale
+  -b, --bw          black & white (smallest, good for text)
+  -p, --pdf         save as PDF (ADF pages become one multi-page PDF)
+  -j, --jpg         save as JPEG
+  -a, --adf         scan all pages from the document feeder
+      --legal       legal page size (8.5x14, ADF only)
+      --airscan     use the driverless airscan/WSD backend instead (max 300 dpi)
+  -d, --device DEV  any SANE device (see: scanimage -L)
+  -o, --open        open the result when done (xdg-open)
+  -h, --help        this help
+
+Examples:
+  scan2image                      # flatbed -> ~/Pictures/scans/scan-<time>.png
+  scan2image receipt.jpg -g       # grayscale JPEG in ~/Pictures/scans
+  scan2image ~/doc.pdf -a -b      # whole feeder stack -> one B&W PDF
+USAGE
+}
+
+file="" res=300 mode="24bit Color[Fast]" fmt="" adf=0 legal=0 dev="brother4:net1;dev0" airscan=0 open=0
+while (($#)); do
+  case "$1" in
+    -h|--help) usage; exit 0;;
+    -r|--res) res="$2"; shift;;
+    -c|--color) mode="24bit Color[Fast]";;
+    -g|--gray) mode="True Gray";;
+    -b|--bw) mode="Black & White";;
+    -p|--pdf) fmt=pdf;;
+    -j|--jpg) fmt=jpeg;;
+    -a|--adf) adf=1;;
+    --legal) legal=1;;
+    --airscan) airscan=1;;
+    -d|--device) dev="$2"; shift;;
+    -o|--open) open=1;;
+    -*) echo "scan2image: unknown option $1 (see --help)" >&2; exit 2;;
+    *) file="$1";;
+  esac; shift
+done
+
+# output name and format
+if [[ -n "$file" ]]; then
+  [[ "$file" == */* ]] || file="$DIR/$file"
+  case "${file,,}" in
+    *.pdf) fmt=pdf;; *.jpg|*.jpeg) fmt=jpeg;; *.tif|*.tiff) fmt=tiff;; *.pnm) fmt=pnm;; *.png) fmt=png;;
+    *) fmt="${fmt:-png}"; file="$file.${fmt/jpeg/jpg}";;
+  esac
+else
+  fmt="${fmt:-png}"; file="$DIR/scan-$(date +%Y%m%d-%H%M%S).${fmt/jpeg/jpg}"
+fi
+mkdir -p "$(dirname "$file")"
+
+# device options
+height=279.37; ((legal)) && height=355.56
+if ((airscan)); then
+  [[ "$dev" == brother4* ]] && dev="$("$SCANIMAGE" -f "%d%n" | grep -m1 "^airscan:.*9130" || true)"
+  [[ -n "$dev" ]] || { echo "scan2image: no airscan device found" >&2; exit 1; }
+  case "$mode" in "True Gray"|"Black & White") amode=Gray;; *) amode=Color;; esac
+  ((res > 300)) && { echo "scan2image: airscan max is 300 dpi, using 300"; res=300; }
+  opts=(--mode "$amode" --source "$( ((adf)) && echo ADF || echo Flatbed)")
+else
+  opts=(--mode "$mode" --source "$( ((adf)) && echo "Automatic Document Feeder(left aligned)" || echo FlatBed)")
+fi
+opts+=(-d "$dev" --resolution "$res" -x 215.88 -y "$height")
+
+echo "Scanning ($( ((adf)) && echo feeder || echo flatbed ), $res dpi, ${mode}) -> $file"
+if ((adf)); then
+  tmp="$(mktemp -d)"; trap rm -rf  EXIT
+  "$SCANIMAGE" "${opts[@]}" --format=png --batch="$tmp/p%03d.png" || true
+  pages=("$tmp"/p*.png)
+  [[ -e "${pages[0]}" ]] || { echo "scan2image: no pages scanned (feeder empty?)" >&2; exit 1; }
+  if [[ "$fmt" == pdf ]]; then
+    convert "${pages[@]}" "$file"
+  else
+    base="${file%.*}" ext="${file##*.}" n=1
+    for p in "${pages[@]}"; do
+      out="$(printf "%s-%02d.%s" "$base" "$n" "$ext")"
+      [[ "$fmt" == png ]] && mv "$p" "$out" || convert "$p" "$out"
+      echo "  $out"; n=$((n+1))
+    done
+    file="$(printf "%s-01.%s" "$base" "$ext")"
+  fi
+  echo "${#pages[@]} page(s) scanned."
+else
+  "$SCANIMAGE" "${opts[@]}" --format="$fmt" -o "$file"
+fi
+echo "Saved: $file ($(du -h "$file" | cut -f1))"
+((open)) && { xdg-open "$file" >/dev/null 2>&1 & }
+exit 0

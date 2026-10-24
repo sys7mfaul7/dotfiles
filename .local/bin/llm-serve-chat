@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Chat/agent server (codecompanion) on :8080 — Qwen3-Coder-30B-A3B, Vulkan
+MODEL="${LLM_CHAT_MODEL:-$HOME/models/Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf}"
+exec llama-server -m "$MODEL" --host 127.0.0.1 --port 8080 -ngl 99 -c 32768 --jinja \
+  -t "$(nproc)" --alias local "$@"

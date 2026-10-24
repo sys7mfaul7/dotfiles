@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Slack
+Comment=Slack Desktop
+Exec=/home/USER/.local/bin/slack %U
+Icon=/home/USER/.local/opt/slack/slack.png
+Terminal=false
+Type=Application
+StartupWMClass=Slack
+Categories=Network;InstantMessaging;
+MimeType=x-scheme-handler/slack;

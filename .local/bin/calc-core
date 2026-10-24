@@ -1,0 +1,22 @@
+#!/bin/sh
+# calc-core MENU... : loop calculator using bc -l. MENU is a dmenu-compatible command.
+# Typed expression -> evaluated; "= N" or a history line "expr = N" -> copy N and exit; Esc -> exit.
+calc_eval() {
+  printf '%s\n' "$1" | sed 's/\^/^/g' | BC_LINE_LENGTH=0 bc -l 2>&1 | tail -n1 |
+    sed -E '/\./{s/0+$//;s/\.$//}; s/^(-?)\./\10./'
+}
+[ "$1" = --eval ] && { calc_eval "$2"; exit; }
+copy() { if [ -n "$WAYLAND_DISPLAY" ]; then printf %s "$1" | wl-copy; else printf %s "$1" | xclip -selection clipboard; fi; }
+hist=""; res=""
+while :; do
+  items=$( { [ -n "$res" ] && printf '= %s\n' "$res"; printf '%s' "$hist"; } )
+  sel=$(printf '%s\n' "$items" | sed '/^$/d' | "$@") || exit 0
+  [ -z "$sel" ] && exit 0
+  case "$sel" in
+    "= "*)   copy "${sel#= }"; exit 0 ;;
+    *" = "*) copy "${sel##* = }"; exit 0 ;;
+  esac
+  res=$(calc_eval "$sel")
+  hist="$sel = $res
+$hist"
+done

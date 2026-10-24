@@ -1,0 +1,14 @@
+#!/bin/sh
+# sys-brightness : backlight keys for every session
+# part of sys7mfaul7 dotfiles
+#   sys-brightness up | down   [step %, default 5]
+command -v brightnessctl >/dev/null || exit 0
+ls /sys/class/backlight/* >/dev/null 2>&1 || exit 0   # desktop monitor: nothing to do
+step=${2:-5}
+case "$1" in
+    up)   brightnessctl -q set "$step%+" ;;
+    down) brightnessctl -q -n 1 set "$step%-" ;;   # never all the way to black
+    *) echo "usage: sys-brightness up|down [step]" >&2; exit 1 ;;
+esac
+p=$(( $(brightnessctl get) * 100 / $(brightnessctl max) ))
+dunstify -u low -r 9102 -h int:value:"$p" brightness "$p%"

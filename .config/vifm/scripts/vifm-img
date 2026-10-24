@@ -1,0 +1,15 @@
+#!/bin/sh
+# vifm image preview: sixel in foot (or sixel-capable xterm), symbols otherwise
+if [ "$1" = clear ]; then exit 0; fi
+x=$1 y=$2 w=$3 h=$4 f=$5
+case "$TERM" in
+  foot*) fmt=sixel ;;
+  xterm*) if [ -n "$VIFM_SIXEL" ]; then fmt=sixel; else fmt=symbols; fi ;;
+  *) fmt=symbols ;;
+esac
+if [ "$fmt" = sixel ]; then
+  printf '\033[%d;%dH' $((y+1)) $((x+1)) > /dev/tty
+  chafa -f sixel -s "${w}x${h}" --animate=off "$f" > /dev/tty
+else
+  chafa -f symbols --symbols=block+border+space -c 256 -s "${w}x${h}" --animate=off "$f"
+fi

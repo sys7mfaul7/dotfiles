@@ -1,0 +1,56 @@
+#!/bin/sh
+# bar : polybar control for the X11 session
+# part of sys7mfaul7 dotfiles
+#   bar start    (re)launch one bar per monitor
+#   bar hide     hide bar(s) and drop the top padding     (Super+Alt+H)
+#   bar show     show bar(s) and restore the padding      (Super+Alt+U)
+B="$HOME/.config/bspwm"
+set -a; . "$B/theme"; set +a
+LOG="${XDG_RUNTIME_DIR:-/tmp}/polybar.log"
+
+pad() { for side in top bottom left right; do bspc config ${side}_padding "$1"; done; }
+dpi_now() { cat "$HOME/.cache/display-dpi" 2>/dev/null || echo 96; }
+# bar height in px at the current DPI + the gap below it
+top_pad() { awk -v p="$BAR_HEIGHT_PT" -v d="$(dpi_now)" -v g="$BAR_GAP_PX" 'BEGIN{printf "%d", p*d/72 + 0.5 + g}'; }
+
+detect() {
+    # network interface of the default route, else first non-loopback link
+    BAR_IFACE=$(ip route show default 2>/dev/null | awk '{for(i=1;i<NF;i++) if($i=="dev"){print $(i+1); exit}}')
+    [ -n "$BAR_IFACE" ] || BAR_IFACE=$(ls /sys/class/net | grep -vx lo | head -n 1)
+    right="network vpn target colorpick bluetooth"
+    BAR_BATTERY=""; BAR_ADAPTER=""
+    for p in /sys/class/power_supply/*; do
+        [ -e "$p/type" ] || continue
+        case $(cat "$p/type") in
+            Battery) [ -r "$p/capacity" ] && [ "$(cat "$p/scope" 2>/dev/null)" != Device ] &&
+                     BAR_BATTERY=${p##*/} ;;   # skip mouse/keyboard batteries
+            Mains)   BAR_ADAPTER=${p##*/} ;;
+        esac
+    done
+    [ -n "$BAR_BATTERY" ] && right="$right battery"
+    BAR_RIGHT="$right cpu memory volume date"
+    export BAR_IFACE BAR_BATTERY BAR_ADAPTER
+}
+
+start() {
+    polybar-msg cmd quit >/dev/null 2>&1
+    while pgrep -x polybar >/dev/null; do sleep 0.2; done
+    detect
+    export XFT_DPI="$(dpi_now)"
+    : >"$LOG"
+    tray=1
+    for m in $(polybar --list-monitors | cut -d: -f1); do
+        # the system tray can live on one bar only
+        if [ $tray = 1 ]; then mods="$BAR_RIGHT tray power"; tray=0; else mods="$BAR_RIGHT power"; fi
+        MONITOR=$m BAR_MODULES_RIGHT=$mods polybar -q main -c "$B/polybar/config.ini" >>"$LOG" 2>&1 &
+    done
+}
+
+case "$1" in
+    start|restart|"") start ;;
+    hide) polybar-msg cmd hide >/dev/null; pad 2 ;;
+    show) polybar-msg cmd show >/dev/null
+          bspc config top_padding "$(top_pad)"
+          for s in bottom left right; do bspc config ${s}_padding "$SIDE_PADDING"; done ;;
+    *) echo "usage: bar start|hide|show" >&2; exit 2 ;;
+esac

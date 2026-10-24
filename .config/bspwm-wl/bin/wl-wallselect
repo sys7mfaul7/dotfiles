@@ -1,0 +1,22 @@
+#!/bin/sh
+# wl-wallselect : Super+Alt+W thumbnail-grid wallpaper picker for bspwm-wl
+# (swayimg gallery, native Wayland). Arrows move, Enter sets, Esc/q cancels.
+# The last tiles are plain colours (solid-black = wallpaper off); Super+Ctrl+W toggles.
+# Choice saved to ~/.config/bspwm-wl/wallpaper for the next login.
+D="$HOME/.local/share/wallpapers"
+SAVE="$HOME/.config/bspwm-wl/wallpaper"
+CFG="$HOME/.config/bspwm-wl/wallselect.lua"
+LOG="$HOME/.local/state/bspwm-wl"
+pgrep -x -f "swayimg .*-a wl-wallselect.*" >/dev/null && exit 0
+# One-shot float/center rule (60% of 3440x1440), in case the rules file isn't loaded
+bspc rule -a wl-wallselect -o state=floating center=on rectangle=2064x864+0+0 2>/dev/null
+L=$(mktemp "${XDG_RUNTIME_DIR:-/tmp}/wallsel.XXXXXX") || exit 1
+find "$D" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | sort > "$L"
+# Plain-colour backgrounds at the end of the grid (solid-black = wallpaper off)
+find "$HOME/.config/bspwm-wl/solid" -maxdepth 1 -name 'solid-*.png' | sort >> "$L"
+sel=$(swayimg -g -c "$CFG" -a wl-wallselect -S 2064,864 -f "$L" 2>"$LOG/wallselect.log"); rc=$?
+mv -f "$L" "$LOG/wallselect.list"   # keep last list (no rm)
+[ $rc -eq 0 ] || exit 0
+W=$(printf '%s\n' "$sel" | tail -n 1)
+[ -f "$W" ] || exit 0
+exec "$HOME/.config/bspwm-wl/bin/wl-wallpaper" set "$W"

@@ -1,0 +1,48 @@
+#!/bin/sh
+# Minimize tray on desktop M (X11 bspwm). Same semantics as wl-minimize.
+L="${XDG_RUNTIME_DIR:-/tmp}/bsp-minimize"
+touch "$L"
+tmp=$(mktemp)
+while read -r id; do
+  bspc query -N -n "$id" >/dev/null 2>&1 && echo "$id"
+done <"$L" | awk '!s[$0]++' >"$tmp"
+mv "$tmp" "$L"
+bspc query -D --names | grep -qx M || bspc monitor focused -a M
+
+shown=0
+while read -r id; do
+  bspc query -N -n "$id.!hidden" >/dev/null 2>&1 && shown=1
+done <"$L"
+
+hide_all() {
+  while read -r id; do
+    bspc node "$id" -d M
+    bspc node "$id" -t floating
+    bspc node "$id" -g hidden=on
+  done <"$L"
+}
+show_all() {
+  d=$(bspc query -D -d focused)
+  while read -r id; do
+    bspc node "$id" -d "$d"
+    bspc node "$id" -g hidden=off
+    bspc node "$id" -t floating
+    bspc node -f "$id"
+    ~/.local/bin/bsp-center >/dev/null 2>&1 || true
+  done <"$L"
+}
+minimize_focused() {
+  id=$(bspc query -N -n focused.window) || return 1
+  grep -qx "$id" "$L" || echo "$id" >>"$L"
+  bspc node "$id" -t floating
+  bspc node "$id" -d M
+  bspc node "$id" -g hidden=on
+}
+
+if [ "$shown" = 1 ]; then
+  hide_all
+elif [ -s "$L" ]; then
+  show_all
+else
+  minimize_focused || notify-send -t 1500 "Minimize" "empty — focus a window first"
+fi

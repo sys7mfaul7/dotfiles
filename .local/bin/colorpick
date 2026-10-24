@@ -1,0 +1,12 @@
+#!/bin/sh
+# Pick a pixel color (Wayland: hyprpicker; X11: xcolor), copy hex, notify.
+if [ -n "$WAYLAND_DISPLAY" ]; then
+  hex=$(hyprpicker -f hex -n 2>/dev/null) || exit 0
+  [ -n "$hex" ] || exit 0
+  printf %s "$hex" | wl-copy
+else
+  hex=$(xcolor -f HEX 2>/dev/null) || exit 0
+  [ -n "$hex" ] || exit 0
+  printf %s "$hex" | xclip -selection clipboard 2>/dev/null || printf %s "$hex" | xsel -b
+fi
+dunstify -a colorpick -t 4000 "Color picked" "$hex  (copied)" 2>/dev/null || true

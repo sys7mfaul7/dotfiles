@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Floorp launcher for Guix: runs the official Linux tarball in an FHS container.
+# First run downloads/extracts to ~/.local/opt/floorp.
+set -euo pipefail
+VER=12.20.1
+DIR="$HOME/.local/opt/floorp"
+if [ ! -x "$DIR/floorp" ]; then
+  mkdir -p "$HOME/.local/opt"
+  curl -L "https://github.com/Floorp-Projects/Floorp/releases/download/v$VER/floorp-linux-x86_64.tar.xz" \
+    | tar -xJ -C "$HOME/.local/opt"
+fi
+exec guix shell --container --emulate-fhs --network --share="$HOME" \
+  --preserve='^DISPLAY$|^XAUTHORITY$|^DBUS_SESSION_BUS_ADDRESS$|^XDG_RUNTIME_DIR$' \
+  --expose=/tmp/.X11-unix --share=/dev/dri --share=/dev/shm --expose=/sys \
+  --share="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}" --expose=/etc/ssl/certs \
+  coreutils bash glibc gcc:lib gtk+ glib dbus-glib libx11 libxcb libxext libxrandr \
+  libxcomposite libxdamage libxfixes libxtst libxi alsa-lib pulseaudio mesa libdrm \
+  fontconfig freetype pango cairo nss-certs ffmpeg -- "$DIR/floorp" "$@"

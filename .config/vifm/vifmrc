@@ -1,0 +1,63 @@
+" vifm config - h4ck3r (green on black)
+set vicmd=nvim
+set syscalls
+set trash
+set history=200
+set nofollowlinks
+set sortnumbers
+set undolevels=100
+set vimhelp
+set norunexec
+set timefmt='%Y-%m-%d %H:%M'
+set wildmenu
+set wildstyle=popup
+set suggestoptions=normal,visual,view,otherpane,keys,marks,registers
+set ignorecase
+set smartcase
+set nohlsearch
+set incsearch
+set scrolloff=4
+set statusline="  %t%= %A %10u:%-7g %15s %20d  "
+set sort=+dir,+iname
+set dotfiles
+set previewprg=''
+colorscheme h4ck3r
+
+" ---- previews (w toggles, e opens full view) ----
+fileviewer */,.*/ tree -C -L 2 --dirsfirst %c
+fileviewer *.pdf pdftotext -l 5 -layout %c -
+fileviewer *.odt,*.ods,*.odp odt2txt %c
+fileviewer *.json jq -C . %c
+fileviewer *.zip,*.jar,*.war,*.apk unzip -l %c
+fileviewer *.tar,*.tar.gz,*.tgz,*.tar.bz2,*.tbz2,*.tar.xz,*.txz,*.tar.zst,*.7z,*.rar als %c
+fileviewer <image/*>
+        \ ~/.config/vifm/scripts/vifm-img %px %py %pw %ph %c %pd
+        \ %pc
+        \ ~/.config/vifm/scripts/vifm-img clear
+fileviewer <video/*>,<audio/*> mediainfo %c
+fileviewer *.md,*.sh,*.py,*.c,*.h,*.cpp,*.rs,*.go,*.js,*.ts,*.lua,*.scm,*.el,*.conf,*.ini,*.toml,*.yaml,*.yml,*.html,*.css,*.vim,*.vifm,*rc,*
+        \ bat --color=always --style=plain --paging=never --theme=ansi %c 2>/dev/null || highlight -O ansi --force %c
+fileviewer <application/octet-stream> file -b %c
+
+" ---- openers ----
+filetype <image/*> nsxiv %f &>/dev/null &, feh %f &>/dev/null &, xdg-open %c &
+filetype *.pdf,*.djvu,*.epub zathura %c &>/dev/null &, xdg-open %c &
+filetype <video/*>,<audio/*> mpv %f &>/dev/null &
+filetype *.html,*.htm brave %c &>/dev/null &, xdg-open %c &
+filetype *.zip,*.tar*,*.tgz,*.7z,*.rar aunpack %c
+filetype *.odt,*.ods,*.odp,*.docx,*.xlsx,*.pptx libreoffice %c &>/dev/null &
+
+" ---- keys ----
+nnoremap w :view<cr>
+vnoremap w :view<cr>gv
+nnoremap s :shell<cr>
+nnoremap S :sort<cr>
+nnoremap yd :!echo -n %d | xclip -selection clipboard %i<cr>
+nnoremap yf :!echo -n %c:p | xclip -selection clipboard %i<cr>
+nnoremap I cw<c-a>
+nnoremap A cw
+nnoremap ,c :write | edit $MYVIFMRC | restart full<cr>
+
+" removable media mounted by udisks/udiskie: :media
+command! media cd /run/media/$USER
+nnoremap gm :media<cr>

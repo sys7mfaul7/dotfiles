@@ -1,0 +1,21 @@
+#!/bin/sh
+# vial : Vial keyboard configurator (official v0.7.5 AppImage, extracted)
+# Runs in a Guix FHS container; shares X11 (Xwayland) + all /dev/hidraw*.
+R="$HOME/.local/opt/vial/squashfs-root"
+[ -x "$R/opt/Vial/Vial" ] || { echo "vial: $R missing" >&2; exit 1; }
+. /etc/profile 2>/dev/null
+DISP=${DISPLAY:-:1}
+set --
+for d in /dev/hidraw*; do [ -e "$d" ] && set -- "$@" "--share=$d"; done
+[ -n "$XAUTHORITY" ] && [ -f "$XAUTHORITY" ] && set -- "$@" "--share=$XAUTHORITY"
+exec guix shell -C -F --no-cwd \
+  --share="$R=/vial" --share=/tmp/.X11-unix --expose=/sys --expose=/run/udev \
+  --share="$HOME/.local/share/Vial=/home/$USER/.local/share/Vial" \
+  "$@" \
+  --preserve='^XAUTHORITY$' \
+  glibc gcc-toolchain mesa libx11 libxi libdrm fontconfig freetype \
+  libgpg-error harfbuzz libusb util-linux:lib libxcb zlib libxkbcommon \
+  xcb-util xcb-util-wm xcb-util-image xcb-util-keysyms xcb-util-renderutil \
+  font-dejavu coreutils xkeyboard-config \
+  -- env DISPLAY="$DISP" QT_QPA_PLATFORM=xcb XDG_RUNTIME_DIR=/tmp QT_XKB_CONFIG_ROOT=/usr/share/X11/xkb LD_LIBRARY_PATH=/vial/opt/Vial \
+     /vial/opt/Vial/Vial

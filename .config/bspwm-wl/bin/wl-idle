@@ -1,0 +1,12 @@
+#!/bin/sh
+# wl-idle [SECONDS] : blank every output (DPMS-style power off via
+# wlr-output-power-management, no lock) after SECONDS idle (default 900 =
+# 15 min, or $BSPWM_WL_IDLE); any key/mouse input wakes it. Apps holding an
+# idle inhibitor (video players, fullscreen video) keep the screen on.
+# The flag file lets wl-hotplug re-blank if the monitor bounces HPD while off.
+T=${1:-${BSPWM_WL_IDLE:-900}}
+F="${XDG_RUNTIME_DIR:-/tmp}/wl-idle.blanked"
+rm -f "$F"
+exec swayidle -w \
+  timeout "$T" "touch '$F'; wlopm --off '*'" \
+  resume "rm -f '$F'; wlopm --on '*'"

@@ -1,0 +1,12 @@
+#!/bin/sh
+# target : the current engagement target, shown on the bar
+# part of sys7mfaul7 dotfiles
+#   target            print it (bar module)
+#   target 10.0.0.5   set it
+#   target reset      clear it
+f="${XDG_RUNTIME_DIR:-/tmp}/bar-target"
+case "$1" in
+    "")    [ -s "$f" ] && cat "$f" || echo "no target" ;;
+    reset) rm -f "$f" ;;
+    *)     printf '%s\n' "$*" >"$f" ;;
+esac

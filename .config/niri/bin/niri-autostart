@@ -1,0 +1,29 @@
+#!/bin/sh
+# niri session daemons (spawned once by spawn-at-startup in config.kdl).
+L="$HOME/.local/state/niri"; mkdir -p "$L"
+WB="$HOME/.config/bspwm-wl/bin"
+# D-Bus-activated services (dunst, portals) must see this Wayland session
+dbus-update-activation-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_DATA_DIRS PATH 2>/dev/null
+# PipeWire for audio + screencast (portal: xdg-desktop-portal-gnome, D-Bus activated, see niri-portals.conf)
+[ -S "$XDG_RUNTIME_DIR/pipewire-0" ] || { pipewire >"$L/pipewire.log" 2>&1 & sleep 1; }
+pgrep -x wireplumber >/dev/null || wireplumber >"$L/wireplumber.log" 2>&1 &
+PGA=$HOME/.guix-profile/libexec/polkit-gnome-authentication-agent-1; [ -x "$PGA" ] || PGA=/run/current-system/profile/libexec/polkit-gnome-authentication-agent-1
+[ -x "$PGA" ] && ! pgrep -x polkit-gnome-au >/dev/null && "$PGA" >"$L/polkit.log" 2>&1 &
+pgrep -x dunst >/dev/null || dunst >"$L/dunst.log" 2>&1 &
+command -v udiskie >/dev/null && ! pgrep -x .udiskie-real >/dev/null && ! pgrep -x udiskie >/dev/null && udiskie --automount --notify --smart-tray >"$L/udiskie.log" 2>&1 &
+command -v transmission-daemon >/dev/null && ! pgrep -x transmission-da >/dev/null && transmission-daemon -w "$HOME/Downloads/torrents" >/dev/null 2>&1
+wl-paste --watch cliphist store >"$L/cliphist.log" 2>&1 &
+# Idle: blank monitors after 900 s (any input wakes them). Same timeout as bspwm-wl's wl-idle.
+command -v swayidle >/dev/null && swayidle -w timeout 900 'niri msg action power-off-monitors' >"$L/swayidle.log" 2>&1 &
+# Wallpaper: same source as bspwm-wl
+W=
+[ -f "$HOME/.config/bspwm-wl/wallpaper" ] && W=$(cat "$HOME/.config/bspwm-wl/wallpaper")
+[ -f "$W" ] || W="$HOME/.local/share/wallpapers/sys7mfaul7-03c-glitch-clear.jpg"
+S="${W%.*}-3440.png"; [ -f "$S" ] && W="$S"
+swaybg -m fill -i "$W" >"$L/swaybg.log" 2>&1 &
+# waybar (niri variant) in a respawn loop; flock prevents a second loop/duplicate bar
+( flock -n 9 || exit 0
+  while niri msg version >/dev/null 2>&1; do
+    waybar -c "$HOME/.config/niri/waybar/config.jsonc" -s "$HOME/.config/niri/waybar/style.css" >>"$L/waybar.log" 2>&1
+    echo "--- waybar exited $? at $(date +%T), respawning" >>"$L/waybar.log"; sleep 2
+  done ) 9>"$XDG_RUNTIME_DIR/niri-waybar.lock" &

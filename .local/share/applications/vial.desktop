@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Vial
+Comment=Configure Vial/QMK keyboards
+Exec=/home/USER/.local/bin/vial
+Icon=/home/USER/.local/share/icons/hicolor/256x256/apps/vial.png
+Categories=Utility;
+Terminal=false

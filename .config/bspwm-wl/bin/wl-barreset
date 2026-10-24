@@ -1,0 +1,21 @@
+#!/bin/sh
+# Ctrl+Alt+W: close stuck menus, restart waybar. The bspwmrc respawn loop (if
+# running) brings it back; otherwise start exactly one ourselves, logging to
+# ~/.local/state/bspwm-wl/waybar.log.
+L="$HOME/.local/state/bspwm-wl/waybar.log"
+pkill -x bemenu-run; pkill -x bemenu; pkill -x rofi
+# If more than one bspwmrc respawn loop owns a waybar (e.g. after a bspwmrc re-run),
+# stop all but the oldest loop so only one bar comes back.
+loops=$(for w in $(pgrep -x .waybar-real); do pp=$(ps -o ppid= -p "$w" | tr -d " "); [ "$(ps -o comm= -p "$pp")" = bspwmrc ] && echo "$pp"; done | sort -un)
+[ "$(echo "$loops" | grep -c .)" -gt 1 ] && echo "$loops" | tail -n +2 | xargs -r kill
+pkill -x .waybar-real
+i=0; while pgrep -x .waybar-real >/dev/null && [ $i -lt 20 ]; do sleep 0.25; i=$((i+1)); done
+sleep 3   # give the respawn loop (sleep 2) a chance
+n=$(pgrep -x .waybar-real | wc -l)
+if [ "$n" -eq 0 ]; then
+  echo "--- wl-barreset started waybar at $(date +%T)" >>"$L"
+  setsid -f waybar -c "$HOME/.config/bspwm-wl/waybar/config.jsonc" -s "$HOME/.config/bspwm-wl/waybar/style.css" >>"$L" 2>&1
+elif [ "$n" -gt 1 ]; then
+  # more than one: keep the newest
+  pgrep -x .waybar-real | sort -n | head -n $((n-1)) | xargs -r kill
+fi

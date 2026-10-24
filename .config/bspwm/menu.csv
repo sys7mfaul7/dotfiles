@@ -1,0 +1,38 @@
+# ~/.config/bspwm/menu.csv : right-click desktop menu (jgmenu csv)
+# part of sys7mfaul7 dotfiles
+# columns: label, command, icon
+Terminal,term,utilities-terminal
+Floating terminal,term --float,utilities-terminal
+Browser,chromium,web-browser
+Files,xterm -name YaziTerm -class FloaTerm -e nnn,system-file-manager
+Editor,zed,accessories-text-editor
+Key bindings,keyhelp,preferences-desktop-keyboard-shortcuts
+^sep()
+Applications,^checkout(apps),applications-other
+Wallpaper,wallselect,preferences-desktop-wallpaper
+Screenshot,screenshot menu,applets-screenshooter
+^sep()
+Session,^checkout(session),system-run
+Power,^checkout(power),system-shutdown
+
+^tag(apps)
+^sep(Applications)
+Launcher,launcher drun,system-search
+Volume mixer,pavucontrol,multimedia-volume-control
+Calculator,qalculate-gtk,accessories-calculator
+Network,bartui network,network-wired
+Bluetooth,bartui bluetooth,bluetooth
+System monitor,bartui top,utilities-system-monitor
+
+^tag(session)
+Reload session,reload,view-refresh
+Reload keys,pkill -USR1 -x sxhkd,input-keyboard
+Hide bar,bar hide,view-restore
+Show bar,bar show,view-fullscreen
+Log out,bspc quit,system-log-out
+
+^tag(power)
+Lock,lock,system-lock-screen
+Suspend,lock & sleep 1; loginctl suspend,system-suspend
+Reboot,loginctl reboot,system-reboot
+Power off,loginctl poweroff,system-shutdown

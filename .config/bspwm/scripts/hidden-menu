@@ -1,0 +1,18 @@
+#!/bin/sh
+# hidden-menu : pick a hidden window and bring it back here   (Ctrl+Alt+H)
+# part of sys7mfaul7 dotfiles
+# Lists every hidden window except the ones parked in the Super+M tray.
+B="$HOME/.config/bspwm"
+list=""
+for id in $(bspc query -N -n .hidden.window); do
+    d=$(bspc query -D -n "$id" --names)
+    [ "$d" = M ] && continue
+    name=$(xdotool getwindowname "$id" 2>/dev/null)
+    list="$list$id  [$d] ${name:-?}\n"
+done
+[ -n "$list" ] || { dunstify -u low "hidden windows" "none"; exit 0; }
+c=$(printf "$list" | rofi -dmenu -p hidden -theme "$B/rofi/dmenu.rasi") || exit 0
+id=${c%% *}
+bspc node "$id" -d focused
+bspc node "$id" -g hidden=off
+bspc node "$id" -f

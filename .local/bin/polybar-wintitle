@@ -1,0 +1,11 @@
+#!/bin/sh
+show() {
+  id=$(xdotool getactivewindow 2>/dev/null) || { echo ""; return; }
+  cls=$(xprop -id "$id" WM_CLASS 2>/dev/null | sed -n "s/.*\"\(.*\)\"$/\1/p")
+  name=$(xdotool getwindowname "$id" 2>/dev/null)
+  out="$cls - $name"; [ ${#out} -gt 90 ] && out="$(printf %s "$out" | cut -c1-87)..."
+  echo "$out"
+}
+show
+bspc subscribe node_focus node_remove desktop_focus node_add 2>/dev/null | while read -r _; do show; done &
+while sleep 1; do show; done | uniq

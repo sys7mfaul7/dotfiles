@@ -1,0 +1,173 @@
+{
+ "layer": "top",
+ "position": "top",
+ "height": 26,
+ "spacing": 0,
+ "margin-bottom": 0,
+ "modules-left": [
+  "custom/launcher",
+  "custom/dots",
+  "ext/workspaces",
+  "custom/scratch"
+ ],
+ "modules-center": [
+  "custom/wintitle"
+ ],
+ "modules-right": [
+  "network",
+  "network#vpn",
+  "custom/colorpicker",
+  "custom/bluetooth",
+  "battery",
+  "custom/mplayer",
+  "custom/usercard",
+  "cpu",
+  "memory",
+  "pulseaudio",
+  "custom/updates",
+  "custom/clock",
+  "tray",
+  "custom/power"
+ ],
+ "custom/launcher": {
+  "format": "<span color='#76EA00' size=\"13pt\"></span>",
+  "tooltip": false,
+  "on-click": "bspwm-wl-menu"
+ },
+ "custom/dots": {
+  "format": " <span color='#578a29' size=\"10pt\">󰇙</span> ",
+  "tooltip": false
+ },
+ "ext/workspaces": {
+  "format": "{icon}",
+  "on-click": "activate",
+  "sort-by-id": true,
+  "ignore-hidden": false,
+  "format-icons": {
+   "1": "1",
+   "2": "2",
+   "3": "3",
+   "4": "4",
+   "5": "5",
+   "6": "6",
+   "7": "7",
+   "8": "8",
+   "9": "9",
+   "10": "0"
+  }
+ },
+ "network": {
+  "interval": 3,
+  "format-ethernet": "<span color='#578a29' size=\"10pt\">󰈀</span> {ipaddr}",
+  "format-wifi": "<span color='#578a29' size=\"10pt\">󰈀</span> {ipaddr}",
+  "format-disconnected": "<span color='#578a29' size=\"10pt\">󰈂</span> <span color='#4f7f5a'>Offline</span>",
+  "tooltip-format": "{ifname} {essid}",
+  "on-click": "nm-connection-editor",
+  "on-click-right": "~/.config/bspwm-wl/bin/wl-bartui network"
+ },
+ "network#vpn": {
+  "interface": "tun0",
+  "format": "<span color='#578a29'></span> {ipaddr}",
+  "format-disconnected": "",
+  "tooltip": false
+ },
+ "custom/colorpicker": {
+  "format": "<span color='#578a29'></span>",
+  "tooltip": false,
+  "on-click": "sh -c 'c=$(grim -g \"$(slurp -p)\" -t ppm - | magick - -format \"%[hex:p{0,0}]\" info:-) && printf \"#%s\" \"$c\" | wl-copy && dunstify Colorpicker \"#$c copied\"'"
+ },
+ "custom/bluetooth": {
+  "exec": "~/.config/bspwm-wl/bin/wl-bt-status",
+  "interval": 3,
+  "format": "{}",
+  "tooltip": false,
+  "on-click": "blueman-manager",
+  "on-click-middle": "~/.local/bin/bt-menu",
+  "on-click-right": "~/.config/bspwm-wl/bin/wl-bartui bluetooth"
+ },
+ "battery": {
+  "full-at": 99,
+  "format": "{icon} {capacity}%",
+  "format-charging": "<span color='#00fa5c'></span> {capacity}%",
+  "format-icons": [
+   "<span color='#578a29'></span>",
+   "<span color='#578a29'></span>",
+   "<span color='#578a29'></span>",
+   "<span color='#578a29'></span>",
+   "<span color='#578a29'></span>"
+  ]
+ },
+ "custom/mplayer": {
+  "format": " <span color='#578a29'></span> ",
+  "tooltip": false,
+  "on-click": "foot -e ncmpcpp"
+ },
+ "custom/usercard": {
+  "format": " <span color='#539e06'></span> ",
+  "tooltip": false
+ },
+ "cpu": {
+  "interval": 1,
+  "format": " <span color='#578a29'></span> {usage}%",
+  "on-click": "~/.config/bspwm-wl/bin/wl-bartui top"
+ },
+ "memory": {
+  "interval": 3,
+  "format": " <span color='#578a29'></span> {used:0.1f}G",
+  "on-click": "~/.config/bspwm-wl/bin/wl-bartui top"
+ },
+ "pulseaudio": {
+  "format": "{icon} {volume}",
+  "format-muted": "<span color='#578a29' size=\"10pt\">󰝟</span> <span color='#4f7f5a'>Muted</span>",
+  "format-icons": {
+   "default": [
+    "<span color='#00ff41' size='10pt'>󰕿</span>",
+    "<span color='#00ff41' size='10pt'>󰖀</span>",
+    "<span color='#00ff41' size='10pt'>󰖀</span>",
+    "<span color='#00ff41' size='10pt'>󰕾</span>",
+    "<span color='#00ff41' size='10pt'>󰕾</span>"
+   ]
+  },
+  "on-click": "pavucontrol",
+  "on-click-right": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
+  "on-click-middle": "~/.config/bspwm-wl/bin/wl-bartui audio",
+  "on-scroll-up": "pactl set-sink-volume @DEFAULT_SINK@ +5%",
+  "on-scroll-down": "pactl set-sink-volume @DEFAULT_SINK@ -5%",
+  "scroll-step": 5
+ },
+ "custom/updates": {
+  "exec": "cat $HOME/.cache/Updates.txt 2>/dev/null || echo 0",
+  "interval": 600,
+  "format": " <span color='#578a29'></span> {}",
+  "tooltip": false
+ },
+ "tray": {
+  "spacing": 8,
+  "icon-size": 16
+ },
+ "custom/power": {
+  "format": "<span color='#6DDE00'></span>",
+  "tooltip": false,
+  "on-click": "~/.config/bspwm-wl/bin/wl-powermenu"
+ },
+ "custom/clock": {
+  "exec": "TZ=America/Chicago date \"+%a, %d %b %Y %-I:%M%P\"",
+  "interval": 1,
+  "format": "{}",
+  "tooltip": false,
+  "on-click": "~/.config/bspwm-wl/bin/wl-bartui calendar"
+ },
+ "custom/scratch": {
+  "exec": "~/.config/bspwm-wl/bin/wl-scratchstatus",
+  "return-type": "json",
+  "format": "{}",
+  "tooltip": true,
+  "on-click": "~/.config/bspwm-wl/bin/wl-scratch toggle"
+ },
+ "custom/wintitle": {
+  "exec": "~/.config/bspwm-wl/bin/wl-wintitle",
+  "format": "{}",
+  "tooltip": false,
+  "escape": false
+ }
+}

@@ -1,0 +1,15 @@
+#!/bin/sh
+# wl-blank: Ctrl+Alt+L turns every monitor off now (no lock, computer keeps
+# running). Any key or mouse move should wake it; pressing Ctrl+Alt+L again
+# always turns the monitors back on. Debug log: $XDG_RUNTIME_DIR/wl-blank.log
+R="${XDG_RUNTIME_DIR:-/tmp}"
+F="$R/wl-idle.blanked"; L="$R/wl-blank.lock"; P="$R/wl-blank.pid"
+if [ -e "$F" ] || ! wlopm | grep -q " on"; then
+  [ -r "$P" ] && kill "$(cat "$P")" 2>/dev/null
+  rm -f "$F" "$P"; wlopm --on "*"; exit 0
+fi
+exec 9>"$L"; flock -n 9 || exit 0
+sleep 0.6   # let the keys be released so they do not wake it straight away
+echo $$ > "$P"
+exec swayidle -d timeout 1 "touch '$F'; wlopm --off '*'" \
+  resume "rm -f '$F' '$P'; wlopm --on '*'; kill \$PPID" >"$R/wl-blank.log" 2>&1

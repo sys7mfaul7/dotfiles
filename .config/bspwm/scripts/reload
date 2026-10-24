@@ -1,0 +1,14 @@
+#!/bin/sh
+# reload : re-read the theme and reload bar, notifications, keys, compositor
+# part of sys7mfaul7 dotfiles                                (Ctrl+Super+Alt+S)
+B="$HOME/.config/bspwm"
+theme-apply
+pkill -USR1 -x sxhkd
+pkill -HUP -x xsettingsd
+pkill -USR1 -x picom
+# dunst only re-reads its config file on restart
+pkill -x dunst; while pgrep -x dunst >/dev/null; do sleep 0.1; done
+dunst -config "$B/generated/dunstrc" >/dev/null 2>&1 &
+bar start
+sleep 0.5
+dunstify -u low "reloaded" "theme, bar, keys, notifications, compositor"

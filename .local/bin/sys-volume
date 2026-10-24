@@ -1,0 +1,22 @@
+#!/bin/sh
+# sys-volume : volume keys for every session (X11 bspwm, bspwm-wl, niri)
+# part of sys7mfaul7 dotfiles
+#   sys-volume up | down | mute | mic-mute   [step %, default 5]
+step=${2:-5}
+S=@DEFAULT_SINK@
+case "$1" in
+    up)       pactl set-sink-mute $S 0; pactl set-sink-volume $S "+$step%" ;;
+    down)     pactl set-sink-volume $S "-$step%" ;;
+    mute)     pactl set-sink-mute $S toggle ;;
+    mic-mute) pactl set-source-mute @DEFAULT_SOURCE@ toggle
+              m=$(pactl get-source-mute @DEFAULT_SOURCE@ | awk '{print $2}')
+              dunstify -u low -r 9101 microphone "muted: $m"; exit 0 ;;
+    *) echo "usage: sys-volume up|down|mute|mic-mute [step]" >&2; exit 1 ;;
+esac
+v=$(pactl get-sink-volume $S | awk -F/ 'NR==1 {gsub(/[ %]/, "", $2); print $2}')
+[ "${v:-0}" -gt 100 ] && pactl set-sink-volume $S 100% && v=100   # cap at 100%
+if pactl get-sink-mute $S | grep -q yes; then
+    dunstify -u low -r 9101 -h int:value:0 volume "muted"
+else
+    dunstify -u low -r 9101 -h int:value:"$v" volume "$v%"
+fi

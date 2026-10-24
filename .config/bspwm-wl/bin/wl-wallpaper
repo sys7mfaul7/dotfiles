@@ -1,0 +1,40 @@
+#!/bin/sh
+# wl-wallpaper : wallpaper on/off and setter for bspwm-wl, Niri and X11 bspwm.
+#   wl-wallpaper toggle   -> Super+Ctrl+W: switch between plain black and the last picture
+#   wl-wallpaper set FILE -> show FILE (picture or solid-colour PNG) and save it
+# Current choice: ~/.config/bspwm-wl/wallpaper (read at login by bspwmrc / niri-autostart)
+# Last picture (restored by toggle): ~/.config/bspwm-wl/wallpaper.last
+SAVE="$HOME/.config/bspwm-wl/wallpaper"
+LAST="$HOME/.config/bspwm-wl/wallpaper.last"
+SOLID="$HOME/.config/bspwm-wl/solid"
+LOG="$HOME/.local/state/bspwm-wl"; mkdir -p "$LOG"
+is_solid() { case "$1" in "$SOLID"/*) return 0;; esac; return 1; }
+apply() {
+  if [ -n "$WAYLAND_DISPLAY" ]; then
+    old=$(pgrep -x swaybg)
+    setsid -f swaybg -m fill -i "$1" >"$LOG/swaybg.log" 2>&1
+    sleep 0.5; [ -n "$old" ] && kill $old 2>/dev/null
+  else
+    feh --no-fehbg --bg-fill "$1"
+  fi
+}
+set_wall() {
+  [ -f "$1" ] || exit 1
+  printf '%s\n' "$1" > "$SAVE"
+  is_solid "$1" || printf '%s\n' "$1" > "$LAST"
+  apply "$1"
+}
+case "$1" in
+  set) set_wall "$2" ;;
+  toggle)
+    cur=$(cat "$SAVE" 2>/dev/null)
+    if [ -n "$cur" ] && ! is_solid "$cur"; then
+      printf '%s\n' "$cur" > "$LAST"; set_wall "$SOLID/solid-black.png"
+    else
+      w=$(cat "$LAST" 2>/dev/null)
+      [ -f "$w" ] || w="$HOME/.local/share/wallpapers/sys7mfaul7-03c-glitch-clear.jpg"
+      set_wall "$w"
+    fi ;;
+  *) echo "usage: wl-wallpaper toggle | set FILE" >&2; exit 2 ;;
+esac
+exit 0

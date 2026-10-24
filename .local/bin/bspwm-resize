@@ -1,0 +1,11 @@
+#!/bin/sh
+# bspwm-resize grow|shrink : resize focused window (tiled or floating) on all sides
+s=40; [ "$1" = shrink ] && s=-40
+n=$(( -s ))
+if bspc query -N -n focused.floating >/dev/null; then
+  bspc node -z left $n 0; bspc node -z right $s 0
+  bspc node -z top 0 $n;  bspc node -z bottom 0 $s
+else
+  bspc node -z right $s 0 || bspc node -z left $n 0
+  bspc node -z bottom 0 $s || bspc node -z top 0 $n
+fi

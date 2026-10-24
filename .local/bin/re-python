@@ -1,0 +1,2 @@
+#!/bin/sh
+exec ~/.local/opt/re-venv/bin/python "$@"

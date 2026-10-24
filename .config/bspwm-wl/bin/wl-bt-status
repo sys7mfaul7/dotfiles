@@ -1,0 +1,9 @@
+#!/bin/sh
+# Bluetooth status for waybar (pango); empty if no hardware
+[ -d /sys/class/bluetooth ] && [ -n "$(ls /sys/class/bluetooth)" ] || exit 0
+off="<span color='#4f7f5a'>󰂲</span>"
+if ! command -v bluetoothctl >/dev/null || ! timeout 2 bluetoothctl show >/dev/null 2>&1; then echo "$off"; exit 0; fi
+if timeout 2 bluetoothctl show | grep -q "Powered: yes"; then
+  n=$(timeout 2 bluetoothctl devices Connected | wc -l)
+  if [ "$n" -gt 0 ]; then echo "<span color='#00ff41'>󰂱</span> $n"; else echo "<span color='#00ff41'>󰂯</span>"; fi
+else echo "$off"; fi

@@ -1,0 +1,21 @@
+#!/bin/sh
+id=$(bspc query -N -n focused.window) || exit 0
+case "$1" in
+raise)
+  if bspc query -N -n "$id.floating" >/dev/null 2>&1 || \
+     bspc query -N -n "$id.fullscreen" >/dev/null 2>&1; then
+    bspc node "$id" -l above
+    bspc node -f "$id"
+  fi
+  ;;
+lower)
+  if bspc query -N -n "$id.floating" >/dev/null 2>&1 || \
+     bspc query -N -n "$id.fullscreen" >/dev/null 2>&1; then
+    bspc node "$id" -l below
+  fi
+  ;;
+normal)
+  bspc node "$id" -l normal 2>/dev/null || true
+  ;;
+*) echo "usage: bsp-stack raise|lower|normal" >&2; exit 2 ;;
+esac

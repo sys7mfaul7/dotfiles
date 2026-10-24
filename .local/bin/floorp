@@ -1,0 +1,31 @@
+#!/bin/sh
+# Floorp (Firefox-based) from the official tarball in ~/.local/opt/floorp,
+# run in a Guix FHS container (modelled on ~/.local/bin/brave).
+[ -z "$DBUS_SESSION_BUS_ADDRESS" ] && [ -r "$XDG_RUNTIME_DIR/dbus-env" ] && . "$XDG_RUNTIME_DIR/dbus-env"
+export XAUTHORITY="${XAUTHORITY:-$HOME/.Xauthority}"
+export GTK_THEME="${GTK_THEME:-Adwaita:dark}"
+APP="$HOME/.local/opt/floorp"
+RT_ARGS=""; X_ARGS=""
+# XDG_RUNTIME_DIR carries the Wayland socket, PipeWire (screen share/camera),
+# PulseAudio and the document portal.
+if [ -n "$XDG_RUNTIME_DIR" ] && [ -d "$XDG_RUNTIME_DIR" ]; then
+  RT_ARGS="--share=$XDG_RUNTIME_DIR --preserve=^XDG_RUNTIME_DIR"
+fi
+if [ -n "$WAYLAND_DISPLAY" ] && [ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]; then
+  export MOZ_ENABLE_WAYLAND=1
+  RT_ARGS="$RT_ARGS --preserve=^WAYLAND_DISPLAY"
+else
+  export DISPLAY="${DISPLAY:-:0}"
+fi
+[ -n "$DISPLAY" ] && X_ARGS="--preserve=^DISPLAY"
+[ -n "$DISPLAY" ] && [ -f "$XAUTHORITY" ] && X_ARGS="$X_ARGS --expose=$XAUTHORITY --preserve=^XAUTHORITY"
+exec guix shell --container --emulate-fhs --network --share="$HOME" \
+  --share=/tmp --share=/dev/shm --share=/dev/dri $RT_ARGS $X_ARGS \
+  --preserve=^DBUS_SESSION_BUS_ADDRESS --preserve=^GTK_THEME --preserve=^MOZ_ \
+  --preserve=^XDG_CURRENT_DESKTOP --preserve=^XDG_SESSION_TYPE --preserve=^LANG$ \
+  gtk+ dbus dbus-glib glib pango cairo gdk-pixbuf at-spi2-core libxt libx11 libxcb \
+  libxext libxrender libxrandr libxcomposite libxdamage libxfixes libxi libxtst libxcursor \
+  libxkbcommon mesa libdrm libva alsa-lib pulseaudio pipewire ffmpeg eudev \
+  fontconfig freetype font-dejavu font-google-noto font-google-noto-emoji font-google-noto-sans-cjk \
+  nss-certs gcc-toolchain coreutils bash glibc-locales xdg-utils libnotify -- \
+  "$APP/floorp" "$@"

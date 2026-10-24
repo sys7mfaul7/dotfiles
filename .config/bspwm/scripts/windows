@@ -1,0 +1,9 @@
+#!/bin/sh
+# windows : window switcher with previews   (Super+Tab, Super+Shift+Tab)
+# part of sys7mfaul7 dotfiles
+# Hold Super and tap Tab to walk the list; Return switches.
+row=0; [ "$1" = prev ] && row=1
+exec rofi -show window -window-thumbnail -window-hide-active-window true \
+    -theme "$HOME/.config/bspwm/rofi/windows.rasi" \
+    -kb-element-next Super+Tab -kb-element-prev Super+Shift+Tab \
+    -kb-accept-entry '!Super-Tab,!Super+Shift-Tab,Return' -selected-row "$row"

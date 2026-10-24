@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+export QT_QPA_PLATFORMTHEME=qt6ct
+# Ensure pip --user adblock is visible to Guix qutebrowser (python -sP)
+export PYTHONPATH="${HOME}/.local/lib/python3.12/site-packages${PYTHONPATH:+:$PYTHONPATH}"
+exec /run/current-system/profile/bin/qutebrowser "$@"

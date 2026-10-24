@@ -1,0 +1,13 @@
+#!/bin/sh
+# power-menu : lock / suspend / log out / reboot / power off   (Super+Alt+P, bar ⏻)
+# part of sys7mfaul7 dotfiles
+up=$(uptime -p 2>/dev/null | sed 's/^up //')
+c=$(printf 'lock\nsuspend\nlogout\nreboot\npoweroff\n' |
+    rofi -dmenu -p "power (up $up)" -theme "$HOME/.config/bspwm/rofi/dmenu.rasi") || exit 0
+case $c in
+    lock)     lock ;;
+    suspend)  lock & sleep 1; loginctl suspend ;;
+    logout)   bspc quit ;;
+    reboot)   loginctl reboot ;;
+    poweroff) loginctl poweroff ;;
+esac

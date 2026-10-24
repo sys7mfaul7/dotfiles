@@ -1,0 +1,21 @@
+#!/bin/sh
+# sys-media : media keys for every session (MPRIS players via playerctl, else mpd)
+# part of sys7mfaul7 dotfiles
+#   sys-media toggle | next | prev | stop
+case "$1" in
+    toggle) a=play-pause m=toggle ;;
+    next)   a=next       m=next ;;
+    prev)   a=previous   m=prev ;;
+    stop)   a=stop       m=stop ;;
+    *) echo "usage: sys-media toggle|next|prev|stop" >&2; exit 1 ;;
+esac
+if command -v playerctl >/dev/null && [ -n "$(playerctl -l 2>/dev/null)" ]; then
+    playerctl "$a"
+    sleep 0.2
+    now=$(playerctl metadata --format '{{artist}} - {{title}}' 2>/dev/null)
+elif command -v mpc >/dev/null; then
+    mpc -q "$m"
+    now=$(mpc current 2>/dev/null)
+fi
+[ -n "$now" ] && dunstify -u low -r 9103 "$1" "$now"
+exit 0

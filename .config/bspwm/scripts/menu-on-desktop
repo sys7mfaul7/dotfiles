@@ -1,0 +1,13 @@
+#!/bin/sh
+# menu-on-desktop : right-click on the bare desktop opens the app menu
+# part of sys7mfaul7 dotfiles
+# sxhkd sees every right click (~button3 passes it through); only act when
+# the pointer is over the root window or a desktop-type window.
+eval "$(xdotool getmouselocation --shell 2>/dev/null)"
+root=$(xdotool search --maxdepth 0 --name '' 2>/dev/null | head -1)
+case "$(xprop -id "${WINDOW:-0}" _NET_WM_WINDOW_TYPE 2>/dev/null)" in
+    *DESKTOP*) ;;
+    *) [ -z "$WINDOW" ] || [ "$WINDOW" = "$root" ] || [ "$WINDOW" = 0 ] || exit 0 ;;
+esac
+G="$HOME/.config/bspwm/generated"
+exec jgmenu --config-file="$G/jgmenurc" --csv-file="$HOME/.config/bspwm/menu.csv"

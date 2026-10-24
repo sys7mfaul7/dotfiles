@@ -1,0 +1,74 @@
+{
+  "layer": "top",
+  "position": "top",
+  "height": 34,
+  "spacing": 8,
+  "modules-left": [
+    "custom/launcher",
+    "river/tags"
+  ],
+  "modules-center": [
+    "river/window"
+  ],
+  "modules-right": [
+    "network",
+    "cpu",
+    "memory",
+    "pulseaudio",
+    "custom/date",
+    "custom/power"
+  ],
+  "network": {
+    "format-ethernet": "  {ipaddr}",
+    "format-wifi": "  {ipaddr}",
+    "format-disconnected": "  Offline",
+    "interval": 10,
+    "tooltip-format": "{ifname}"
+  },
+  "cpu": {
+    "format": "  {usage}%",
+    "interval": 3
+  },
+  "memory": {
+    "format": "  {used:0.1f}G",
+    "interval": 5
+  },
+  "pulseaudio": {
+    "format": "  {volume}%",
+    "format-muted": "  Muted",
+    "on-click": "pamixer -t"
+  },
+  "custom/date": {
+    "exec": "date \"+%a, %d %b %Y %-I:%M%P\"",
+    "interval": 20,
+    "format": "  {}"
+  },
+  "custom/launcher": {
+    "format": "",
+    "tooltip": false,
+    "on-click": "~/.local/bin/river-menu"
+  },
+  "custom/power": {
+    "format": "󰐥",
+    "tooltip": false,
+    "on-click": "~/.local/bin/river-power"
+  },
+  "river/tags": {
+    "num-tags": 10,
+    "tag-labels": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "0"
+    ]
+  },
+  "river/window": {
+    "max-length": 80
+  }
+}

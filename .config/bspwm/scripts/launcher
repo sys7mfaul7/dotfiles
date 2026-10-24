@@ -1,0 +1,7 @@
+#!/bin/sh
+# launcher : app search (drun) or command runner in the one-line menu
+# part of sys7mfaul7 dotfiles
+#   launcher        apps         (Super+Space, bar λ)
+#   launcher run    commands     (Super+Ctrl+Space)
+mode=drun; [ "$1" = run ] && mode=run
+exec rofi -show "$mode" -theme "$HOME/.config/bspwm/rofi/dmenu.rasi"

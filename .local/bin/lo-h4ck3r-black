@@ -1,0 +1,26 @@
+#!/bin/sh
+# Apply h4ck3r black/green LibreOffice colors. Run with LibreOffice CLOSED.
+X=$HOME/.config/libreoffice/4/user/registrymodifications.xcu
+if pgrep -x soffice.bin >/dev/null; then echo "LibreOffice is running; close it first (it rewrites this file on exit)."; exit 1; fi
+[ -f "$X.bak-black" ] || cp "$X" "$X.bak-black"
+S="/org.openoffice.Office.UI/ColorScheme/ColorSchemes/org.openoffice.Office.UI:ColorScheme['h4ck3r']"
+grep -v "ColorScheme\['h4ck3r'\]\|CurrentColorScheme\|oor:name=\"ApplicationAppearance\"\|oor:name=\"SymbolStyle\"" "$X" | grep -v '^</oor:items>' > "$X.tmp"
+c() { printf '<item oor:path="%s/%s"><prop oor:name="Color" oor:op="fuse"><value>%s</value></prop></item>\n' "$S" "$1" "$2"; }
+# ints: 000000=0 c0ffc0=12648384 00ff41=65345 1f6f2f=2060079 4f7f5a=5209946 1a2a1f=1714719 0f1f14=991508
+{
+c DocColor 0; c AppBackground 0; c FontColor 12648384; c DocBoundaries 1714719; c TableBoundaries 1714719
+c Links 65345; c LinksVisited 5209946; c Shadow 0; c CalcGrid 1714719; c CalcPageBreak 5209946
+c CalcCellFocus 65345; c CalcDBFocus 65345; c WriterTextGrid 1714719; c WriterFieldShadings 991508
+c WriterIdxShadings 991508; c WriterDirectCursor 65345; c WriterSectionBoundaries 1714719
+c WriterHeaderFooterMark 5209946; c WriterPageBreaks 5209946; c WriterNonPrintChars 5209946
+c DrawGrid 1714719; c BASICEditor 0; c BASICIdentifier 12648384; c BASICComment 5209946
+c BASICNumber 65345; c BASICString 65345; c BASICOperator 12648384; c BASICKeyword 65345
+c SQLIdentifier 12648384; c SQLNumber 65345; c SQLString 65345; c SQLOperator 12648384; c SQLKeyword 65345; c SQLComment 5209946
+c HTMLSGML 65345; c HTMLComment 5209946; c HTMLKeyword 65345; c HTMLUnknown 12648384
+c CalcValue 12648384; c CalcFormula 65345; c CalcText 12648384; c CalcProtectedBackground 991508
+c CalcHiddenColRow 5209946; c CalcTextOverflow 65345; c CalcComments 2060079
+echo '<item oor:path="/org.openoffice.Office.UI/ColorScheme"><prop oor:name="CurrentColorScheme" oor:op="fuse"><value>h4ck3r</value></prop></item>'
+echo '<item oor:path="/org.openoffice.Office.Common/Appearance"><prop oor:name="ApplicationAppearance" oor:op="fuse"><value>2</value></prop></item>'
+echo '<item oor:path="/org.openoffice.Office.Common/Misc"><prop oor:name="SymbolStyle" oor:op="fuse"><value>colibre_dark</value></prop></item>'
+echo '</oor:items>'
+} >> "$X.tmp" && mv "$X.tmp" "$X" && echo "applied"

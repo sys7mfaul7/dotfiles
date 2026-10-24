@@ -1,0 +1,17 @@
+#!/bin/sh
+# fm-term <vifm|nnn> [tiled|float] [user|sudo] : file manager in a terminal (bspwm-wl: foot, X11: xterm)
+app=${1:-vifm}; mode=${2:-tiled}; priv=${3:-user}
+export NNN_FCOLORS=41412f9b006c6c4141b2b241 NNN_COLORS="#41414141"  # nnn: no red, dim green
+export NNN_BMS="m:/run/media/$USER;h:$HOME"  # nnn bookmarks: b then m = removable media
+case "$app" in vifm|nnn) ;; *) exit 1 ;; esac
+cmd="$app"; title="$app"
+if [ "$priv" = sudo ]; then
+  cmd="sudo -E $app"; title="$app (root)"
+fi
+if [ -n "$WAYLAND_DISPLAY" ]; then
+  id=foot; [ "$mode" = float ] && id=foot-float
+  exec foot --app-id="$id" --title="$title" -e sh -c "$cmd"
+else
+  if [ "$mode" = float ]; then exec xterm -class FloaTerm -T "$title" -e sh -c "$cmd"
+  else exec xterm -T "$title" -e sh -c "$cmd"; fi
+fi

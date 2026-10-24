@@ -1,0 +1,4 @@
+#!/bin/sh
+# bspwm-wl has no per-window opacity yet (no bspc node opacity / scene alpha).
+# X11 sessions use ~/.local/bin/bsp-opacity + picom.
+dunstify -u low -t 2500 "Opacity" "Not supported in bspwm-wl yet (needs compositor alpha). Works on X11 via Super+O."

@@ -1,0 +1,16 @@
+#!/bin/sh
+# wl-wintitle : focused window title for waybar (like polybar xwindow); empty when none.
+# Prints only on change; exits (and stops bspc subscribe) when waybar closes the pipe.
+F=$(mktemp -u "${XDG_RUNTIME_DIR:-/tmp}/wl-wintitle.XXXXXX"); mkfifo "$F" || exit 1
+bspc subscribe node_focus desktop_focus node_remove node_transfer node_flag >"$F" 2>/dev/null & SP=$!
+trap 'kill $SP 2>/dev/null; rm -f "$F"; exit 0' EXIT INT TERM PIPE HUP
+last=__none__
+show() {
+  t=$(bspc query -T -n focused.window 2>/dev/null | jq -r '(.title // "") as $t | if $t == "" then .client.className else $t end' 2>/dev/null)
+  t=$(printf '%s' "$t" | cut -c1-80 | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
+  [ "$t" = "$last" ] && return 0
+  last=$t
+  printf '%s\n' "$t" || exit 0
+}
+show
+while read -r _; do show; kill -0 $PPID 2>/dev/null || exit 0; done <"$F"

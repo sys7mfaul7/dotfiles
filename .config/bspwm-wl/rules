@@ -1,0 +1,113 @@
+# bspwm-wl app rules (Omarchy-style: one line per app). Read by bspwmrc at login/reload.
+# Format:  <app-id or Class[:instance]>  key=value ...
+#   any `bspc rule` key: state=floating|tiled|pseudo_tiled|fullscreen  desktop=^N  center=on
+#   focus=on  sticky=on  follow=on  layer=above  split_dir=...  border=off  locked=on
+#   size=WxH (pixels) or size=W%xH% (of the focused monitor) -> rectangle
+#   opacity=0.9  (accepted but ignored: bspwm-wl has no per-window opacity yet;
+#                 terminals get transparency from foot's colors-dark.alpha instead)
+# Find an app-id: bspc query -T -n focused | jq -r .client.className
+#
+# --- terminals (X11 FloaTerm / *Term instances -> foot --app-id=...) ---
+foot-float        state=floating center=on size=35%x50%
+scratchpad        state=floating center=on size=60%x50% sticky=on
+KeyHelp           state=floating center=on size=40%x70%
+YaziTerm          state=floating center=on size=900x342
+MusicTerm         state=floating center=on size=656x343
+FetchTerm         state=floating center=on size=369x601
+Updating          state=floating center=on size=390x405 sticky=on
+Toolkit           state=floating sticky=on rectangle=500x290+1054+593
+# --- bar pop-ups (wl-bartui app-ids) ---
+BarTUI-audio      state=floating focus=on center=on size=50%x60%
+BarTUI-net        state=floating focus=on center=on size=820x560
+BarTUI-bt         state=floating focus=on center=on size=50%x60%
+BarTUI-top        state=floating focus=on center=on size=50%x60%
+BarCal            state=floating focus=on rectangle=560x250+2720+50
+# --- apps ---
+mpv               state=floating focus=on center=on size=723x407
+org.pulseaudio.pavucontrol state=floating center=on
+pavucontrol       state=floating center=on
+Viewnior          state=floating focus=on center=on
+nsxiv             state=floating focus=on center=on
+feh               state=floating focus=on center=on
+zenity            state=floating center=on
+# Desktop pins that were disabled in X11 (uncomment to use):
+# org.telegram.desktop desktop=^4
+# thunar               desktop=^2
+# firefox              desktop=^3
+#
+# --- from Omarchy (x-wing ~/.config/hypr/app_rules.lua), translated ---
+# Matching is CLASS[:instance[:title]], exact (no regex). Title rules use *:*:<title>.
+1Password          state=floating center=on
+1password          state=floating center=on
+Bitwarden          state=floating center=on
+Proton-authenticator state=floating center=on
+*:*:Proton\ Authenticator state=floating center=on
+burp-StartBurp     state=floating center=on
+qalculate-gtk      state=floating center=on
+org.gnome.Calculator state=floating center=on
+gpgui              state=floating center=on size=900x600
+localsend          state=floating center=on
+localsend_app      state=floating center=on
+*:*:Picture-in-Picture state=floating sticky=on rectangle=600x338+2800+58
+*:*:Picture\ in\ picture state=floating sticky=on rectangle=600x338+2800+58
+com.libretro.RetroArch state=fullscreen
+steam              state=floating
+steam:*:Steam      state=floating center=on size=1100x700
+steam:*:Friends\ List state=floating size=460x800
+imv                state=floating center=on
+org.gnome.Evince   state=floating center=on
+org.gnome.NautilusPreviewer state=floating center=on
+com.gabm.satty     state=floating center=on
+*:*:Zed\ -\ Settings state=floating center=on
+*:*:WebcamOverlay  state=floating sticky=on focus=off rectangle=480x270+2920+1130
+# Browsers stay tiled (Omarchy forces tile for chromium --app windows):
+brave-browser      state=tiled
+chromium           state=tiled
+# Not translatable here: no_screen_share, tags, regex/initial_title matches,
+# keep_aspect_ratio, idle_inhibit, no_follow_mouse, JetBrains popup min_size.
+#
+# --- added 2026-10-14 from x-wing app_rules.lua + apps/*.conf (missing ones) ---
+# Dialogs (xdg parent, fixed min==max size, X11 dialog/utility/splash/modal or
+# WM_TRANSIENT_FOR) now float+center automatically in the bspwm-wl binary.
+# Chromium profile picker (class chromium-browser; normal windows tile by default):
+*:*:Who's\ using\ Chromium? state=floating center=on
+*:*:Who's\ using\ Brave? state=floating center=on
+# Burp Suite Pro (Java/XWayland class names; matching is exact, no regex)
+burp-StartBurpPro  state=floating center=on
+install4j-burp-StartBurp state=floating center=on
+burp               state=floating center=on
+BurpSuitePro       state=floating center=on
+BurpSuite          state=floating center=on
+# GPGUI helper / Qalculate / LocalSend share / Splashtop / LibreOffice Navigator
+GPGUI              state=floating center=on size=900x600
+Gpgui-helper       state=floating center=on size=900x600
+Qalculate!         state=floating center=on
+1Qalculate!        state=floating center=on
+Share              state=floating center=on
+splashtop-business state=floating center=on
+Splashtop-business state=floating center=on
+*:*:Navigator      state=floating size=1100x700
+# Portal file pickers + common file-dialog titles
+xdg-desktop-portal-gtk state=floating center=on
+*:*:Open\ File     state=floating center=on
+*:*:Open\ Files    state=floating center=on
+*:*:Open\ Folder   state=floating center=on
+*:*:Save\ File     state=floating center=on
+*:*:Save\ As       state=floating center=on
+*:*:Save           state=floating center=on
+*:*:Choose\ Files  state=floating center=on
+*:*:Settings       state=floating center=on
+wl-wallselect state=floating center=on size=60%x60%
+# --- popups / dialogs (floatpop) ---
+nm-connection-editor                      state=floating center=on size=900x700
+*:*:Network\ Connections                  state=floating center=on size=900x600
+polkit-gnome-authentication-agent-1       state=floating center=on size=620x300
+Polkit-gnome-authentication-agent-1       state=floating center=on size=620x300
+org.gnome.FileRoller                      state=floating center=on
+blueman-manager                           state=floating center=on size=900x600
+.blueman-manager-wrapped                  state=floating center=on size=900x600
+.blueman-manager-real                     state=floating center=on size=900x600
+.blueman-adapters-real                    state=floating center=on size=600x500
+.blueman-services-real                    state=floating center=on size=600x500
+.blueman-sendto-real                      state=floating center=on size=700x500
+xdg-desktop-portal-gtk                    state=floating center=on size=1100x700

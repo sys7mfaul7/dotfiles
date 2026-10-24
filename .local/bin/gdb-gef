@@ -1,0 +1,2 @@
+#!/bin/sh
+exec gdb -q -x ~/.local/opt/gef/gef.py "$@"

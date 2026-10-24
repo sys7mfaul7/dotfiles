@@ -1,0 +1,30 @@
+/* ~/.config/bspwm/rofi/dmenu.rasi : one-line menu across the top, over the bar
+ * part of sys7mfaul7 dotfiles
+ * Used by the app launcher, run prompt, calc, emoji, clipboard and every
+ * small menu (power, screenshot, wallpaper ...). Font and colours come from
+ * generated/theme.rasi, written from ~/.config/bspwm/theme. */
+@import "../generated/theme.rasi"
+
+configuration { show-icons: false; drun-display-format: "{name}"; }
+
+* {
+    background-color: @bg;
+    text-color: @fg;
+    margin: 0; padding: 0; spacing: 0;
+}
+window {
+    location: north; anchor: north;
+    width: 100%; height: 1.77em;   /* = 26px at 96 DPI with an 11pt font; scales with DPI */
+    children: [ bar ];
+}
+bar      { orientation: horizontal; children: [ prompt, entry, listview ]; padding: 0 0.7em; }
+prompt   { padding: 0.2em 0.55em 0 0; text-color: @accent; }
+entry    { expand: false; width: 18em; padding: 0.2em 0.7em 0 0.3em; placeholder: ""; cursor: text; }
+listview { layout: horizontal; lines: 100; dynamic: true; scrollbar: false; }
+element  { padding: 0.2em 0.8em 0 0.8em; children: [ element-text ]; }
+element-text { background-color: inherit; text-color: inherit; }
+element selected.normal { background-color: @sel-bg; text-color: @sel-fg; }
+element normal.active, element alternate.active { text-color: @accent; }
+element normal.urgent, element alternate.urgent { text-color: @urgent; }
+message  { padding: 0.2em 0.7em 0 0; }
+textbox  { text-color: @dim; }

@@ -1,0 +1,29 @@
+#!/bin/sh
+# screenshot : maim screenshots, saved to ~/Pictures/ScreenShots and copied
+# part of sys7mfaul7 dotfiles
+#   screenshot area | full | window | delay [seconds] | menu
+dir="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")/ScreenShots"
+mkdir -p "$dir"
+file="$dir/Shot-$(date +%Y-%m-%d-%H%M%S).png"
+
+grab() {  # $1 = label, rest = maim options
+    what=$1; shift
+    maim -u "$@" "$file" || exit 0
+    xclip -selection clipboard -t image/png -i "$file"
+    dunstify -u low -i "$file" "screenshot" "$what saved and copied"
+}
+
+case "${1:-menu}" in
+    area)   grab Area -s ;;
+    full)   grab Screen ;;
+    window) grab Window -i "$(xdotool getactivewindow)" ;;
+    delay)  sleep "${2:-5}"; grab Screen ;;
+    menu)
+        c=$(printf 'area\nscreen\nwindow\nin 5s\nin 10s\n' |
+            rofi -dmenu -p screenshot -theme "$HOME/.config/bspwm/rofi/dmenu.rasi") || exit 0
+        sleep 0.3   # let the menu disappear first
+        case $c in
+            area) "$0" area ;; screen) "$0" full ;; window) "$0" window ;;
+            "in 5s") "$0" delay 5 ;; "in 10s") "$0" delay 10 ;;
+        esac ;;
+esac

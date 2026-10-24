@@ -1,0 +1,13 @@
+#!/bin/sh
+# zmk-build BOARD [SHIELD] [extra west args...]  e.g. zmk-build nice_nano//zmk corne_left
+# Output: ~/zmk/app/build/<board>-<shield>/zephyr/zmk.uf2 (drag onto the board UF2 drive)
+set -e
+BOARD=${1:?usage: zmk-build BOARD [SHIELD] [-- extra cmake args]}; shift
+SHIELD=${1:-}; [ $# -gt 0 ] && shift
+export ZEPHYR_TOOLCHAIN_VARIANT=gnuarmemb
+export GNUARMEMB_TOOLCHAIN_PATH="$HOME/.guix-profile"
+export ZEPHYR_BASE="$HOME/zmk/zephyr"
+cd "$HOME/zmk/app"
+DIR="build/$(echo "$BOARD" | tr / _)${SHIELD:+-$SHIELD}"
+# Guix gnuarmemb ships newlib-nano; Zephyr default picolibc clashes with its headers
+exec west build -p auto -d "$DIR" -b "$BOARD" -- ${SHIELD:+-DSHIELD=$SHIELD} -DCONFIG_NEWLIB_LIBC=y -DCONFIG_NEWLIB_LIBC_NANO=y "$@"

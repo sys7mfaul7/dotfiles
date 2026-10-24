@@ -1,0 +1,27 @@
+" h4ck3r - pure black, green, no blue
+highlight clear
+highlight Win          cterm=none guifg=#c0ffc0 guibg=#000000 ctermfg=157 ctermbg=16
+highlight Directory    cterm=bold gui=bold guifg=#00ff41 guibg=default ctermfg=47 ctermbg=default
+highlight Link         cterm=italic gui=italic guifg=#7fbf7f guibg=default ctermfg=108 ctermbg=default
+highlight BrokenLink   cterm=bold gui=bold guifg=#ff3030 guibg=default ctermfg=196 ctermbg=default
+highlight HardLink     cterm=none guifg=#7fbf7f guibg=default ctermfg=108 ctermbg=default
+highlight Socket       cterm=none guifg=#d7af00 guibg=default ctermfg=178 ctermbg=default
+highlight Device       cterm=none guifg=#d7af00 guibg=default ctermfg=178 ctermbg=default
+highlight Fifo         cterm=none guifg=#d7af00 guibg=default ctermfg=178 ctermbg=default
+highlight Executable   cterm=bold gui=bold guifg=#a8ff60 guibg=default ctermfg=155 ctermbg=default
+highlight Selected     cterm=bold gui=bold guifg=#00ff41 guibg=#0f1f14 ctermfg=47 ctermbg=233
+highlight CurrLine     cterm=bold gui=bold guifg=#ffffff guibg=#1f6f2f ctermfg=231 ctermbg=22
+highlight OtherLine    cterm=none guifg=#c0ffc0 guibg=#1a2a1f ctermfg=157 ctermbg=234
+highlight TopLine      cterm=none guifg=#4f7f5a guibg=#000000 ctermfg=65 ctermbg=16
+highlight TopLineSel   cterm=bold gui=bold guifg=#00ff41 guibg=#000000 ctermfg=47 ctermbg=16
+highlight StatusLine   cterm=none guifg=#c0ffc0 guibg=#0f1f14 ctermfg=157 ctermbg=233
+highlight Border       cterm=none guifg=#1a2a1f guibg=#000000 ctermfg=234 ctermbg=16
+highlight CmdLine      cterm=none guifg=#c0ffc0 guibg=#000000 ctermfg=157 ctermbg=16
+highlight ErrorMsg     cterm=bold gui=bold guifg=#ff3030 guibg=#000000 ctermfg=196 ctermbg=16
+highlight WildMenu     cterm=bold gui=bold guifg=#000000 guibg=#00ff41 ctermfg=16 ctermbg=47
+highlight SuggestBox   cterm=none guifg=#c0ffc0 guibg=#000000 ctermfg=157 ctermbg=16
+highlight CmpMismatch  cterm=bold gui=bold guifg=#ff3030 guibg=#000000 ctermfg=196 ctermbg=16
+highlight AuxWin       cterm=none guifg=#c0ffc0 guibg=#000000 ctermfg=157 ctermbg=16
+highlight TabLine      cterm=none guifg=#4f7f5a guibg=#000000 ctermfg=65 ctermbg=16
+highlight TabLineSel   cterm=bold gui=bold guifg=#00ff41 guibg=#0f1f14 ctermfg=47 ctermbg=233
+highlight User1        cterm=none guifg=#4f7f5a guibg=default ctermfg=65 ctermbg=default

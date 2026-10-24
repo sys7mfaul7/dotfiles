@@ -1,0 +1,3 @@
+#!/bin/sh
+# wl-keyhelp : show bspwm-wl bindings (replaces the eww cheat sheet)
+exec foot --app-id=KeyHelp -T 'bspwm-wl keys' sh -c 'bspc keybind -l | paste - - | sed "s/\t\t*/  ->  /" | less'

@@ -1,0 +1,47 @@
+# ~/.config/dunst/dunstrc : notifications for the Wayland sessions (bspwm-wl, niri)
+# part of sys7mfaul7 dotfiles
+# The X11 bspwm session does not read this file; it runs dunst with
+# ~/.config/bspwm/generated/dunstrc, made from ~/.config/bspwm/theme.
+
+[global]
+    origin = top-center
+    offset = (0, 60)
+    width = (300, 400)
+    notification_limit = 6
+    padding = 12
+    horizontal_padding = 14
+    frame_width = 2
+    frame_color = "#00ff41"
+    separator_height = 1
+    separator_color = frame
+    corner_radius = 0
+    transparency = 0
+    font = JetBrainsMono NF Medium 9
+    markup = full
+    format = "<b>%s</b>\n%b"
+    alignment = left
+    vertical_alignment = center
+    icon_position = left
+    min_icon_size = 32
+    max_icon_size = 64
+    progress_bar_height = 8
+    progress_bar_frame_width = 0
+    highlight = "#00ff41"
+    mouse_left_click = do_action, close_current
+    mouse_right_click = close_all
+
+[urgency_low]
+    background = "#000000"
+    foreground = "#4f7f5a"
+    timeout = 3
+
+[urgency_normal]
+    background = "#000000"
+    foreground = "#c0ffc0"
+    timeout = 5
+
+[urgency_critical]
+    background = "#000000"
+    foreground = "#c0ffc0"
+    frame_color = "#ff5f5f"
+    timeout = 0

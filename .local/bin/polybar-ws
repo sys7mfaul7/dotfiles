@@ -1,0 +1,21 @@
+#!/bin/sh
+# polybar-ws : workspaces with shades: empty dim, occupied mid, previous bright, focused #c0ffc0 (icon)
+# part of sys7mfaul7 dotfiles
+E="#2f5a2f"; O="#5fbf5f"; P="#8fef8f"; F="#c0ffc0"; U="#ff5f5f"
+ICON="󱓇"
+draw() {
+  prev=$(bspc query -D -d last --names 2>/dev/null)
+  out=""
+  for d in $(bspc query -D --names); do
+    [ "$d" = M ] && continue   # hidden minimize desktop (bsp-minimize)
+    if [ "$d" = "$(bspc query -D -d focused --names)" ]; then c=$F; t="%{T3}$ICON%{T-}"
+    elif bspc query -D -d "$d.urgent" >/dev/null 2>&1; then c=$U; t=$d
+    elif [ "$d" = "$prev" ]; then c=$P; t=$d
+    elif bspc query -D -d "$d.occupied" >/dev/null 2>&1; then c=$O; t=$d
+    else c=$E; t=$d; fi
+    l=$t; [ "$t" = 10 ] && l=0; out="$out%{A1:bspc desktop -f $d:}%{F$c} $l %{F-}%{A}"
+  done
+  echo "%{A4:bspc desktop -f prev.local:}%{A5:bspc desktop -f next.local:}$out%{A}%{A}"
+}
+draw
+bspc subscribe desktop node_add node_remove node_transfer node_flag 2>/dev/null | while read -r _; do draw; done

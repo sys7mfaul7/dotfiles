@@ -1,0 +1,9 @@
+#!/bin/sh
+. ~/.config/river/menu-opts 2>/dev/null
+c=$(printf "lock\nlogout\nreboot\nshutdown\n" | eval wmenu $WMENU_ARGS -p power)
+case "$c" in
+  lock) swaylock -c 0a0e14 ;;
+  logout) riverctl exit ;;
+  reboot) loginctl reboot 2>/dev/null || sudo reboot ;;
+  shutdown) loginctl poweroff 2>/dev/null || sudo shutdown -h now ;;
+esac

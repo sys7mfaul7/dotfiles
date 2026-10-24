@@ -1,0 +1,13 @@
+#!/bin/sh
+# wl-float : toggle floating; browsers go 35%x80% centered; other near-fullscreen floats go 60%
+bspc node -t ~floating || exit 0
+bspc query -N -n focused.floating >/dev/null || exit 0
+eval $(bspc query -T -m focused | jq -r ".rectangle|\"MW=\(.width) MH=\(.height)\"")
+eval $(bspc query -T -n focused | jq -r ".client|\"W=\(.floatingRectangle.width) H=\(.floatingRectangle.height) C=\(.className)\"")
+case "$C" in
+  chromium*|Chromium*|brave*|Brave*|qutebrowser|firefox*|librewolf*)
+    exec "$HOME/.config/bspwm-wl/bin/wl-center" size $((MW*35/100)) $((MH*80/100)) ;;
+esac
+if [ "$W" -ge $((MW*85/100)) ] || [ "$H" -ge $((MH*85/100)) ]; then
+  "$HOME/.config/bspwm-wl/bin/wl-center" size $((MW*60/100)) $((MH*60/100))
+fi

@@ -1,0 +1,82 @@
+#!/bin/sh
+# wl-smartmove DIR|cancel|commit — context-aware window move (bspwm-wl and X11 bspwm, plain bspc).
+# Adapted from Protesilaos' bspwm_smart_move.sh (GPL-3.0-or-later).
+#   floating            -> nudge 20px (as bspwm-move)
+#   pending edge presel -> same DIR: move the window into it; other DIR: cancel it
+#   receptacle in DIR   -> move the window into the receptacle
+#   window in DIR       -> existing behaviour (~/.local/bin/bspwm-move: swap / split)
+#   outer edge in DIR   -> preselect DIR on the root (green feedback); press DIR again
+#                          (or Super+Enter) to move there; another DIR or Super+Alt+Esc cancels
+R=${XDG_RUNTIME_DIR:-/tmp}
+ST="$R/bspwm-smartmove.$(bspc query -D -d focused 2>/dev/null)"
+exec 9>"$R/bspwm-smartmove.lock"; flock -w 1 9 || exit 0
+dir=$1
+q() { bspc query -N -n "$@" 2>/dev/null; }
+rootpresel() { bspc query -T -n @/ 2>/dev/null | jq -r '.presel.splitDir // empty'; }
+into_root() { # $1 = presel dir on @/: insert a receptacle there, move focused into it
+  bspc node @/ -i || return 1
+  case $1 in west|north) r=$(q @/1);; *) r=$(q @/2);; esac
+  bspc node focused -n "$r" --follow
+}
+cancel_pending() {
+  if [ -f "$ST" ]; then
+    [ "$(rootpresel)" = "$(cat "$ST")" ] && bspc node @/ -p cancel
+    rm -f "$ST"
+  fi
+}
+case $dir in
+  cancel) cancel_pending; exit 0 ;;
+  commit) # move focused into the pending root presel, if any
+    [ -f "$ST" ] && [ -n "$(rootpresel)" ] && [ "$(rootpresel)" = "$(cat "$ST")" ] || { rm -f "$ST"; exit 1; }
+    w=$(cat "$ST"); rm -f "$ST"; into_root "$w"; exit 0 ;;
+  north|south|east|west) ;;
+  *) echo "usage: wl-smartmove north|south|east|west|cancel|commit" >&2; exit 2 ;;
+esac
+
+if q focused.floating >/dev/null; then
+  case $dir in west) bspc node -v -20 0;; east) bspc node -v 20 0;; north) bspc node -v 0 -20;; south) bspc node -v 0 20;; esac
+  exit 0
+fi
+q focused.window >/dev/null || exit 0
+
+if [ -f "$ST" ]; then
+  p=$(rootpresel); want=$(cat "$ST")
+  if [ -n "$p" ] && [ "$p" = "$want" ]; then
+    rm -f "$ST"
+    if [ "$dir" = "$want" ]; then into_root "$dir"
+    else bspc node @/ -p cancel; fi
+    exit 0
+  fi
+  rm -f "$ST"   # stale (presel consumed or cancelled elsewhere)
+fi
+
+# bspwm's direction selector skips receptacles, so find the nearest leaf in DIR
+# (tiled window or receptacle) from the tree; a closer receptacle wins.
+fid=$(( $(q focused) ))
+near=$(bspc query -T -d focused | jq -r --arg d "$dir" --argjson f "$fid" '
+  [.root | .. | objects | select(has("firstChild"))] as $all
+  | ($all[] | select(.id == $f) | .rectangle) as $F
+  | [ $all[] | select(.firstChild == null and .id != $f and (.hidden | not)
+        and (.client == null or .client.state == "tiled" or .client.state == "pseudo_tiled"))
+      | .rectangle as $R
+      | (if $d == "east" then $R.x - ($F.x + $F.width) elif $d == "west" then $F.x - ($R.x + $R.width)
+         elif $d == "south" then $R.y - ($F.y + $F.height) else $F.y - ($R.y + $R.height) end) as $dist
+      | (if $d == "east" or $d == "west" then ($R.y < $F.y + $F.height and $R.y + $R.height > $F.y)
+         else ($R.x < $F.x + $F.width and $R.x + $R.width > $F.x) end) as $ov
+      | select($dist >= 0 and $ov) | {id, dist: $dist, r: (.client == null)} ]
+  | sort_by(.dist, (if .r then 0 else 1 end)) | .[0] // empty
+  | if .r then "R \(.id)" else "W" end')
+case $near in
+  R\ *) bspc node focused -n "$(printf '0x%08X' "${near#R }")" --follow; exit 0 ;;
+esac
+if q "$dir.local.!floating.window" >/dev/null; then
+  exec "$HOME/.local/bin/bspwm-move" "$dir"
+fi
+
+# Outer edge. Nothing to do if the window already spans that whole edge.
+f=$(q focused); root=$(q @/)
+[ "$f" = "$root" ] && exit 0
+case $dir in west|north) side=@/1;; *) side=@/2;; esac
+case $dir in west|east) want=vertical;; *) want=horizontal;; esac
+if [ "$(q "$side")" = "$f" ] && [ "$(bspc query -T -n @/ | jq -r .splitType)" = "$want" ]; then exit 0; fi
+bspc node @/ -p "$dir" && printf '%s\n' "$dir" > "$ST"

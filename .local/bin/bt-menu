@@ -1,0 +1,84 @@
+#!/bin/sh
+# bt-menu : one-line bemenu Bluetooth manager (MACs hidden; map in temp file)
+# Usage: bt-menu            interactive
+#        bt-menu --list     print main menu lines (no menu, for testing)
+#        bt-menu --scanlist print discovered unpaired devices after a 10s scan
+BT=bluetoothctl
+TAB=$(printf '\t')
+map=$(mktemp); trap 'rm -f "$map"' EXIT
+menu() {
+  BEMENU_BACKEND=wayland bemenu -i -p "$1" -H 26 --fn 'JetBrains Mono Bold 11' \
+  --tb '#000000' --tf '#00ff41' --fb '#000000' --ff '#c0ffc0' --nb '#000000' --nf '#c0ffc0' \
+  --hb '#1f6f2f' --hf '#c0ffc0' --ab '#000000' --af '#c0ffc0' -B 0
+}
+note() { dunstify -a bt-menu -t 4000 "Bluetooth" "$1" 2>/dev/null || true; }
+powered() { $BT show 2>/dev/null | grep -q "Powered: yes"; }
+devs() { # bluetoothctl devices [filter] -> MAC<TAB>name
+  $BT devices $1 2>/dev/null | awk '$1=="Device"{m=$2; $1=""; $2=""; sub(/^ +/,""); print m"\t"$0}'
+}
+known() { { devs Paired; devs Trusted; } | awk -F'\t' '!s[$1]++'; }
+label() { # MAC name -> display text (dup names get #2, #3)
+  info=$($BT info "$1" 2>/dev/null)
+  if echo "$info" | grep -q "Connected: yes"; then mk="●"; else mk="○"; fi
+  bat=$(echo "$info" | sed -n 's/.*Battery Percentage:.*(\([0-9]*\)).*/\1/p' | head -1)
+  n="$2"; c=$(cut -f3 "$map" | grep -c -F -x -e "$n")
+  [ "$c" -gt 0 ] && n="$n #$((c+1))"
+  if [ -n "$bat" ]; then echo "$mk $n  ${bat}%"; else echo "$mk $n"; fi
+}
+build_main() {
+  : > "$map"
+  if powered; then
+    known | while IFS="$TAB" read -r mac name; do
+      printf '%s\t%s\t%s\n' "$mac" "$(label "$mac" "$name")" "$name" >> "$map"; done
+    printf 'SCAN\tScan for devices\nOFF\tPower off\nDISC\tDisconnect all\n' >> "$map"
+  else
+    printf 'ON\tPower on\n' >> "$map"
+  fi
+}
+build_scan() {
+  : > "$map"
+  $BT --timeout 10 scan on >/dev/null 2>&1
+  paired=$(known | cut -f1)
+  devs | while IFS="$TAB" read -r mac name; do
+    echo "$paired" | grep -q -x "$mac" && continue
+    echo "$name" | grep -q -E "^([0-9A-Fa-f]{2}[-:]){5}[0-9A-Fa-f]{2}$" && continue  # skip unnamed
+    c=$(cut -f2 "$map" | grep -c -F -x -e "$name"); [ "$c" -gt 0 ] && name="$name #$((c+1))"
+    printf '%s\t%s\n' "$mac" "$name" >> "$map"
+  done
+}
+pick() { cut -f2 "$map" | menu "$1"; }
+lookup() { awk -F'\t' -v s="$1" '$2==s{print $1; exit}' "$map"; }
+
+case "$1" in
+  --list) build_main; cut -f2 "$map"; exit 0 ;;
+  --scanlist) $BT power on >/dev/null 2>&1; build_scan; cut -f2 "$map"; exit 0 ;;
+esac
+
+build_main
+sel=$(pick bluetooth) || exit 0; [ -n "$sel" ] || exit 0
+key=$(lookup "$sel"); [ -n "$key" ] || exit 0
+case "$key" in
+  ON)  $BT power on >/dev/null 2>&1 && note "Powered on" || note "Power on failed" ;;
+  OFF) $BT power off >/dev/null 2>&1 && note "Powered off" || note "Power off failed" ;;
+  DISC) for m in $(devs Connected | cut -f1); do $BT disconnect "$m" >/dev/null 2>&1; done
+        note "Disconnected all" ;;
+  SCAN)
+    note "Scanning 10s…"
+    $BT power on >/dev/null 2>&1
+    build_scan
+    [ -s "$map" ] || { note "No new devices found"; exit 0; }
+    sel=$(pick pair) || exit 0; mac=$(lookup "$sel"); [ -n "$mac" ] || exit 0
+    note "Pairing $sel…"
+    if timeout 40 $BT --agent NoInputNoOutput pair "$mac" 2>&1 | grep -q -i -e "Pairing successful" -e "AlreadyExists"; then
+      $BT trust "$mac" >/dev/null 2>&1
+      if timeout 20 $BT connect "$mac" 2>&1 | grep -q "Connection successful"; then note "Connected: $sel"
+      else note "Paired $sel, but connect failed"; fi
+    else note "Pairing failed: $sel"; fi ;;
+  *)
+    name=$(awk -F'\t' -v s="$sel" '$2==s{print $3; exit}' "$map")
+    if $BT info "$key" | grep -q "Connected: yes"; then
+      $BT disconnect "$key" >/dev/null 2>&1 && note "Disconnected: $name" || note "Disconnect failed: $name"
+    else
+      timeout 20 $BT connect "$key" 2>&1 | grep -q "Connection successful" && note "Connected: $name" || note "Connect failed: $name"
+    fi ;;
+esac

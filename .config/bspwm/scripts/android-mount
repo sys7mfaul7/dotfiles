@@ -1,0 +1,23 @@
+#!/bin/sh
+# android-mount : mount / unmount an Android phone over MTP   (Super+Alt+A)
+# part of sys7mfaul7 dotfiles
+# Mounts under ~/Phone. Uses simple-mtpfs, else jmtpfs, else aft-mtp-mount.
+M="$HOME/Phone"
+D="$HOME/.config/bspwm/rofi/dmenu.rasi"
+note() { dunstify -u low -r 9003 phone "$1"; }
+
+if mountpoint -q "$M"; then
+    c=$(printf 'unmount\nopen\n' | rofi -dmenu -p "phone mounted" -theme "$D") || exit 0
+    case $c in
+        unmount) fusermount -u "$M" && note "unmounted" ;;
+        open)    exec xdg-open "$M" ;;
+    esac
+    exit 0
+fi
+mkdir -p "$M"
+if command -v simple-mtpfs >/dev/null; then simple-mtpfs --device 1 "$M"
+elif command -v jmtpfs >/dev/null; then jmtpfs "$M"
+elif command -v aft-mtp-mount >/dev/null; then aft-mtp-mount "$M"
+else note "install simple-mtpfs or jmtpfs first"; exit 1; fi &&
+    note "mounted on $M (unlock the phone and pick File transfer)" ||
+    note "mount failed - is the phone unlocked and in File transfer mode?"

@@ -1,0 +1,3 @@
+# ~/.config/river/menu-opts : wmenu look shared by river-menu and river-power
+# part of sys7mfaul7 dotfiles
+WMENU_ARGS="-i -f \"JetBrains Mono Bold 10.5\" -N 000000 -n c0ffc0 -M 000000 -m 00ff41 -S 1f6f2f -s c0ffc0"

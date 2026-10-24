@@ -1,0 +1,30 @@
+#!/bin/sh
+# bspwm1 Wayland (bspwm-wl) session launcher. Separate from X11 bspwm.
+P="$HOME/.local/opt/bspwm-wl"
+export PATH="$P/bin:$HOME/.local/bin:$PATH"          # Wayland bspc shadows system bspc ONLY inside this session
+export LD_LIBRARY_PATH="$P/gcroot/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export XDG_CURRENT_DESKTOP=bspwm-wl XDG_SESSION_TYPE=wayland
+export MOZ_ENABLE_WAYLAND=1 QT_QPA_PLATFORM="wayland;xcb" GDK_BACKEND="wayland,x11"
+# export BSPWM_WL_VRR=1             # uncomment to enable adaptive sync (VRR, off by default: OLED flicker)
+# tear3: re-enable explicit sync. WLR_RENDER_NO_EXPLICIT_SYNC=1 disabled
+# timeline waits and let the GLES path sample client dmabufs mid-paint on
+# AMD 890M (stale strips in the scene texture; LibreOffice scroll tear that
+# survived workspace switches). Keep the line below commented unless a new
+# Mesa/wlroots regression needs the old workaround.
+# export WLR_RENDER_NO_EXPLICIT_SYNC=1
+# Avoid direct scanout of client buffers while diagnosing redraw races.
+export WLR_SCENE_DISABLE_DIRECT_SCANOUT=1
+# Optional tear diagnostic (highlight/rerender every frame; heavy at 240Hz).
+# Uncomment, log out/in, scroll Writer, then comment again:
+# export WLR_SCENE_DEBUG_DAMAGE=rerender
+# Optional: software or Vulkan renderer A/B (needs logout):
+# export WLR_RENDERER=pixman
+# export WLR_RENDERER=vulkan
+unset DISPLAY BSPWM_SOCKET
+mkdir -p "$HOME/.local/state/bspwm-wl"
+LOG="$HOME/.local/state/bspwm-wl/session.log"
+[ -f "$LOG" ] && mv -f "$LOG" "$LOG.1"
+if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
+  exec dbus-run-session -- "$P/bin/bspwm-wl" -c "$HOME/.config/bspwm-wl/bspwmrc" "$@" >"$LOG" 2>&1
+fi
+exec "$P/bin/bspwm-wl" -c "$HOME/.config/bspwm-wl/bspwmrc" "$@" >"$LOG" 2>&1

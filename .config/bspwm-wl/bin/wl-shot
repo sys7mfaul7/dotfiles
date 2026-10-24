@@ -1,0 +1,10 @@
+#!/bin/sh
+# bspwm-wl screenshots: wl-shot area|full  (saved + copied, like X11 Print keys)
+d="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")/ScreenShots"; mkdir -p "$d"
+f="$d/Shot-$(date +%Y-%m-%d-%H%M%S).png"
+case "$1" in
+  area) g=$(bspc query -N -n .window.local.!hidden -d focused | while read -r n; do bspc query -T -n $n | jq -r '.rectangle | "\(.x),\(.y) \(.width)x\(.height)"'; done | slurp) || exit 0; grim -g "$g" "$f" && m="Area" ;;
+  window) g=$(bspc query -T -n focused.window | jq -r '.rectangle | "\(.x),\(.y) \(.width)x\(.height)"') || exit 0; [ -n "$g" ] && grim -g "$g" "$f" && m="Window" ;;
+  *)    grim "$f" && m="Screen" ;;
+esac
+[ -f "$f" ] && wl-copy -t image/png < "$f" && dunstify "Screenshot" "$m saved and copied"

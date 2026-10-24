@@ -1,0 +1,171 @@
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run `zed: open default settings` from the
+// command palette (cmd-shift-p / ctrl-shift-p)
+{
+  "icon_theme": "Zed (Default)",
+  "cli_default_open_behavior": "existing_window",
+  "prettier": {
+    "allowed": true
+  },
+  "proxy": "",
+  "outline_panel": {
+    "dock": "right"
+  },
+  "buffer_line_height": {
+    "custom": 1.0
+  },
+  "vim": {
+    "gdefault": true,
+    "use_smartcase_find": true,
+    "toggle_relative_line_numbers": true
+  },
+  "relative_line_numbers": "enabled",
+  "which_key": {
+    "enabled": true
+  },
+  "agent_servers": {
+    "opencode": {
+      "type": "registry"
+    },
+  },
+  "agent": {
+    "default_model": {
+      "provider": "ollama",
+      "model": "glm-5.3-flash",
+      "enable_thinking": true
+    },
+    "favorite_models": [
+      {
+        "provider": "ollama",
+        "model": "glm-5.3-flash",
+        "enable_thinking": true
+      }
+    ]
+  },
+  "language_models": {
+    "openai_compatible": {
+      "Local llama": {
+        "api_url": "http://127.0.0.1:8080/v1",
+        "available_models": [
+          { "name": "local", "display_name": "Qwen3-Coder-30B (local)", "max_tokens": 32768, "capabilities": { "tools": true, "images": false, "parallel_tool_calls": false, "prompt_cache_key": false } }
+        ]
+      }
+    },
+    "ollama": {
+      "api_url": "http://vader.lan:10000",
+      "context_window": 8192,
+      "auto_discover": true
+    },
+    "lmstudio": {
+      "api_key": "REPLACE_ME",
+      "api_url": "http://vader.lan:1234/api/v0",
+    }
+  },
+  "model_parameters": [
+    {
+      "provider": "ollama",
+      "model": "glm-5.3-flash"
+    },
+  ],
+  "minimap": {
+    "show": "always",
+  },
+  "buffer_font_weight": 100.0,
+  "use_system_window_tabs": false,
+  "project_panel": {
+    "button": true,
+  },
+  "title_bar": {
+    "show_branch_status_icon": true,
+    "show_project_items": true,
+    "show_onboarding_banner": true,
+    "show_sign_in": false,
+    "show_menus": false,
+  },
+  "window_decorations": "server",
+  "preview_tabs": {
+    "enable_preview_multibuffer_from_code_navigation": true,
+    "enable_preview_from_file_finder": true,
+  },
+
+
+  "context_servers": {
+    "mcp-server-markitdown": {
+      "enabled": true,
+      "remote": false,
+      "settings": {
+        "context_servers": {
+          "markitdown": {
+            "command": "uvx",
+            "args": [
+              "--python",
+              "3.13",
+              "markitdown-mcp"
+            ]
+          }
+        }
+      }
+    },
+    "mcp-server-brave-search": {
+      "enabled": true,
+      "remote": false,
+      "settings": {
+        "brave_api_key": "REPLACE_ME"
+      }
+    },
+    "mcp-server-github": {
+      "enabled": true,
+      "remote": false,
+      "settings": {
+        "github_personal_access_token": "REPLACE_ME"
+      }
+    },
+    "gem": {
+      "enabled": false,
+      "remote": false,
+      "settings": {},
+    },
+    "browser-tools-context-server": {
+      "enabled": true,
+      "remote": false,
+      "settings": {},
+    },
+  },
+  "session": {
+    "trust_all_worktrees": true,
+  },
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false
+  },
+  "vim_mode": true,
+  "base_keymap": "Cursor",
+  "ui_font_family": "JetBrainsMono Nerd Font",
+  "ui_font_size": 15.0,
+  "buffer_font_family": "JetBrainsMono Nerd Font",
+  "buffer_font_size": 15.0,
+  "terminal": {
+    "font_family": "JetBrainsMono Nerd Font",
+    "font_size": 15.0,
+    //"env":"",
+    //"detect_venv":""
+  },
+  "theme": {
+    "mode": "dark",
+    "light": "h4ck3r",
+    "dark": "h4ck3r"
+  },
+  "experimental": {
+    "theme_overrides": {}
+    //"editor.background": "#001125",
+    //"editor.gutter.background": "#001125",
+    //"scrollbar.track.background": "#000000",
+    //"terminal.background": "#000000",
+    //"terminal.ansi.background": "#000000",
+  }
+}

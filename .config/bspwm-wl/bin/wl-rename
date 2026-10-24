@@ -1,0 +1,56 @@
+#!/bin/sh
+# wl-rename : rename the focused desktop via a one-line bemenu prompt.
+#   Enter a name  -> rename (shown on waybar)
+#   Empty / Esc   -> cancel
+#   "-" or "reset"-> back to its default number (1..10 by position; 10 shows as 0)
+#   wl-rename reset-all -> reset desktops 1..10 to defaults
+#   wl-rename renumber  -> re-apply the "[N]" position prefix to every renamed desktop
+# Renamed desktops are stored as "[N]NAME" (N = position 1..9, 0 for the 10th) so
+# the bar shows the number too; unrenamed ones keep their plain number.
+# Works in bspwm-wl (bemenu) and X11 bspwm (dmenu, same colours).
+[ -n "$WAYLAND_DISPLAY" ] && export BSPWM_SOCKET="${BSPWM_SOCKET:-/run/user/1000/bspwmwayland-0_0_0-socket}"
+prompt() {
+  if [ -n "$WAYLAND_DISPLAY" ]; then
+    : | BEMENU_BACKEND=wayland bemenu -p "$1" -H 26 --fn 'JetBrains Mono Bold 11' \
+      --tb '#000000' --tf '#00ff41' --fb '#000000' --ff '#c0ffc0' --nb '#000000' --nf '#c0ffc0' \
+      --hb '#1f6f2f' --hf '#c0ffc0' --ab '#000000' --af '#c0ffc0' -B 0
+  else
+    : | dmenu -p "$1" -fn 'JetBrains Mono:bold:size=11' -nb '#000000' -nf '#c0ffc0' -sb '#1f6f2f' -sf '#c0ffc0'
+  fi
+}
+default_name() { # position among this monitor's desktops -> default name
+  bspc query -D -m focused | grep -nx "$1" | cut -d: -f1
+}
+strip() { printf '%s' "$1" | sed 's/^\[[0-9]\]//'; }
+label() { # label POS BASE -> stored desktop name
+  idx=$1; [ "$idx" -eq 10 ] && idx=0
+  if [ -z "$2" ] || [ "$2" = "$1" ]; then printf '%s' "$1"; else printf '[%s]%s' "$idx" "$2"; fi
+}
+if [ "$1" = renumber ]; then
+  i=1; for d in $(bspc query -D -m focused); do
+    n=$(bspc query -D -d "$d" --names)
+    if [ "$i" -le 10 ] && [ "$n" != M ]; then
+      want=$(label "$i" "$(strip "$n")"); [ "$want" = "$n" ] || bspc desktop "$d" -n "$want"
+    fi
+    i=$((i+1)); done; exit 0
+fi
+if [ "$1" = reset-all ]; then
+  i=1; for d in $(bspc query -D -m focused); do
+    [ "$i" -le 10 ] && [ "$(bspc query -D -d "$d" --names)" != M ] && bspc desktop "$d" -n "$i"
+    i=$((i+1)); done; exit 0
+fi
+did=$(bspc query -D -d focused) || exit 0
+cur=$(bspc query -D -d focused --names)
+[ "$cur" = M ] && { dunstify -t 1500 "Rename" "M is the minimize tray; not renamed"; exit 0; }
+new=$(prompt "rename $(strip "$cur") (- resets)") || exit 0
+# trim spaces; cap length
+new=$(printf '%s' "$new" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' | cut -c1-24)
+[ -n "$new" ] || exit 0
+pos=$(default_name "$did")
+case "$new" in -|reset) new=$pos ;; esac
+new=$(strip "$new"); [ -n "$new" ] || exit 0
+[ "$pos" -le 10 ] 2>/dev/null && new=$(label "$pos" "$new")
+[ "$new" = "$cur" ] && exit 0
+# bspc refuses nothing, but duplicate names break name lookups; refuse them
+bspc query -D --names | grep -qxF -- "$new" && { dunstify -t 2000 "Rename" "'$new' already used"; exit 0; }
+bspc desktop "$did" -n "$new"

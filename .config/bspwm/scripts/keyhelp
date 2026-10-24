@@ -1,0 +1,16 @@
+#!/bin/sh
+# keyhelp : searchable list of the key bindings   (Super+F1)
+# part of sys7mfaul7 dotfiles
+# Reads sxhkdrc: a "# text" line directly above a key line becomes one entry.
+awk '
+    /^# =/ { next }
+    /^#  [a-z]/ { sec = substr($0, 4); next }
+    /^# / { desc = substr($0, 3); next }
+    /^[^ \t#]/ && desc != "" {
+        k = $0; gsub(/ \+ /, "+", k); gsub(/super/, "Super", k)
+        gsub(/ctrl/, "Ctrl", k); gsub(/alt/, "Alt", k); gsub(/shift/, "Shift", k)
+        printf "%-44s %-10s %s\n", k, sec, desc; desc = ""; next }
+    { desc = "" }
+' "$HOME/.config/bspwm/sxhkdrc" |
+    rofi -dmenu -i -p keys -theme "$HOME/.config/bspwm/rofi/windows.rasi" \
+        -theme-str 'element-icon { enabled: false; } listview { columns: 1; lines: 18; }' >/dev/null

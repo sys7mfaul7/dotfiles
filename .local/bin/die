@@ -1,0 +1,2 @@
+#!/bin/sh
+exec flatpak run io.github.horsicq.detect-it-easy "$@"

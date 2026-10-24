@@ -1,0 +1,28 @@
+#!/bin/sh
+# scratchterm : drop-down terminal at the top of the screen   (Super+Alt+O)
+# part of sys7mfaul7 dotfiles
+# First press starts it (70% wide, 35% tall, sticky); later presses hide/show it.
+NAME=scratchterm
+id=$(xdotool search --classname "^$NAME\$" 2>/dev/null | head -n 1)
+
+place() {
+    set -- $(bspc query -T -m focused | jq -r '.rectangle | "\(.x) \(.y) \(.width) \(.height)"')
+    w=$(( $3 * 70 / 100 )); h=$(( $4 * 35 / 100 ))
+    x=$(( $1 + ($3 - w) / 2 )); y=$(( $2 + $(bspc config top_padding) ))
+}
+
+if [ -z "$id" ]; then
+    place
+    bspc rule -a "*:$NAME" -o state=floating sticky=on layer=above \
+        rectangle="${w}x${h}+${x}+${y}"
+    exec xterm -name "$NAME"
+fi
+if bspc query -N -n "$id.hidden" >/dev/null 2>&1; then
+    place
+    bspc node "$id" -m focused
+    bspc node "$id" -g hidden=off
+    xdo move -x "$x" -y "$y" "$id"; xdo resize -w "$w" -h "$h" "$id"
+    bspc node "$id" -f
+else
+    bspc node "$id" -g hidden=on
+fi

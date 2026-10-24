@@ -1,0 +1,23 @@
+#!/bin/sh
+# display-auto : preferred mode for the known screens, plus a first DPI guess
+# part of sys7mfaul7 dotfiles
+# The X11 bspwm session refines the DPI afterwards with ~/.config/bspwm/scripts/dpi.
+out=$(xrandr | awk '/ connected/ {print $1; exit}')
+modes=$(xrandr | grep -A1 "^$out connected")
+if echo "$modes" | grep -q 3440x1440; then
+    xrandr --output "$out" --mode 3440x1440 --rate 240
+    dpi=96 cur=24
+elif echo "$modes" | grep -q 2880x1800; then
+    xrandr --output "$out" --mode 2880x1800 --rate 110 2>/dev/null || xrandr --output "$out" --mode 2880x1800
+    dpi=144 cur=36
+else
+    dpi=144 cur=36
+fi
+echo "Xft.dpi: $dpi" | xrdb -merge
+for xs in "$HOME/.config/bspwm/generated/xsettingsd" "$HOME/.config/bspwm/config/xsettingsd"; do
+    [ -f "$xs" ] || continue
+    sed -i "s|^Xft/DPI .*|Xft/DPI $((dpi * 1024))|; s|^Gtk/CursorThemeSize .*|Gtk/CursorThemeSize $cur|" "$xs"
+    pkill -HUP -x xsettingsd 2>/dev/null
+    break
+done
+echo "$dpi" >"$HOME/.cache/display-dpi"

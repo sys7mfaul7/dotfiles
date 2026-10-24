@@ -1,0 +1,22 @@
+/* ~/.config/bspwm/rofi/windows.rasi : Super+Tab window switcher with thumbnails
+ * part of sys7mfaul7 dotfiles */
+@import "../generated/theme.rasi"
+
+configuration { show-icons: true; window-format: "{c}  {t}"; }
+
+* { background-color: transparent; text-color: @fg; margin: 0; padding: 0; spacing: 0; }
+window {
+    location: center; width: 46%;
+    background-color: @bg;
+    border: 1px; border-color: @accent;
+    padding: 10px;
+}
+mainbox  { children: [ inputbar, listview ]; spacing: 8px; }
+inputbar { children: [ prompt, entry ]; padding: 4px 6px; background-color: @bg-alt; }
+prompt   { text-color: @accent; padding: 0 8px 0 0; }
+listview { lines: 8; columns: 1; fixed-height: false; scrollbar: false; spacing: 2px; }
+element  { padding: 4px 8px; spacing: 12px; children: [ element-icon, element-text ]; }
+element-icon { size: 64px; }
+element-text { vertical-align: 0.5; }
+element selected.normal { background-color: @sel-bg; }
+element-text selected { font: @font-emph; }

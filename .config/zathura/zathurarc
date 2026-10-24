@@ -1,0 +1,36 @@
+# ~/.config/zathura/zathurarc : PDF viewer, green-on-black
+# part of sys7mfaul7 dotfiles
+set recolor              true
+set recolor-darkcolor    "#c0ffc0"
+set recolor-lightcolor   "#000000"
+set default-bg           "#000000"
+set default-fg           "#c0ffc0"
+set statusbar-bg         "#0a0e14"
+set statusbar-fg         "#c0ffc0"
+set inputbar-bg          "#000000"
+set inputbar-fg          "#c0ffc0"
+set notification-bg      "#0a0e14"
+set notification-fg      "#c0ffc0"
+set notification-error-bg   "#0a0e14"
+set notification-error-fg   "#ff5f5f"
+set notification-warning-bg "#0a0e14"
+set notification-warning-fg "#00ff41"
+set completion-bg        "#0a0e14"
+set completion-fg        "#c0ffc0"
+set completion-group-bg  "#000000"
+set completion-group-fg  "#00ff41"
+set completion-highlight-bg "#1f6f2f"
+set completion-highlight-fg "#c0ffc0"
+set index-bg             "#000000"
+set index-fg             "#c0ffc0"
+set index-active-bg      "#1f6f2f"
+set index-active-fg      "#c0ffc0"
+set highlight-color      "#1f6f2f"
+set highlight-active-color "#00ff41"
+set render-loading-bg    "#000000"
+set render-loading-fg    "#4f7f5a"
+set font                 "DejaVu Sans Mono 10"
+set adjust-open          width
+set window-title-home-tilde true
+set statusbar-basename   true
+set selection-clipboard  clipboard

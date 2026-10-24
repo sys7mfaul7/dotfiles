@@ -1,0 +1,12 @@
+#!/bin/sh
+# Wayland twin of ~/.config/bspwm/scripts/bartui, using foot. Usage: wl-bartui audio|network|bluetooth|top|calendar
+have() { command -v "$1" >/dev/null 2>&1; }
+F() { id=$1; shift; pkill -x -f "foot --app-id=$id .*" 2>/dev/null && exit 0; exec foot --app-id="$id" "$@"; }
+case "$1" in
+  audio)     if have wiremix; then c=wiremix; elif have pulsemixer; then c=pulsemixer; else exec pavucontrol; fi
+             F BarTUI-audio -T Audio $c ;;
+  network)   F BarTUI-net -T Network sh -c 'sleep 0.3; exec nmtui' ;;
+  bluetooth) if have bluetui; then c=bluetui; else c=bluetoothctl; fi; F BarTUI-bt -T Bluetooth $c ;;
+  top)       F BarTUI-top -T btop btop ;;
+  calendar)  F BarCal -T Calendar -W 66x11 sh -c 'cal -3 --color=always; read -r _' ;;
+esac

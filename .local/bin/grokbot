@@ -1,0 +1,40 @@
+#!/bin/sh
+[ -z "$DBUS_SESSION_BUS_ADDRESS" ] && [ -r "$XDG_RUNTIME_DIR/dbus-env" ] && . "$XDG_RUNTIME_DIR/dbus-env"
+# --- D-Bus: find or start a real session bus (bak-clipcrash) ---
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+case "$DBUS_SESSION_BUS_ADDRESS" in ""|disabled:*) unset DBUS_SESSION_BUS_ADDRESS;; esac
+[ -z "$DBUS_SESSION_BUS_ADDRESS" ] && [ -r "$XDG_RUNTIME_DIR/dbus-env" ] && . "$XDG_RUNTIME_DIR/dbus-env"
+if [ -z "$DBUS_SESSION_BUS_ADDRESS" ] && [ -S "$XDG_RUNTIME_DIR/bus" ]; then
+  export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+fi
+if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
+  eval "$(dbus-launch --sh-syntax)"
+  printf 'export DBUS_SESSION_BUS_ADDRESS=%s\nexport DBUS_SESSION_BUS_PID=%s\n' "$DBUS_SESSION_BUS_ADDRESS" "$DBUS_SESSION_BUS_PID" > "$XDG_RUNTIME_DIR/dbus-env"
+fi
+export DISPLAY="${DISPLAY:-:0}"
+export XAUTHORITY="${XAUTHORITY:-$HOME/.Xauthority}"
+APP="$HOME/.local/opt/grokbot/squashfs-root"
+SHIM="$HOME/.local/opt/grokbot/shim"
+FIFO="$HOME/.local/opt/grokbot/open.fifo"
+# A grokbot:// link while the app runs: just forward it to the running instance
+[ -p "$FIFO" ] || { rm -f "$FIFO"; mkfifo "$FIFO"; }
+# Host-side opener: URLs written by the container open in the host browser
+if ! pgrep -f "grokbot-opener" >/dev/null; then
+  (exec -a grokbot-opener sh -c "while true; do if read -r u < \"$FIFO\"; then [ -n \"\$u\" ] && /run/current-system/profile/bin/xdg-open \"\$u\" >/dev/null 2>&1 & fi; done") &
+fi
+WL_ARGS=""; WL_FLAGS=""
+if [ -n "$WAYLAND_DISPLAY" ] && [ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]; then
+  WL_ARGS="--preserve=^WAYLAND_DISPLAY wayland"
+  WL_FLAGS="--ozone-platform=wayland --enable-features=WaylandWindowDecorations --disable-gpu-compositing"
+  # GROKBOT_X11=1 runs through XWayland instead
+  [ "$GROKBOT_X11" = 1 ] && { WL_ARGS=""; WL_FLAGS="--ozone-platform=x11"; }
+fi
+exec guix shell --container --emulate-fhs --network --share="$HOME" \
+  --share=/tmp --share=/dev/shm --expose="$XAUTHORITY" --share=/dev/dri \
+  --share=/run/dbus --share="$XDG_RUNTIME_DIR" --preserve=^XDG_RUNTIME_DIR \
+  --preserve=^DISPLAY --preserve=^XAUTHORITY --preserve=^DBUS_SESSION_BUS_ADDRESS \
+  gtk+ nss nspr alsa-lib libxkbcommon mesa libdrm libxscrnsaver libxtst cups at-spi2-core \
+  dbus expat libsecret eudev coreutils bash glibc-locales fontconfig font-dejavu font-google-noto-emoji font-google-noto \
+  nss-certs libxcomposite libxdamage libxrandr libxext libx11 libxcb libxfixes pango cairo \
+  gdk-pixbuf glib libnotify gcc-toolchain libxshmfence openssh grep sed gawk findutils procps which less xdg-utils $WL_ARGS -- \
+  env DBUS_SYSTEM_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket PATH="$SHIM:/bin:/usr/bin" BROWSER="$SHIM/xdg-open" "$APP/grok-bot" --no-sandbox $WL_FLAGS "$@"

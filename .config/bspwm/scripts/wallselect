@@ -1,0 +1,13 @@
+#!/bin/sh
+# wallselect : choose a wallpaper from $WALLPAPER_DIR   (Super+Alt+W)
+# part of sys7mfaul7 dotfiles
+# Saves through wl-wallpaper so bspwm-wl and Niri use the same picture.
+. "$HOME/.config/bspwm/theme"
+c=$( { find "$WALLPAPER_DIR" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) -printf '%f\n' 2>/dev/null | sort
+       echo "(none: plain black)"; } |
+     rofi -dmenu -i -p wallpaper -theme "$HOME/.config/bspwm/rofi/dmenu.rasi") || exit 0
+case $c in
+    "(none: plain black)") exec "$HOME/.config/bspwm-wl/bin/wl-wallpaper" set "$HOME/.config/bspwm-wl/solid/solid-black.png" ;;
+    "") exit 0 ;;
+    *) exec "$HOME/.config/bspwm-wl/bin/wl-wallpaper" set "$WALLPAPER_DIR/$c" ;;
+esac

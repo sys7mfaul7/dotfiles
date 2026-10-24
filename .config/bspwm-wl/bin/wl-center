@@ -1,0 +1,9 @@
+#!/bin/sh
+# wl-center [fit] : Wayland port of bsp-center (bspc only, no xdotool)
+if ! bspc query -N -n focused.floating >/dev/null; then
+  if [ "$1" = fit ]; then bspc node @/ -B; elif bspc query -N -n focused.leaf >/dev/null; then bspc node @parent -B; else bspc node -B; fi; exit 0; fi
+eval $(bspc query -T -m focused | jq -r '.rectangle|"MX=\(.x) MY=\(.y) MW=\(.width) MH=\(.height)"')
+eval $(bspc query -T -n focused | jq -r '.client.floatingRectangle|"X=\(.x) Y=\(.y) W=\(.width) H=\(.height)"')
+if [ "$1" = fit ]; then NW=$((MW*50/100)); NH=$((MH*80/100)); else NW=${2:-$W}; NH=${3:-$H}; fi
+[ "$NW" != "$W" ] || [ "$NH" != "$H" ] && bspc node -z bottom_right $((NW-W)) $((NH-H))
+bspc node -v $((MX+(MW-NW)/2-X)) $((MY+(MH-NH)/2-Y))

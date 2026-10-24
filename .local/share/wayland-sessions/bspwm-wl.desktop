@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=bspwm-wl (bspwm1 Wayland)
+Comment=bspwm1 wlroots compositor (test)
+Exec=/home/USER/.local/bin/bspwm-wl-session
+Type=Application
+DesktopNames=bspwm-wl

@@ -1,0 +1,7 @@
+#!/bin/sh
+# Chromium on Wayland (falls back to X11/XWayland automatically).
+# Always open a NEW window (on the current workspace) instead of a tab in an existing window,
+# except for --app / profile-only launches that manage their own windows.
+NW=--new-window
+for a in "$@"; do case "$a" in --app*|--new-window|--incognito) NW= ;; esac; done
+exec chromium --ozone-platform-hint=auto --enable-features=WebRTCPipeWireCapturer,WaylandWindowDecorations $NW "$@"

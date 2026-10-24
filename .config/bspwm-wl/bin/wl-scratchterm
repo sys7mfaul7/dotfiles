@@ -1,0 +1,12 @@
+#!/bin/sh
+# wl-scratchterm : drop-down foot (app-id scratchpad) toggle (port of Bspwm-ScratchPad)
+# hide if shown on the FOCUSED desktop; otherwise bring here, show, focus.
+exec 9>"${XDG_RUNTIME_DIR:-/tmp}/bspwm-wl-scratchterm.lock"; flock -w 1 9 || exit 0
+id=$(bspc wm -d | jq -r '[.. | objects | select(.client?.className == "scratchpad") | .id] | first // empty')
+if [ -z "$id" ]; then exec 9>&-; exec foot --app-id=scratchpad; fi
+id=$(printf '0x%08X' "$id")
+if bspc query -N -d focused -n '.!hidden.window' | grep -qx "$id"; then
+  bspc node "$id" -g hidden=on
+else
+  bspc node "$id" -d focused; bspc node "$id" -g hidden=off; bspc node -f "$id"
+fi
