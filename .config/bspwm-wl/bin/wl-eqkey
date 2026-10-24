@@ -1,0 +1,7 @@
+#!/bin/sh
+# wl-eqkey [x11] : Super+= -- centre a focused floating window, otherwise equalize columns
+D="$HOME/.config/bspwm-wl/bin"
+if bspc query -N -n focused.floating >/dev/null 2>&1; then
+  if [ "$1" = x11 ]; then exec "$HOME/.local/bin/bsp-center"; else exec "$D/wl-center"; fi
+fi
+exec "$D/wl-eqcols"

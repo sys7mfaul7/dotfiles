@@ -1,5 +1,5 @@
 #!/bin/sh
 # wl-calc: bc calculator in bemenu (same look as wl-powermenu)
-exec "$HOME/.local/bin/calc-core" env BEMENU_BACKEND=wayland bemenu -p 'calc' -H 26 --fn 'JetBrains Mono Bold 11' \
+exec "$HOME/.local/bin/calc-core" env BEMENU_BACKEND=wayland bemenu -p 'calc' -H 22 --fn 'JetBrains Mono Bold 11' \
   --tb '#000000' --tf '#00ff41' --fb '#000000' --ff '#c0ffc0' --nb '#000000' --nf '#c0ffc0' \
   --hb '#1f6f2f' --hf '#c0ffc0' --ab '#000000' --af '#c0ffc0' -B 0

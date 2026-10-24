@@ -14,7 +14,7 @@ configuration { show-icons: false; drun-display-format: "{name}"; }
 }
 window {
     location: north; anchor: north;
-    width: 100%; height: 1.77em;   /* = 26px at 96 DPI with an 11pt font; scales with DPI */
+    width: 100%; height: 1.50em;   /* = 22px at 96 DPI with an 11pt font; scales with DPI */
     children: [ bar ];
 }
 bar      { orientation: horizontal; children: [ prompt, entry, listview ]; padding: 0 0.7em; }

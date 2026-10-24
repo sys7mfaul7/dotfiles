@@ -1,7 +1,7 @@
 #!/bin/sh
 # bspwm-wl Super+D: one-line dmenu-style launcher matching the X11 rofi bar look
 export BEMENU_BACKEND=wayland
-exec bemenu-run -p '' -H 26 --fn 'JetBrains Mono Bold 11' \
+exec bemenu-run -p '' -H 22 --fn 'JetBrains Mono Bold 11' \
   --tb '#000000' --tf '#00ff41' --fb '#000000' --ff '#c0ffc0' \
   --nb '#000000' --nf '#c0ffc0' --ab '#000000' --af '#c0ffc0' \
   --hb '#1f6f2f' --hf '#c0ffc0' --sb '#1f6f2f' --sf '#00ff41' \

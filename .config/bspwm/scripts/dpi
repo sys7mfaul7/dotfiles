@@ -10,7 +10,7 @@
 #   physical = horizontal pixels / (width in mm / 25.4)   (from xrandr)
 #   screens under 18" diagonal (laptops) are viewed closer, so x0.6
 #   then rounded to a multiple of 24 and kept within 96..288.
-# 96 DPI is the reference: 11pt text = ~15px, the bar = 26px.
+# 96 DPI is the reference: 11pt text = ~15px, the bar = 22px.
 B="$HOME/.config/bspwm"
 
 pick() {

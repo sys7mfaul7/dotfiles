@@ -5,10 +5,13 @@ bspc query -N -n focused.floating >/dev/null || exit 0
 eval $(bspc query -T -m focused | jq -r '.rectangle|"MX=\(.x) MY=\(.y) MW=\(.width) MH=\(.height)"')
 eval $(bspc query -T -n focused | jq -r '.client.floatingRectangle|"X=\(.x) Y=\(.y) W=\(.width) H=\(.height)"')
 TP=$(bspc config top_padding); BP=$(bspc config bottom_padding); B=$(bspc config border_width)
+# reserved space (bar): larger of global padding and the monitor padding / exclusive zone
+eval $(bspc query -T -m focused | jq -r '.padding|"PT=\(.top) PB=\(.bottom) PL=\(.left) PR=\(.right)"')
+[ "${PT:-0}" -gt "$TP" ] && TP=$PT; [ "${PB:-0}" -gt "$BP" ] && BP=$PB
 NX=$X; NY=$Y
 case $1 in
-  west)  NX=$((MX+G)) ;;
-  east)  NX=$((MX+MW-W-2*B-G)) ;;
+  west)  NX=$((MX+${PL:-0}+G)) ;;
+  east)  NX=$((MX+MW-${PR:-0}-W-2*B-G)) ;;
   north) NY=$((MY+TP+G)) ;;
   south) NY=$((MY+MH-BP-H-2*B-G)) ;;
 esac

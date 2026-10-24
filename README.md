@@ -144,9 +144,10 @@ This section is generated from the `K` / `KE` lines in `.config/bspwm-wl/bspwmrc
 | `ctrl + super + alt + Delete` | `loginctl reboot` |
 | `ctrl + super + alt + q` | `bspc quit` |
 | `super + alt + q` | `bspc quit` |
-| `ctrl + super + alt + l` | `swaylock -f -c 000000 --inside-color 000000 --ring-color 1f6f2f --key-hl-color 00ff41 --text-color c0ffc0` |
+| `ctrl + alt + l` | `swaylock -f -c 000000 --indicator-idle-visible --inside-color 000000 --ring-color 1f6f2f --key-hl-color 00ff41 --text-color c0ffc0` |
 | `ctrl + super + alt + k` | `bspc node -k` |
 | `ctrl + super + alt + s` | `$HOME/.config/bspwm-wl/bspwmrc` |
+| `super + alt + r` | `$HOME/.config/bspwm-wl/bspwmrc` - reload config |
 | `ctrl + alt + b` | `$HOME/.config/bspwm-wl/bspwmrc && dunstify -u low bspwm-wl 'keys reloaded'` |
 
 ### media keys
@@ -185,7 +186,7 @@ This section is generated from the `K` / `KE` lines in `.config/bspwm-wl/bspwmrc
 |---|---|
 | `super + u` | `bspc node @parent -R 90` |
 | `super + ctrl + alt + b` | `bspc node @/ -B` |
-| `super + equal` | `$WB/wl-center` |
+| `super + ctrl + equal` | `$WB/wl-center` |
 | `super + shift + equal` | `$WB/wl-center fit` |
 | `super + plus` | `$WB/wl-center fit` |
 | `super + a` | `bspc node -f @parent` |
@@ -201,7 +202,7 @@ This section is generated from the `K` / `KE` lines in `.config/bspwm-wl/bspwmrc
 | `super + shift + r` | `bspc node @/ --rotate -90` |
 | `super + apostrophe` | `bspc desktop -f last` |
 | `super + shift + apostrophe` | `bspc desktop -f last` |
-| `ctrl + alt + l` | `$WB/wl-blank` |
+| `ctrl + super + alt + l` | `$WB/wl-blank` |
 | `super + Prior` | `bspc desktop -f next.local` |
 | `super + Next` | `bspc desktop -f prev.local` |
 | `super + shift + Prior` | `$X11B/bspwm-sel shift next` |
@@ -236,8 +237,11 @@ _In the loops below, `$k` is h/j/k/l or the arrow keys, and `$dir` is west/south
 | `super + $k` | `bspc node -f $dir.!sticky.!hidden.local` |
 | `super + shift + $k` (repeat) | `$WB/wl-smartmove $dir` |
 | `ctrl + alt + $k` | `bspc node -s $dir.local` |
-| `super + alt + $k` | `bspc node -p ~$dir` |
-| `super + alt + shift + $k` | `$WB/wl-edge $dir` |
+| `super + alt + $k` | `$WB/wl-altdir $dir` - floating: edge, tiled: presel |
+| `super + alt + shift + Left` (repeat) | `bspc node focused.floating -v -80 0` |
+| `super + alt + shift + Right` (repeat) | `bspc node focused.floating -v 80 0` |
+| `super + alt + shift + Up` (repeat) | `bspc node focused.floating -v 0 -80` |
+| `super + alt + shift + Down` (repeat) | `bspc node focused.floating -v 0 80` |
 
 ### preselection
 
@@ -278,7 +282,9 @@ _In the loops below, `$k` is h/j/k/l or the arrow keys, and `$dir` is west/south
 | Keys | Action |
 |---|---|
 | `super + ctrl + r` | `$WB/wl-rename` - type a name; "-" or "reset" = default number; Esc cancels |
-| `super + ctrl + equal` | `$WB/wl-eqcols` - equal-width columns on this desktop |
+| `super + equal` | `$WB/wl-eqkey` - floating: centre, tiled: equal-width columns |
+| `super + KP_Equal` | `$WB/wl-eqkey` - keypad = : same as Super+= |
+| `super + shift + KP_Equal` | `$WB/wl-center fit` |
 | `super + ctrl + alt + equal` | `$WB/wl-eqcols -r` - equal columns + equal rows in each column |
 
 ### window stacking / minimize / floats / opacity / emoji
@@ -359,7 +365,7 @@ All sizes are in **points**, so they follow the screen DPI. At login `scripts/dp
 
 To force a value, put a number in `~/.config/bspwm/dpi` (for example `echo 120 > ~/.config/bspwm/dpi`) or export `BSPWM_DPI=120` before starting the session. `dpi` with no argument prints the value it would use.
 
-Reference look at 96 DPI: 11 pt text, bar 19.5 pt = 26 px. At 144 DPI the bar is 39 px. Polybar's `dpi` and rofi's `dpi` are set to the session DPI, the cursor is 24 px x DPI/96, and GTK/Qt get it through xsettingsd and `QT_FONT_DPI`.
+Reference look at 96 DPI: 11 pt text, bar 16.5 pt = 22 px (the waybars in bspwm-wl, niri and river are 22 px too). At 144 DPI the bar is 33 px. Polybar's `dpi` and rofi's `dpi` are set to the session DPI, the cursor is 24 px x DPI/96, and GTK/Qt get it through xsettingsd and `QT_FONT_DPI`.
 
 Bar text and icons are centred with per-font vertical offsets in `theme` (`BAR_YOFF_TEXT`, `BAR_YOFF_ICON`, `BAR_YOFF_ICON_BIG`, pixels at 96 DPI, + = down). `theme-apply` scales them with the DPI (3/2/3 at 96 DPI become 5/3/5 at 144). If you change the font, rerun `theme-apply` and nudge these until digits and icons line up.
 
@@ -430,11 +436,12 @@ From `.config/bspwm/sxhkdrc` (press `super + F1` for the same list in a menu). `
 
 | Keys | Action |
 |---|---|
-| `ctrl + super + alt + {p,Delete,q,l,k,s}` | poweroff / reboot / log out / lock / xkill / reload the session |
+| `ctrl + super + alt + {p,Delete,q,k,s}` | poweroff / reboot / log out / xkill / reload the session |
 | `ctrl + alt + q` | log out |
 | `super + Escape` | reload key bindings |
 | `super + alt + {h,u}` | hide / show the bar |
-| `ctrl + alt + l` | screen off now (any input wakes it) |
+| `ctrl + alt + l` | lock the screen |
+| `ctrl + super + alt + l` | screen off now, no lock (any input wakes it) |
 | `ctrl + alt + {plus,minus,t}` | opacity of the focused window: less / more / reset |
 | `super + o` | toggle opacity of the focused window |
 | `XF86MonBrightness{Up,Down}` | brightness |
@@ -466,8 +473,10 @@ From `.config/bspwm/sxhkdrc` (press `super + F1` for the same list in a menu). `
 | `super + Tab` | window switcher with previews (hold Super, tap Tab; shift: backwards) |
 | `super + shift + Tab` | ″ |
 | `super + shift + {bracketleft,bracketright}` | raise / lower in the stack |
-| `super + {equal,shift + equal,plus}` | centre floating window (shift / plus: 50% x 80%) |
-| `super + alt + shift + {Left,Down,Up,Right}` | snap floating window to an edge |
+| `super + {equal,KP_Equal}` | floating: centre the window; tiled: equal-width columns (keypad = too) |
+| `super + shift + KP_Equal` | centre floating window at 50% x 80% |
+| `super + {ctrl + equal,shift + equal,plus}` | centre floating window (shift / plus: 50% x 80%) |
+| `super + alt + shift + {Left,Down,Up,Right}` | move floating window fast (80 px, repeats while held) |
 | `super + {KP_Add,minus,KP_Subtract}` | grow / shrink |
 | `super + ctrl + {Up,Down,Left,Right}` | grow / shrink around the centre |
 | `super + alt + {plus,minus}` | tiled window bigger / smaller |
@@ -482,14 +491,14 @@ From `.config/bspwm/sxhkdrc` (press `super + F1` for the same list in a menu). `
 
 | Keys | Action |
 |---|---|
-| `super + alt + {Left,Down,Up,Right}` | preselect (press again to cancel) |
+| `super + alt + {Left,Down,Up,Right}` | floating: snap to that edge (below the bar); tiled: preselect (press again to cancel) |
 | `super + ctrl + {v,q}` | preselect below / cancel |
 | `super + alt + Escape` | cancel preselection (also a pending smart-move) |
 | `super + {Return,shift + Escape}` | move into the preselected spot / clear the selection |
 | `super + u` | rotate the split of this window |
 | `super + {shift + }r` | rotate the whole desktop |
 | `super + ctrl + alt + b` | balance |
-| `super + ctrl + {alt + }equal` | equal columns (alt: rows too) |
+| `super + ctrl + alt + equal` | equal columns and equal rows in each column |
 
 ### desktops
 

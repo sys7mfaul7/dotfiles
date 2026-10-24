@@ -30,7 +30,7 @@ BORDER_WIDTH="2"
 BORDER_NORMAL="#1a2a1f"
 BORDER_FOCUSED="#c0ffc0"
 WINDOW_GAP="5"
-BAR_HEIGHT_PT="19.5"  # bar height in points (19.5pt = 26px at 96 DPI)
+BAR_HEIGHT_PT="16.5"  # bar height in points (16.5pt = 22px at 96 DPI)
 BAR_GAP_PX="6"        # air between bar and windows; top_padding = bar px + this
 SIDE_PADDING="1"
 # Vertical nudge of each bar font, in pixels AT 96 DPI (+ = down). theme-apply

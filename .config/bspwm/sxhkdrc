@@ -153,8 +153,8 @@ super + alt + p
 # ======================================================================
 
 # poweroff / reboot / log out / lock / xkill / reload the session
-ctrl + super + alt + {p,Delete,q,l,k,s}
-    {loginctl poweroff,loginctl reboot,bspc quit,lock,xkill,reload}
+ctrl + super + alt + {p,Delete,q,k,s}
+    {loginctl poweroff,loginctl reboot,bspc quit,xkill,reload}
 
 # log out
 ctrl + alt + q
@@ -169,7 +169,11 @@ super + alt + {h,u}
     bar {hide,show}
 
 # screen off now (any input wakes it)
+# Ctrl+Alt+L locks; Ctrl+Super+Alt+L turns the monitor off (no lock)
 ctrl + alt + l
+    lock
+
+ctrl + super + alt + l
     sleep 0.6; xset dpms force off
 
 # opacity of the focused window: less / more / reset
@@ -279,12 +283,12 @@ super + shift + {bracketleft,bracketright}
     ~/.local/bin/bsp-stack {raise,lower}
 
 # centre floating window (shift / plus: 50% x 80%)
-super + {equal,shift + equal,plus}
+super + {ctrl + equal,shift + equal,plus}
     ~/.local/bin/bsp-center {_,fit,fit}
 
 # snap floating window to an edge
 super + alt + shift + {Left,Down,Up,Right}
-    ~/.local/bin/bsp-edge {west,south,north,east}
+    bspc node focused.floating -v {-80 0,0 80,0 -80,80 0}
 
 # grow / shrink
 super + {KP_Add,minus,KP_Subtract}
@@ -322,7 +326,7 @@ super + ctrl + {_,shift + }Tab
 
 # preselect (press again to cancel)
 super + alt + {Left,Down,Up,Right}
-    bspc node -p ~{west,south,north,east}
+    ~/.config/bspwm-wl/bin/wl-altdir {west,south,north,east} x11
 
 # preselect below / cancel
 super + ctrl + {v,q}
@@ -349,8 +353,8 @@ super + ctrl + alt + b
     bspc node @/ -B
 
 # equal columns (alt: rows too)
-super + ctrl + {_,alt + }equal
-    ~/.config/bspwm-wl/bin/wl-eqcols {_,-r}
+super + {_,ctrl + alt + }equal
+    ~/.config/bspwm-wl/bin/{wl-eqkey x11,wl-eqcols -r}
 
 # ======================================================================
 #  desktops
@@ -383,3 +387,9 @@ super + {_,shift + }apostrophe
 # rename this desktop
 super + ctrl + r
     ~/.config/bspwm-wl/bin/wl-rename
+
+# keypad = : same as Super+= / Super+Shift+=
+super + KP_Equal
+    ~/.config/bspwm-wl/bin/wl-eqkey x11
+super + shift + KP_Equal
+    ~/.local/bin/bsp-center fit

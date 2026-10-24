@@ -1,6 +1,6 @@
 #!/bin/sh
 # wl-emoji: emoji picker in bemenu (same look as wl-calc / Super+C)
-exec "$HOME/.local/bin/emoji-core" env BEMENU_BACKEND=wayland bemenu -i -p 'emoji' -H 26 \
+exec "$HOME/.local/bin/emoji-core" env BEMENU_BACKEND=wayland bemenu -i -p 'emoji' -H 22 \
   --fn 'JetBrains Mono Bold 11' \
   --tb '#000000' --tf '#00ff41' --fb '#000000' --ff '#c0ffc0' --nb '#000000' --nf '#c0ffc0' \
   --hb '#1f6f2f' --hf '#c0ffc0' --ab '#000000' --af '#c0ffc0' -B 0

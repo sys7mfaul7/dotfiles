@@ -5,11 +5,14 @@ bspc query -N -n focused.floating >/dev/null || exit 0
 id=$(bspc query -N -n focused)
 eval $(bspc query -T -m focused | jq -r ".rectangle|\"MX=\(.x) MY=\(.y) MW=\(.width) MH=\(.height)\"")
 TP=$(bspc config top_padding); BP=$(bspc config bottom_padding)
+# reserved space (bar): larger of global padding and the monitor padding / exclusive zone
+eval $(bspc query -T -m focused | jq -r '.padding|"PT=\(.top) PB=\(.bottom) PL=\(.left) PR=\(.right)"')
+[ "${PT:-0}" -gt "$TP" ] && TP=$PT; [ "${PB:-0}" -gt "$BP" ] && BP=$PB
 eval $(xdotool getwindowgeometry --shell $id)
 B=$(bspc config border_width)
 case $1 in
-  west)  X=$((MX+G)) ;;
-  east)  X=$((MX+MW-WIDTH-2*B-G)) ;;
+  west)  X=$((MX+${PL:-0}+G)) ;;
+  east)  X=$((MX+MW-${PR:-0}-WIDTH-2*B-G)) ;;
   north) Y=$((MY+TP+G)) ;;
   south) Y=$((MY+MH-BP-HEIGHT-2*B-G)) ;;
 esac

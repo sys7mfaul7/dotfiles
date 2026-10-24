@@ -9,6 +9,10 @@ bspc config window_gap 5
 bspc config focused_border_color '#c0ffc0'
 bspc config active_border_color  '#1a2a1f'
 bspc config normal_border_color  '#1a2a1f'
+# Pinned (sticky) windows: yellow when focused, dark yellow otherwise; marked (#ff6000) wins.
+# Needs the sticky-border build of bspwm-wl; errors harmlessly on older builds.
+bspc config sticky_focused_border_color '#ffe600' 2>/dev/null
+bspc config sticky_border_color         '#7a6e00' 2>/dev/null
 bspc config presel_feedback true
 bspc config presel_feedback_color '#1f6f2f'
 bspc config split_ratio 0.5
@@ -71,9 +75,10 @@ K 'ctrl + super + alt + p'   'loginctl poweroff'
 K 'ctrl + super + alt + Delete' 'loginctl reboot'
 K 'ctrl + super + alt + q'   'bspc quit'
 K 'super + alt + q'          'bspc quit'
-K 'ctrl + super + alt + l'   'swaylock -f -c 000000 --inside-color 000000 --ring-color 1f6f2f --key-hl-color 00ff41 --text-color c0ffc0'
+K 'ctrl + alt + l'             'swaylock -f -c 000000 --indicator-idle-visible --inside-color 000000 --ring-color 1f6f2f --key-hl-color 00ff41 --text-color c0ffc0'
 K 'ctrl + super + alt + k'   'bspc node -k'
 K 'ctrl + super + alt + s'   "$HOME/.config/bspwm-wl/bspwmrc"
+K 'super + alt + r'          "$HOME/.config/bspwm-wl/bspwmrc"   # reload config
 K 'ctrl + alt + b'           "$HOME/.config/bspwm-wl/bspwmrc && dunstify -u low bspwm-wl 'keys reloaded'"
 # ---- media keys ----
 K 'XF86MonBrightnessUp'      "$HOME/.local/bin/sys-brightness up"
@@ -100,7 +105,7 @@ K 'super + shift + alt + p' 'bsp-pip --big'
 # ---- layout ----
 K 'super + u'                'bspc node @parent -R 90'
 K 'super + ctrl + alt + b'   'bspc node @/ -B'
-K 'super + equal'            "$WB/wl-center"
+K 'super + ctrl + equal'     "$WB/wl-center"
 K 'super + shift + equal'    "$WB/wl-center fit"
 K 'super + plus'             "$WB/wl-center fit"
 K 'super + a'                'bspc node -f @parent'
@@ -112,7 +117,7 @@ K 'super + r'                'bspc node @/ --rotate 90'
 K 'super + shift + r'        'bspc node @/ --rotate -90'
 K 'super + apostrophe'       'bspc desktop -f last'
 K 'super + shift + apostrophe' 'bspc desktop -f last'
-K 'ctrl + alt + l'           "$WB/wl-blank"
+K 'ctrl + super + alt + l'   "$WB/wl-blank"
 K 'super + Prior'            'bspc desktop -f next.local'
 K 'super + Next'             'bspc desktop -f prev.local'
 K 'super + shift + Prior'    "$X11B/bspwm-sel shift next"
@@ -141,9 +146,13 @@ done
 for d in Left:west Down:south Up:north Right:east; do
   k=${d%%:*}; dir=${d#*:}
   K "ctrl + alt + $k"            "bspc node -s $dir.local"
-  K "super + alt + $k"           "bspc node -p ~$dir"
-  K "super + alt + shift + $k"   "$WB/wl-edge $dir"
+  K "super + alt + $k"           "$WB/wl-altdir $dir"   # floating: edge, tiled: presel
 done
+# fast nudge for floating windows (80px, repeats while held)
+KE 'super + alt + shift + Left' 'bspc node focused.floating -v -80 0'
+KE 'super + alt + shift + Right' 'bspc node focused.floating -v 80 0'
+KE 'super + alt + shift + Up' 'bspc node focused.floating -v 0 -80'
+KE 'super + alt + shift + Down' 'bspc node focused.floating -v 0 80'
 # ---- preselection ----
 K 'super + ctrl + v'         'bspc node -p south'
 K 'super + ctrl + q'         'bspc node -p cancel'
@@ -168,7 +177,9 @@ K 'super + shift + s'        "$WB/wl-scratch add"
 K 'super + ctrl + s'         "$WB/wl-scratch remove"
 # ---- desktop rename / equal columns ----
 K 'super + ctrl + r'         "$WB/wl-rename"            # type a name; "-" or "reset" = default number; Esc cancels
-K 'super + ctrl + equal'     "$WB/wl-eqcols"            # equal-width columns on this desktop
+K 'super + equal'            "$WB/wl-eqkey"             # floating: centre, tiled: equal-width columns
+K 'super + KP_Equal'         "$WB/wl-eqkey"             # keypad = : same as Super+=
+K 'super + shift + KP_Equal' "$WB/wl-center fit"
 K 'super + ctrl + alt + equal' "$WB/wl-eqcols -r"   # equal columns + equal rows in each column
 # ---- window stacking / minimize / floats / opacity / emoji ----
 K 'super + shift + bracketleft'  "$WB/wl-stack raise"

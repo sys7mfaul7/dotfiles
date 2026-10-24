@@ -1,0 +1,6 @@
+#!/bin/sh
+# wl-altdir <dir> [x11] : Super+Alt+Arrow -- floating: snap to edge, tiled: toggle preselection
+if bspc query -N -n focused.floating >/dev/null 2>&1; then
+  if [ "$2" = x11 ]; then exec "$HOME/.local/bin/bsp-edge" "$1"; else exec "$HOME/.config/bspwm-wl/bin/wl-edge" "$1"; fi
+fi
+exec bspc node -p "~$1"

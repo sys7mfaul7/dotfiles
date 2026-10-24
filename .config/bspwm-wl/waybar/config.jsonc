@@ -1,7 +1,7 @@
 {
  "layer": "top",
  "position": "top",
- "height": 26,
+ "height": 22,
  "spacing": 0,
  "margin-bottom": 0,
  "modules-left": [
@@ -14,28 +14,29 @@
   "custom/wintitle"
  ],
  "modules-right": [
+  "cpu",
+  "memory",
+  "disk",
   "network",
   "network#vpn",
   "custom/colorpicker",
-  "custom/bluetooth",
-  "battery",
   "custom/mplayer",
   "custom/usercard",
-  "cpu",
-  "memory",
+  "custom/bluetooth",
   "pulseaudio",
   "custom/updates",
-  "custom/clock",
+  "battery",
   "tray",
+  "custom/clock",
   "custom/power"
  ],
  "custom/launcher": {
-  "format": "<span color='#76EA00' size=\"13pt\"></span>",
+  "format": "<span rise='1pt' color='#76EA00' size=\"13pt\"></span>",
   "tooltip": false,
   "on-click": "bspwm-wl-menu"
  },
  "custom/dots": {
-  "format": " <span color='#578a29' size=\"10pt\">󰇙</span> ",
+  "format": " <span rise='1pt' color='#578a29' size=\"10pt\">󰇙</span> ",
   "tooltip": false
  },
  "ext/workspaces": {
@@ -58,21 +59,21 @@
  },
  "network": {
   "interval": 3,
-  "format-ethernet": "<span color='#578a29' size=\"10pt\">󰈀</span> {ipaddr}",
-  "format-wifi": "<span color='#578a29' size=\"10pt\">󰈀</span> {ipaddr}",
-  "format-disconnected": "<span color='#578a29' size=\"10pt\">󰈂</span> <span color='#4f7f5a'>Offline</span>",
+  "format-ethernet": "<span rise='1pt' color='#578a29' size=\"10pt\">󰈀</span> {ipaddr}",
+  "format-wifi": "<span rise='1pt' color='#578a29' size=\"10pt\">󰈀</span> {ipaddr}",
+  "format-disconnected": "<span rise='1pt' color='#578a29' size=\"10pt\">󰈂</span> <span rise='1pt' color='#4f7f5a'>Offline</span>",
   "tooltip-format": "{ifname} {essid}",
   "on-click": "nm-connection-editor",
   "on-click-right": "~/.config/bspwm-wl/bin/wl-bartui network"
  },
  "network#vpn": {
   "interface": "tun0",
-  "format": "<span color='#578a29'></span> {ipaddr}",
+  "format": "<span rise='1pt' color='#578a29'></span> {ipaddr}",
   "format-disconnected": "",
   "tooltip": false
  },
  "custom/colorpicker": {
-  "format": "<span color='#578a29'></span>",
+  "format": "<span rise='1pt' color='#578a29'></span>",
   "tooltip": false,
   "on-click": "sh -c 'c=$(grim -g \"$(slurp -p)\" -t ppm - | magick - -format \"%[hex:p{0,0}]\" info:-) && printf \"#%s\" \"$c\" | wl-copy && dunstify Colorpicker \"#$c copied\"'"
  },
@@ -88,44 +89,44 @@
  "battery": {
   "full-at": 99,
   "format": "{icon} {capacity}%",
-  "format-charging": "<span color='#00fa5c'></span> {capacity}%",
+  "format-charging": "<span rise='1pt' color='#00fa5c'></span> {capacity}%",
   "format-icons": [
-   "<span color='#578a29'></span>",
-   "<span color='#578a29'></span>",
-   "<span color='#578a29'></span>",
-   "<span color='#578a29'></span>",
-   "<span color='#578a29'></span>"
+   "<span rise='1pt' color='#578a29'></span>",
+   "<span rise='1pt' color='#578a29'></span>",
+   "<span rise='1pt' color='#578a29'></span>",
+   "<span rise='1pt' color='#578a29'></span>",
+   "<span rise='1pt' color='#578a29'></span>"
   ]
  },
  "custom/mplayer": {
-  "format": " <span color='#578a29'></span> ",
+  "format": " <span rise='1pt' color='#578a29'></span> ",
   "tooltip": false,
   "on-click": "foot -e ncmpcpp"
  },
  "custom/usercard": {
-  "format": " <span color='#539e06'></span> ",
+  "format": " <span rise='1pt' color='#539e06'></span> ",
   "tooltip": false
  },
  "cpu": {
   "interval": 1,
-  "format": " <span color='#578a29'></span> {usage}%",
+  "format": " <span rise='1pt' color='#578a29'></span> {usage}%",
   "on-click": "~/.config/bspwm-wl/bin/wl-bartui top"
  },
  "memory": {
   "interval": 3,
-  "format": " <span color='#578a29'></span> {used:0.1f}G",
+  "format": " <span rise='1pt' color='#578a29'></span> {percentage}%",
   "on-click": "~/.config/bspwm-wl/bin/wl-bartui top"
  },
  "pulseaudio": {
   "format": "{icon} {volume}",
-  "format-muted": "<span color='#578a29' size=\"10pt\">󰝟</span> <span color='#4f7f5a'>Muted</span>",
+  "format-muted": "<span rise='1pt' color='#578a29' size=\"10pt\">󰝟</span> <span rise='1pt' color='#4f7f5a'>Muted</span>",
   "format-icons": {
    "default": [
-    "<span color='#00ff41' size='10pt'>󰕿</span>",
-    "<span color='#00ff41' size='10pt'>󰖀</span>",
-    "<span color='#00ff41' size='10pt'>󰖀</span>",
-    "<span color='#00ff41' size='10pt'>󰕾</span>",
-    "<span color='#00ff41' size='10pt'>󰕾</span>"
+    "<span rise='1pt' color='#00ff41' size='10pt'>󰕿</span>",
+    "<span rise='1pt' color='#00ff41' size='10pt'>󰖀</span>",
+    "<span rise='1pt' color='#00ff41' size='10pt'>󰖀</span>",
+    "<span rise='1pt' color='#00ff41' size='10pt'>󰕾</span>",
+    "<span rise='1pt' color='#00ff41' size='10pt'>󰕾</span>"
    ]
   },
   "on-click": "pavucontrol",
@@ -138,15 +139,22 @@
  "custom/updates": {
   "exec": "cat $HOME/.cache/Updates.txt 2>/dev/null || echo 0",
   "interval": 600,
-  "format": " <span color='#578a29'></span> {}",
+  "format": " <span rise='1pt' color='#578a29'></span> {}",
   "tooltip": false
+ },
+ "disk": {
+  "interval": 30,
+  "path": "/",
+  "format": " <span rise='1pt' color='#578a29'>󰋊</span> {percentage_used}%",
+  "tooltip-format": "{used} of {total} used on {path}",
+  "on-click": "~/.config/bspwm-wl/bin/wl-bartui top"
  },
  "tray": {
   "spacing": 8,
   "icon-size": 16
  },
  "custom/power": {
-  "format": "<span color='#6DDE00'></span>",
+  "format": "<span rise='1pt' color='#6DDE00'></span>",
   "tooltip": false,
   "on-click": "~/.config/bspwm-wl/bin/wl-powermenu"
  },

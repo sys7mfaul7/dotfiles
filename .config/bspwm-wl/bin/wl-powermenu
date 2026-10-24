@@ -1,10 +1,13 @@
 #!/bin/sh
 # Power menu for bspwm-wl (bemenu, same look as Super+D)
-c=$(printf 'Lock\nLogout\nSuspend\nReboot\nShutdown\n' | BEMENU_BACKEND=wayland bemenu -p 'power' -H 26 --fn 'JetBrains Mono Bold 11' \
+# "Cancel" is first so a stray click (bemenu accepts the highlighted
+# entry on click) does nothing instead of locking the screen.
+LOCK='swaylock -f -c 000000 --indicator-idle-visible --inside-color 000000 --ring-color 1f6f2f --key-hl-color 00ff41 --text-color c0ffc0'
+c=$(printf 'Cancel\nLock\nLogout\nSuspend\nReboot\nShutdown\n' | BEMENU_BACKEND=wayland bemenu -p 'power' -H 22 --fn 'JetBrains Mono Bold 11' \
   --tb '#000000' --tf '#00ff41' --fb '#000000' --ff '#c0ffc0' --nb '#000000' --nf '#c0ffc0' \
   --hb '#1f6f2f' --hf '#c0ffc0' --ab '#000000' --af '#c0ffc0' -B 0) || exit 0
 case "$c" in
-  Lock)     command -v swaylock >/dev/null && exec swaylock -c 000000 ;;
+  Lock)     command -v swaylock >/dev/null && exec $LOCK ;;
   Logout)   [ "$XDG_CURRENT_DESKTOP" = niri ] && exec niri msg action quit --skip-confirmation; exec bspc quit ;;
   Suspend)  exec loginctl suspend ;;
   Reboot)   exec loginctl reboot ;;
