@@ -14,6 +14,10 @@ tooltip { background: #000000; border: 1px solid #1f6f2f; color: #c0ffc0; }
 #window { color: #c0ffc0; }
 #taskbar button.active { color: #c0ffc0; }
 #custom-launcher { padding: 0 6px 0 8px; }
-#network, #custom-colorpicker, #custom-bluetooth, #battery, #cpu, #memory, #pulseaudio, #custom-updates, #custom-clock, #tray { padding: 0 6px; }
+#network, #custom-net, #custom-colorpicker, #custom-bluetooth, #battery, #cpu, #memory, #pulseaudio, #custom-updates, #custom-clock, #tray { padding: 0 6px; }
 #custom-power { padding: 0 10px 0 6px; }
 #workspaces button.active, #workspaces button.focused { font-weight: bold; }   /* emphasis: focused workspace */
+
+/* guix updates: dim when 0, accent while checking */
+#custom-updates.zero { color: #4f7f5a; }
+#custom-updates.checking { color: #00ff41; }

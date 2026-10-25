@@ -1,8 +1,9 @@
-;; Local packages.  Use with: guix ... -L ~/guix-config/my-packages
+;; Local packages for r2d2.  Use with: guix ... -L ~/guix-config/my-packages
 (define-module (my packages)
   #:use-module (guix packages)
   #:use-module (guix gexp)
   #:use-module (guix download)
+  #:use-module (guix git-download)
   #:use-module (guix build-system font)
   #:use-module ((guix licenses) #:prefix license:))
 
@@ -56,7 +57,7 @@
                      (display "[Desktop Entry]
 Name=bspwm-wl (bspwm1 Wayland)
 Comment=bspwm1 wlroots compositor (test)
-Exec=/bin/sh -c 'exec \"$HOME/.local/bin/bspwm-wl-session\"'
+Exec=/home/USER/.local/bin/bspwm-wl-session
 Type=Application
 DesktopNames=bspwm-wl
 " port)))))))
@@ -81,12 +82,12 @@ user's locally built bspwm-wl compositor.")
                (use-modules (guix build utils))
                (let ((dir (string-append #$output "/share/wayland-sessions")))
                  (mkdir-p dir)
-                 (call-with-output-file (string-append dir "/niri-custom.desktop")
+                 (call-with-output-file (string-append dir "/niri-r2d2.desktop")
                    (lambda (port)
                      (display "[Desktop Entry]
 Name=Niri
-Comment=Scrollable-tiling Wayland compositor (custom config)
-Exec=/bin/sh -c 'exec \"$HOME/.local/bin/niri-start\"'
+Comment=Scrollable-tiling Wayland compositor (r2d2 config)
+Exec=/home/USER/.local/bin/niri-start
 Type=Application
 DesktopNames=niri
 " port)))))))
@@ -127,3 +128,39 @@ through the user's ~/.local/bin/niri-start launcher.")
                 (("gtk_misc_set_alignment \\(GTK_MISC \\(label\\), 0, 1.0\\);")
                  "gtk_misc_set_alignment (GTK_MISC (label), 0, 1.0); gtk_label_set_line_wrap (GTK_LABEL (label), TRUE); gtk_label_set_line_wrap_mode (GTK_LABEL (label), PANGO_WRAP_WORD_CHAR); gtk_label_set_max_width_chars (GTK_LABEL (label), 50);")))))))
     (synopsis "GNOME polkit agent with a narrow, wrapping Authenticate dialog")))
+
+;; libfprint 1.94.10: first release with the Realtek MOC driver entry for
+;; 2541:fa03 (Minisforum AI X1 Pro fingerprint reader).  Pinned to 1.94.x on
+;; purpose: enrolment reportedly segfaults with 1.95.x on this sensor.
+;; Since 1.94.9 the uru4000 driver uses OpenSSL instead of NSS.
+(define-public libfprint-r2d2
+  (package
+    (inherit (@ (gnu packages freedesktop) libfprint))
+    (name "libfprint")
+    (version "1.94.10")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.freedesktop.org/libfprint/libfprint")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1zhvyq55w754l2xlw5ps0rrvdbxafirq63dmsd0gwg1plqh59l38"))))
+    (arguments
+     (list #:configure-flags
+           #~(list (string-append "-Dudev_hwdb_dir=" #$output
+                                  "/lib/udev/hwdb.d")
+                   (string-append "-Dudev_rules_dir=" #$output
+                                  "/lib/udev/rules.d"))))
+    (inputs
+     (modify-inputs (package-inputs (@ (gnu packages freedesktop) libfprint))
+       (replace "nss" (@ (gnu packages tls) openssl))))))
+
+;; fprintd (daemon, CLI tools and pam_fprintd.so) built against libfprint-r2d2.
+(define-public fprintd-r2d2
+  (package
+    (inherit (@ (gnu packages freedesktop) fprintd))
+    (inputs
+     (modify-inputs (package-inputs (@ (gnu packages freedesktop) fprintd))
+       (replace "libfprint" libfprint-r2d2)))))

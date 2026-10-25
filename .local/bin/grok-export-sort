@@ -1,0 +1,109 @@
+#!/usr/bin/env python3
+"""Sort a Grok account-data export into real image/video files.
+Usage: grok-export-sort [export.zip ...] [-o OUTDIR]
+Default: every ~/Downloads/*.zip that contains prod-grok-backend.json,
+output ~/Pictures/grok-backup. Never deletes or overwrites anything."""
+import sys, os, re, json, zipfile, shutil, argparse, glob
+
+SIGS = [
+    (b'\xff\xd8\xff', 0, 'jpg', 'images'),
+    (b'\x89PNG', 0, 'png', 'images'),
+    (b'GIF8', 0, 'gif', 'images'),
+    (b'WEBP', 8, 'webp', 'images'),
+    (b'ftyp', 4, 'mp4', 'videos'),
+    (b'\x1a\x45\xdf\xa3', 0, 'webm', 'videos'),
+]
+
+def kind(path):
+    with open(path, 'rb') as f:
+        h = f.read(16)
+    for sig, off, ext, d in SIGS:
+        if h[off:off + len(sig)] == sig:
+            if ext == 'mp4' and h[8:12] in (b'qt  ',):
+                ext = 'mov'
+            return ext, d
+    s = h.lstrip()[:1]
+    if s in (b'{', b'['):
+        return 'json', 'other'
+    return 'bin', 'other'
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('zips', nargs='*')
+    ap.add_argument('-o', '--out', default=os.path.expanduser('~/Pictures/grok-backup'))
+    a = ap.parse_args()
+    zips = a.zips
+    if not zips:
+        for z in sorted(glob.glob(os.path.expanduser('~/Downloads/*.zip'))):
+            try:
+                if any(n.endswith('prod-grok-backend.json') for n in zipfile.ZipFile(z).namelist()):
+                    zips.append(z)
+            except zipfile.BadZipFile:
+                pass
+    if not zips:
+        sys.exit('No Grok export ZIP found in ~/Downloads (pass the path).')
+    out = a.out
+    raw = os.path.join(out, 'raw')
+    os.makedirs(raw, exist_ok=True)
+    for z in zips:
+        print('Extracting', z)
+        dest = os.path.join(raw, os.path.splitext(os.path.basename(z))[0])
+        with zipfile.ZipFile(z) as zf:
+            for m in zf.infolist():
+                t = os.path.join(dest, m.filename)
+                if m.is_dir() or os.path.exists(t):
+                    continue
+                os.makedirs(os.path.dirname(t), exist_ok=True)
+                with zf.open(m) as s, open(t, 'wb') as d:
+                    shutil.copyfileobj(s, d)
+    counts = {}
+    have = set()
+    texts = []
+    for root, _, files in os.walk(raw):
+        for fn in files:
+            p = os.path.join(root, fn)
+            if fn.endswith('prod-grok-backend.json'):
+                texts.append(p)
+                continue
+            if 'prod-mc-asset-server' not in p:
+                continue
+            ext, d = kind(p)
+            ident = os.path.basename(root) if fn == 'content' else os.path.splitext(fn)[0]
+            have.add(ident)
+            od = os.path.join(out, d)
+            os.makedirs(od, exist_ok=True)
+            t = os.path.join(od, f'{ident}.{ext}')
+            n = 1
+            while os.path.exists(t):
+                if os.path.getsize(t) == os.path.getsize(p):
+                    break
+                t = os.path.join(od, f'{ident}-{n}.{ext}'); n += 1
+            if not os.path.exists(t):
+                shutil.copy2(p, t)
+            counts[d] = counts.get(d, 0) + 1
+    posts = set()
+    for tp in texts:
+        s = open(tp, encoding='utf-8', errors='replace').read()
+        posts.update(re.findall(r'imagine/post/([A-Za-z0-9_-]+)', s))
+        try:
+            j = json.loads(s)
+        except Exception:
+            continue
+        def walk(o, inimg=False):
+            if isinstance(o, dict):
+                for k, v in o.items():
+                    walk(v, inimg or 'imagine' in k.lower() or 'media' in k.lower())
+            elif isinstance(o, list):
+                for v in o:
+                    walk(v, inimg)
+        walk(j)
+    missing = sorted(p for p in posts if p not in have)
+    with open(os.path.join(out, 'missing-posts.txt'), 'w') as f:
+        for p in missing:
+            f.write(f'https://grok.com/imagine/post/{p}\n')
+    print('Sorted:', ', '.join(f'{v} {k}' for k, v in sorted(counts.items())) or 'nothing')
+    print(f'Imagine posts referenced: {len(posts)}, with no file in export: {len(missing)}')
+    print('Output:', out, '(missing links in missing-posts.txt)')
+
+if __name__ == '__main__':
+    main()

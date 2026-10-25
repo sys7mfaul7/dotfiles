@@ -19,8 +19,12 @@ end
 
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
+vim.g.loaded_perl_provider = 0 -- unused; Guix has no Neovim::Ext
+vim.g.loaded_node_provider = 0 -- unused by current plugins
+vim.g.loaded_ruby_provider = 0
 vim.o.number = true
 vim.o.relativenumber = true
+vim.o.cursorline = true
 vim.o.signcolumn = "yes"
 vim.o.termguicolors = true
 vim.opt.clipboard = "unnamedplus" -- system clipboard (xclip / wl-copy)
@@ -54,8 +58,20 @@ vim.pack.add({
   "https://github.com/Olical/conjure",
   "https://github.com/MeanderingProgrammer/render-markdown.nvim",
   "https://github.com/nvim-orgmode/orgmode",
-  "https://github.com/lukas-reineke/headlines.nvim",
+  "https://github.com/nvim-tree/nvim-web-devicons",
+  "https://github.com/lewis6991/gitsigns.nvim",
+  "https://github.com/sindrets/diffview.nvim",
+  "https://github.com/NeogitOrg/neogit",
+  "https://github.com/ibhagwan/fzf-lua",
+  "https://github.com/pwntester/octo.nvim",
+  "https://github.com/folke/which-key.nvim",
+  "https://github.com/MunifTanjim/nui.nvim",
+  { src = "https://github.com/nvim-neo-tree/neo-tree.nvim", version = "v3.x" },
 }, { confirm = false })
+-- headlines.nvim is only used for org: keep it off the runtimepath until an
+-- org buffer opens, so it never touches markdown (render-markdown owns that)
+vim.pack.add({ "https://github.com/lukas-reineke/headlines.nvim" },
+  { confirm = false, load = function() end })
 
 local ok, cc = pcall(require, "codecompanion")
 if ok then
@@ -87,7 +103,7 @@ map({ "n", "v" }, "<leader>ac", "<cmd>CodeCompanionChat Toggle<cr>", { desc = "A
 map({ "n", "v" }, "<leader>ai", ":CodeCompanion ", { desc = "AI inline prompt" })
 map({ "n", "v" }, "<leader>aa", "<cmd>CodeCompanionActions<cr>", { desc = "AI actions" })
 
-for _, m in ipairs({ "ui", "treesitter", "completion", "lsp", "format", "lint", "dap", "extras", "notes" }) do
+for _, m in ipairs({ "ui", "treesitter", "completion", "lsp", "format", "lint", "dap", "extras", "notes", "keys", "tree", "git" }) do
   local okm, err = pcall(require, "config." .. m)
   if not okm then vim.notify(m .. ": " .. tostring(err), vim.log.levels.WARN) end
 end

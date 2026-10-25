@@ -218,11 +218,11 @@ super + n ; {x,k}
 
 # then m: pull all marked windows here
 super + n ; m
-    for w in $(bspc query -N -n .marked); do bspc node "$w" -d focused --follow; done
+    ~/.local/bin/bspwm-undo save-sel; for w in $(bspc query -N -n .marked); do bspc node "$w" -d focused --follow; done
 
 # then 1-9: pull every window from that desktop here
 super + n ; {1-9}
-    for w in $(bspc query -N -d ^{1-9} -n .window); do bspc node "$w" -d focused; done
+    ~/.local/bin/bspwm-undo save-desk '^{1-9}'; for w in $(bspc query -N -d ^{1-9} -n .window); do bspc node "$w" -d focused; done
 
 # floating toggle
 super + f
@@ -262,11 +262,11 @@ super + {Left,Down,Up,Right}
 
 # move (tiled: swap, floating: nudge)
 super + shift + {Left,Down,Up,Right,h,j,k,l}
-    ~/.config/bspwm-wl/bin/wl-smartmove {west,south,north,east,west,south,north,east}
+    ~/.local/bin/bspwm-undo save-dir {west,south,north,east,west,south,north,east}; ~/.config/bspwm-wl/bin/wl-smartmove {west,south,north,east,west,south,north,east}
 
 # swap with the neighbour
 ctrl + alt + {Left,Down,Up,Right}
-    bspc node -s {west,south,north,east}.local
+    ~/.local/bin/bspwm-undo save-dir {west,south,north,east}; bspc node -s {west,south,north,east}.local
 
 # previous / next window
 alt + {_,shift + }Tab
@@ -284,27 +284,19 @@ super + shift + {bracketleft,bracketright}
 
 # centre floating window (shift / plus: 50% x 80%)
 super + {ctrl + equal,shift + equal,plus}
-    ~/.local/bin/bsp-center {_,fit,fit}
+    ~/.local/bin/bspwm-undo save; ~/.local/bin/bsp-center {_,fit,fit}
 
 # snap floating window to an edge
 super + alt + shift + {Left,Down,Up,Right}
-    bspc node focused.floating -v {-80 0,0 80,0 -80,80 0}
+    ~/.local/bin/bspwm-undo save; bspc node focused.floating -v {-80 0,0 80,0 -80,80 0}
 
-# grow / shrink
-super + {KP_Add,minus,KP_Subtract}
-    ~/.local/bin/bspwm-resize {grow,shrink,shrink}
+# grow / shrink (keypad + / - only)
+super + {KP_Add,KP_Subtract}
+    ~/.local/bin/bspwm-resize {grow,shrink}
 
 # grow / shrink around the centre
 super + ctrl + {Up,Down,Left,Right}
     ~/.local/bin/bspwm-cresize {shrink v,grow v,shrink h,grow h}
-
-# tiled window bigger / smaller
-super + alt + {plus,minus}
-    bspc node -z {top_right 20 -20; bspc node -z bottom_left -20 20,top_right -20 20; bspc node -z bottom_left 20 -20}
-
-# floating window bigger / smaller
-super + ctrl + {plus,minus}
-    xdotool getactivewindow windowmove --relative -- {-50 -25; xdo resize -w +100 -h +50,50 25; xdo resize -w -100 -h -50}
 
 # select parent (repeat to climb) / back down to a window
 super + a
@@ -326,7 +318,7 @@ super + ctrl + {_,shift + }Tab
 
 # preselect (press again to cancel)
 super + alt + {Left,Down,Up,Right}
-    ~/.config/bspwm-wl/bin/wl-altdir {west,south,north,east} x11
+    ~/.local/bin/bspwm-undo save; ~/.config/bspwm-wl/bin/wl-altdir {west,south,north,east} x11
 
 # preselect below / cancel
 super + ctrl + {v,q}
@@ -338,11 +330,12 @@ super + alt + Escape
 
 # move into the preselected spot / clear the selection
 super + {Return,shift + Escape}
-    ~/.local/bin/bspwm-sel {toggle,clear}
+    ~/.local/bin/bspwm-undo save; ~/.local/bin/bspwm-sel {toggle,clear}
 
-# rotate the split of this window
+# undo the last window move (send / move / swap / snap / centre) -- bspwm-undo
 super + u
-    bspc node @parent -R 90
+    ~/.local/bin/bspwm-undo restore
+
 
 # rotate the whole desktop
 super + {_,shift + }r
@@ -354,19 +347,23 @@ super + ctrl + alt + b
 
 # equal columns (alt: rows too)
 super + {_,ctrl + alt + }equal
-    ~/.config/bspwm-wl/bin/{wl-eqkey x11,wl-eqcols -r}
+    ~/.local/bin/bspwm-undo save; ~/.config/bspwm-wl/bin/{wl-eqkey x11,wl-eqcols -r}
 
 # ======================================================================
 #  desktops
 # ======================================================================
 
-# go to desktop 1-10 / send window there
-super + {_,ctrl + }{1-9,0}
-    bspc {desktop -f,node -d} '^{1-9,10}'
+# go to desktop 1-10
+super + {1-9,0}
+    bspc desktop -f '^{1-9,10}'
+
+# send window there (no follow)
+super + ctrl + {1-9,0}
+    ~/.local/bin/bspwm-undo save; bspc node -d '^{1-9,10}'
 
 # send window to desktop 1-10 (alt: and follow)
 super + {_,alt + }shift + {1-9,0}
-    ~/.local/bin/bspwm-sel {send,sendfollow} {1-9,0}
+    ~/.local/bin/bspwm-undo save-sel; ~/.local/bin/bspwm-sel {send,sendfollow} {1-9,0}
 
 # previous / next desktop
 super + {bracketleft,bracketright}
@@ -378,18 +375,26 @@ super + {Next,Prior}
 
 # send window left / right (alt: and follow)
 super + {_,alt + }shift + {Next,Prior}
-    ~/.local/bin/bspwm-sel {shift,shiftfollow} {prev,next}
+    ~/.local/bin/bspwm-undo save-sel; ~/.local/bin/bspwm-sel {shift,shiftfollow} {prev,next}
 
 # last desktop
 super + {_,shift + }apostrophe
     bspc desktop -f last
 
+# rotate the split of this window (shift: the other way)
+super + ctrl + {_,shift + }r
+    bspc node @parent -R {90,270}
+
 # rename this desktop
-super + ctrl + r
+super + alt + equal
     ~/.config/bspwm-wl/bin/wl-rename
+
+# rename desktop 1-10 (0 = 10)
+super + alt + {1-9,0}
+    ~/.config/bspwm-wl/bin/wl-rename {1-9,0}
 
 # keypad = : same as Super+= / Super+Shift+=
 super + KP_Equal
-    ~/.config/bspwm-wl/bin/wl-eqkey x11
+    ~/.local/bin/bspwm-undo save; ~/.config/bspwm-wl/bin/wl-eqkey x11
 super + shift + KP_Equal
-    ~/.local/bin/bsp-center fit
+    ~/.local/bin/bspwm-undo save; ~/.local/bin/bsp-center fit

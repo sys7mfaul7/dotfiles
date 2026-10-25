@@ -1,4 +1,4 @@
-// niri config (sys7mfaul7) - mirrors bspwm-wl where niri allows.
+// niri config for r2d2 - mirrors bspwm-wl where niri allows.
 // Palette: text #c0ffc0, accent #00ff41, selection #1f6f2f, dim #4f7f5a, bg #000000.
 // Reload: Ctrl+Alt+B (niri also live-reloads on save).  Validate: niri validate
 
@@ -141,7 +141,7 @@ binds {
     Mod+Shift+T      { spawn "foot" "--app-id=foot-float"; }
     Mod+Space        hotkey-overlay-title="Apps: bspwm-wl-apps" { spawn-sh "~/.local/bin/bspwm-wl-apps"; }
     Mod+Ctrl+Space   { spawn-sh "bspwm-wl-menu"; }
-    Mod+Alt+Space    hotkey-overlay-title="Run: fuzzel" { spawn "fuzzel"; }
+    Mod+Alt+Space    hotkey-overlay-title="Run: rofi" { spawn-sh "rofi -show run -theme ~/.config/bspwm/rofi/dmenu.rasi"; }
     Mod+D            hotkey-overlay-title="Files: vifm" { spawn-sh "fm-term vifm tiled user"; }
     Mod+Alt+D        { spawn-sh "fm-term nnn tiled user"; }
     Mod+C            { spawn-sh "~/.config/bspwm-wl/bin/wl-calc"; }
@@ -237,14 +237,13 @@ binds {
     Mod+Comma       { consume-window-into-column; }
     Mod+Period      { expel-window-from-column; }
 
-    // resize (Super+Ctrl+Arrows, Super+minus / keypad +)
+    // resize (Super+Ctrl+Arrows; grow / shrink = Super+keypad + / -)
     Mod+Ctrl+Left   { set-column-width "-5%"; }
     Mod+Ctrl+Right  { set-column-width "+5%"; }
     Mod+Ctrl+Up     { set-window-height "-5%"; }
     Mod+Ctrl+Down   { set-window-height "+5%"; }
-    Mod+Minus       { set-column-width "-10%"; }
     Mod+KP_Add      { set-column-width "+10%"; }
-    Mod+Shift+Minus { set-window-height "-10%"; }
+    Mod+KP_Subtract { set-column-width "-10%"; }
     Mod+Ctrl+R      { reset-window-height; }
 
     // workspaces 1..0

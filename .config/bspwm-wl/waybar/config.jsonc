@@ -17,7 +17,7 @@
   "cpu",
   "memory",
   "disk",
-  "network",
+  "custom/net",
   "network#vpn",
   "custom/colorpicker",
   "custom/mplayer",
@@ -58,12 +58,13 @@
    "10": "0"
   }
  },
- "network": {
-  "interval": 3,
-  "format-ethernet": "<span rise='1pt' color='#578a29' size=\"10pt\">󰈀</span> {ipaddr}",
-  "format-wifi": "<span rise='1pt' color='#578a29' size=\"10pt\">󰈀</span> {ipaddr}",
-  "format-disconnected": "<span rise='1pt' color='#578a29' size=\"10pt\">󰈂</span> <span rise='1pt' color='#4f7f5a'>Offline</span>",
-  "tooltip-format": "{ifname} {essid}",
+ "custom/net": {
+  "exec": "$HOME/.local/bin/waybar-net",
+  "return-type": "json",
+  "interval": 5,
+  "format": "{}",
+  "tooltip": true,
+  "escape": false,
   "on-click": "nm-connection-editor",
   "on-click-right": "~/.config/bspwm-wl/bin/wl-bartui network"
  },
@@ -138,10 +139,13 @@
   "scroll-step": 5
  },
  "custom/updates": {
-  "exec": "cat $HOME/.cache/Updates.txt 2>/dev/null || echo 0",
+  "exec": "$HOME/.local/bin/waybar-guix-updates",
+  "return-type": "json",
   "interval": 600,
+  "signal": 8,
   "format": " <span rise='1pt' color='#578a29'></span> {}",
-  "tooltip": false
+  "tooltip": true,
+  "on-click": "foot --app-id=foot-float -e $HOME/.local/bin/guix-updates-run"
  },
  "disk": {
   "interval": 30,

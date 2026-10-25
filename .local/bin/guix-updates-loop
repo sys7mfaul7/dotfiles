@@ -1,0 +1,14 @@
+#!/bin/sh
+# guix-updates-loop: run guix-updates-check every 6 hours (single instance).
+# Started from bspwmrc / niri-autostart with setsid; the flock stops duplicates.
+exec 8>"${XDG_RUNTIME_DIR:-/tmp}/guix-updates-loop.lock"
+flock -n 8 || exit 0
+PERIOD=21600
+while :; do
+  last=$(cat "$HOME/.cache/guix-updates.stamp" 2>/dev/null); case $last in ''|*[!0-9]*) last=0;; esac
+  wait=$(( last + PERIOD - $(date +%s) ))
+  if [ "$wait" -gt 0 ]; then sleep "$wait"; continue; fi
+  sleep 60   # let the session settle first
+  "$HOME/.local/bin/guix-updates-check" 8>&-
+  sleep 600  # if the check failed, retry in 10 min at the earliest
+done

@@ -28,7 +28,7 @@ detect() {
         esac
     done
     [ -n "$BAR_BATTERY" ] && right="$right battery"
-    BAR_RIGHT="$right cpu memory volume date"
+    BAR_RIGHT="$right cpu memory volume updates date"
     export BAR_IFACE BAR_BATTERY BAR_ADAPTER
 }
 

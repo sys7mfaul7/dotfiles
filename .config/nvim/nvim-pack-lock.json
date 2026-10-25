@@ -21,6 +21,18 @@
       "rev": "f190de76d2eca0380ddcb2425cd582d740699b55",
       "src": "https://github.com/hat0uma/csvview.nvim"
     },
+    "diffview.nvim": {
+      "rev": "4516612fe98ff56ae0415a259ff6361a89419b0a",
+      "src": "https://github.com/sindrets/diffview.nvim"
+    },
+    "fzf-lua": {
+      "rev": "507dfc85551ff2d9293ec215f10f19395252aada",
+      "src": "https://github.com/ibhagwan/fzf-lua"
+    },
+    "gitsigns.nvim": {
+      "rev": "d4854fa9a94b5c8b37dd209fb4a19e98e764186f",
+      "src": "https://github.com/lewis6991/gitsigns.nvim"
+    },
     "headlines.nvim": {
       "rev": "bf17c96a836ea27c0a7a2650ba385a7783ed322e",
       "src": "https://github.com/lukas-reineke/headlines.nvim"
@@ -28,6 +40,19 @@
     "llama.vim": {
       "rev": "e1ca1cc6af9da73f4ae21f810f33909d515592e6",
       "src": "https://github.com/ggml-org/llama.vim"
+    },
+    "neo-tree.nvim": {
+      "rev": "1a14083046d96e88e361d1da00761c40d45012f3",
+      "src": "https://github.com/nvim-neo-tree/neo-tree.nvim",
+      "version": "'v3.x'"
+    },
+    "neogit": {
+      "rev": "832a2db084ac25c2801fd73a3fab58f3c82ed2ec",
+      "src": "https://github.com/NeogitOrg/neogit"
+    },
+    "nui.nvim": {
+      "rev": "10fc361835c856ba4233ef5ea135b919bf3dce97",
+      "src": "https://github.com/MunifTanjim/nui.nvim"
     },
     "nvim-dap": {
       "rev": "cfa2d58f4537aca6ca83e2de1a0d9f1491121264",
@@ -62,6 +87,14 @@
       "src": "https://github.com/nvim-treesitter/nvim-treesitter",
       "version": "'master'"
     },
+    "nvim-web-devicons": {
+      "rev": "ec309a0eaff6ea967e58c275996155ab5c16938d",
+      "src": "https://github.com/nvim-tree/nvim-web-devicons"
+    },
+    "octo.nvim": {
+      "rev": "8461d99d13cca243f89848bf4d9fadee096f0a48",
+      "src": "https://github.com/pwntester/octo.nvim"
+    },
     "orgmode": {
       "rev": "fed51bcfd2b5f12c135f9660b6ea01426d330afa",
       "src": "https://github.com/nvim-orgmode/orgmode"
@@ -73,6 +106,10 @@
     "render-markdown.nvim": {
       "rev": "8e8795368391036643b622875a6da6a51bcd33f4",
       "src": "https://github.com/MeanderingProgrammer/render-markdown.nvim"
+    },
+    "which-key.nvim": {
+      "rev": "3aab2147e74890957785941f0c1ad87d0a44c15a",
+      "src": "https://github.com/folke/which-key.nvim"
     }
   }
 }

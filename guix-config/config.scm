@@ -5,17 +5,50 @@
 (use-modules (gnu)
              (guix gexp)
              (gnu system setuid)
+             (gnu system pam)
              (nongnu packages linux)
              (nongnu system linux-initrd)
              (my packages))   ; needs -L ~/guix-config/my-packages
 
 (use-service-modules base dbus desktop networking ssh xorg cups
-                     virtualization docker linux lightdm shepherd)
-(use-package-modules linux firmware wm admin)   ; kbd for console font
+                     virtualization docker linux lightdm shepherd
+                     authentication)
+(use-package-modules linux firmware wm admin security-token)   ; kbd for console font
 
 (define %keyboard (keyboard-layout "us"))
 
-(define %my-packages
+;; --- YubiKey (pam_u2f) + fingerprint (pam_fprintd) as OPTIONAL shortcuts ---
+;; Both are "sufficient" and sit in front of pam_unix: a key touch or a finger
+;; logs you in, anything else (no key, no enrolled finger, timeout, wrong
+;; finger) falls through to the normal password prompt.  Nothing is
+;; "required", so the password alone always works.  LUKS/boot is untouched.
+;; Keys live per user in ~/.config/Yubico/u2f_keys (one line; a backup key is
+;; appended to that same line with `yubikey-enroll`).  "nouserok" = users
+;; without that file just get the password prompt.
+(define %auth-shortcut-services
+  '("login" "lightdm" "sudo" "swaylock" "i3lock"))
+
+(define %pam-u2f-entry
+  (pam-entry
+   (control "sufficient")
+   (module (file-append pam-u2f "/lib/security/pam_u2f.so"))
+   (arguments '("cue" "nouserok"))))
+
+(define %pam-fprintd-entry
+  (pam-entry
+   (control "sufficient")
+   (module (file-append fprintd-r2d2 "/lib/security/pam_fprintd.so"))
+   (arguments '("max-tries=1" "timeout=10"))))
+
+(define (add-auth-shortcuts pam)
+  (if (member (pam-service-name pam) %auth-shortcut-services)
+      (pam-service
+       (inherit pam)
+       (auth (cons* %pam-u2f-entry %pam-fprintd-entry
+                    (pam-service-auth pam))))
+      pam))
+
+(define %r2d2-packages
   (specifications->packages
    '(;; --- X11 bspwm session (bar, menus, notifications, tools) ---
      "bspwm" "sxhkd" "polybar" "rofi" "dunst" "jgmenu" "feh"
@@ -28,7 +61,7 @@
      "mpd" "mpd-mpc" "ncmpcpp" "mpv"
      ;; --- terminals / shells / file managers ---
      "foot" "xterm" "xmodmap" "picom" "xset" "qt5ct" "qt6ct" "zsh" "zsh-autosuggestions" "zsh-syntax-highlighting"
-     "nnn" "vifm" "thunar" "tumbler" "gvfs"
+     "nnn" "vifm" "gvfs" ; pcmanfm is in the user profile
      ;; --- removable media: udisks automount + filesystem tools ---
      "udiskie" "exfatprogs" "ntfs-3g" "dosfstools"
      "eza" "bat" "fzf" "ripgrep" "fd" "findutils"
@@ -51,14 +84,16 @@
      "docker-compose" "htop" "btop"
      ;; --- Wayland sessions (bspwm-wl, niri): wallpaper, idle, lock, bar, tools ---
      "swaybg" "swayidle" "swaylock" "waybar" "wl-clipboard" "grim" "slurp"
-     "fuzzel" "wlr-randr" "xdg-desktop-portal" "xdg-desktop-portal-wlr"
-     "xdg-desktop-portal-gtk" "pipewire" "wireplumber" "xorg-server-xwayland")))
+     "wlr-randr" "xdg-desktop-portal" "xdg-desktop-portal-wlr"
+     "xdg-desktop-portal-gtk" "pipewire" "wireplumber" "xorg-server-xwayland"
+     ;; --- YubiKey tools (pamu2fcfg, fido2-token, ykman) + X11 PAM locker ---
+     "pam-u2f" "libfido2" "python-yubikey-manager" "i3lock")))
 
 (operating-system
   (locale "en_US.utf8")
   (timezone "America/Chicago")
   (keyboard-layout %keyboard)
-  (host-name "myhost")          ; set your own host name
+  (host-name "r2d2")
   (kernel linux)
   (initrd microcode-initrd)
   (firmware (list linux-firmware))
@@ -96,10 +131,10 @@
 
   (users
    (cons* (user-account
-           (name "user")                ; set your login name (and home-directory below)
+           (name "smt")
            (comment "sys7mfaul7")
            (group "users")
-           (home-directory "/home/user")
+           (home-directory "/home/USER")
           ;; login shell left as bash
            (supplementary-groups
             '("wheel" "netdev" "audio" "video" "input" "lp"
@@ -107,8 +142,9 @@
           %base-user-accounts))
 
   (packages (append (list font-nerd-jetbrains-mono font-nerd-terminus
-                                font-nerd-ubuntu-mono bspwm-wl-session niri-session opendoas)
-                          %my-packages %base-packages))
+                                font-nerd-ubuntu-mono bspwm-wl-session niri-session opendoas
+                                fprintd-r2d2)
+                          %r2d2-packages %base-packages))
 
   ;; doas (OpenDoas, built --with-timestamp so "persist" works); sudo stays
   (setuid-programs
@@ -139,12 +175,33 @@
      (udev-rules-service (quote vial)
                          (udev-rule "59-vial.rules"
                                     "KERNEL==\"hidraw*\", SUBSYSTEM==\"hidraw\", ATTRS{serial}==\"*vial:f64c2b3c*\", MODE=\"0660\", GROUP=\"users\", TAG+=\"uaccess\"\n"))
+     ;; FIDO/U2F security keys (YubiKey): libfido2 udev rules tag the hidraw
+     ;; node "uaccess" so the logged-in user (swaylock, i3lock, ykman,
+     ;; pamu2fcfg) can talk to the key without root.
+     (udev-rules-service (quote fido2) libfido2)
+     ;; Fingerprint daemon (D-Bus activated), built on libfprint 1.94.10 for
+     ;; the Realtek 2541:fa03 sensor.
+     (service fprintd-service-type
+              (fprintd-configuration (fprintd fprintd-r2d2)))
+     ;; Put pam_u2f + pam_fprintd (sufficient) before pam_unix for the
+     ;; services in %auth-shortcut-services.
+     (simple-service (quote auth-shortcuts) pam-root-service-type
+                     (list (pam-extension
+                            (transformer add-auth-shortcuts))))
      (service cups-service-type)
      ;; swaylock via PAM (no setuid)
      (service screen-locker-service-type
               (screen-locker-configuration
                (name "swaylock")
                (program (file-append (@ (gnu packages window-management) swaylock) "/bin/swaylock"))
+               (using-pam? #t)
+               (using-setuid? #f)))
+     ;; i3lock via PAM for the X11 bspwm session (its lock script prefers
+     ;; i3lock over slock; slock does not use PAM, so no key/finger there)
+     (service screen-locker-service-type
+              (screen-locker-configuration
+               (name "i3lock")
+               (program (file-append (@ (gnu packages window-management) i3lock) "/bin/i3lock"))
                (using-pam? #t)
                (using-setuid? #f)))
      (service lightdm-service-type

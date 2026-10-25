@@ -1,0 +1,244 @@
+#!/usr/bin/env python3
+# waybar-net : network icon + detailed tooltip for waybar (bspwm-wl / niri) and polybar.
+#   waybar-net            -> waybar JSON {text, tooltip, class}; icon only, details in tooltip
+#   waybar-net --polybar  -> polybar text (icon only, polybar colour/font tags)
+#   waybar-net --text     -> the tooltip block as plain text (for a terminal)
+# Sources: ip route/addr, /sys/class/net, iw, nmcli (no Wi-Fi rescans), resolv.conf.
+# Up/down rates come from /sys counters diffed against a cache in $XDG_RUNTIME_DIR.
+import json, os, re, subprocess, sys, time, ipaddress
+
+ICON = '#578a29'; DIM = '#4f7f5a'; TXT = '#c0ffc0'; ACC = '#00ff41'
+RISE = "rise='1pt' "
+WIFI_ICONS = ['\U000f092f', '\U000f091f', '\U000f0922', '\U000f0925', '\U000f0928']  # 󰤯 󰤟 󰤢 󰤥 󰤨
+ETH_ICON = '\U000f0200'   # 󰈀
+OFF_ICON = '\U000f0202'   # 󰈂
+VPN_PREFIXES = ('tun', 'tap', 'wg', 'ppp')
+
+def run(*cmd):
+    try:
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=3).stdout
+    except Exception:
+        return ''
+
+def rd(path, default=''):
+    try:
+        with open(path) as f: return f.read().strip()
+    except Exception:
+        return default
+
+def default_iface():
+    best = None
+    for line in run('ip', '-o', 'route', 'show', 'default').splitlines():
+        m = re.search(r'\bdev (\S+)', line)
+        if not m or m.group(1).startswith(VPN_PREFIXES): continue
+        mt = re.search(r'\bmetric (\d+)', line); mt = int(mt.group(1)) if mt else 0
+        if best is None or mt < best[1]: best = (m.group(1), mt)
+    if best: return best[0]
+    for d in sorted(os.listdir('/sys/class/net')):
+        if d == 'lo' or d.startswith(VPN_PREFIXES + ('docker', 'br-', 'veth', 'virbr', 'p2p')): continue
+        if rd('/sys/class/net/%s/operstate' % d) == 'up': return d
+    return None
+
+def human(n):
+    n = float(n)
+    for u in ('B', 'KiB', 'MiB', 'GiB', 'TiB'):
+        if n < 1024 or u == 'TiB':
+            return ('%d %s' % (n, u)) if u == 'B' else ('%.1f %s' % (n, u))
+        n /= 1024
+
+def rate(n):
+    bits = n * 8
+    for u in ('bit/s', 'kbit/s', 'Mbit/s', 'Gbit/s'):
+        if bits < 1000 or u == 'Gbit/s':
+            return ('%.0f %s' % (bits, u)) if u == 'bit/s' else ('%.1f %s' % (bits, u))
+        bits /= 1000
+
+def stats(iface):
+    keys = ('rx_bytes', 'tx_bytes', 'rx_packets', 'tx_packets', 'rx_errors', 'tx_errors', 'rx_dropped', 'tx_dropped')
+    s = {k: int(rd('/sys/class/net/%s/statistics/%s' % (iface, k), '0') or 0) for k in keys}
+    now = time.time()
+    cache = os.path.join(os.environ.get('XDG_RUNTIME_DIR') or '/tmp', 'waybar-net.%s.%d' % (iface, os.getuid()))
+    up = down = None
+    try:
+        with open(cache) as f: t0, rx0, tx0 = f.read().split()
+        dt = now - float(t0)
+        if 0 < dt < 120:
+            down = max(0, s['rx_bytes'] - int(rx0)) / dt
+            up = max(0, s['tx_bytes'] - int(tx0)) / dt
+    except Exception:
+        pass
+    try:
+        with open(cache + '.tmp', 'w') as f: f.write('%f %d %d' % (now, s['rx_bytes'], s['tx_bytes']))
+        os.replace(cache + '.tmp', cache)
+    except Exception:
+        pass
+    return s, down, up
+
+def nm_dev(iface):
+    d = {}
+    for line in run('nmcli', '-t', '-e', 'no', 'device', 'show', iface).splitlines():
+        k, _, v = line.partition(':')
+        if v: d.setdefault(re.sub(r'\[\d+\]$', '', k), []).append(v)
+    return d
+
+def wifi_info(iface):
+    w = {}
+    link = run('iw', 'dev', iface, 'link')
+    if not link.startswith('Connected'): return w
+    m = re.search(r'Connected to (\S+)', link); w['bssid'] = m.group(1).upper() if m else ''
+    for key, rx in (('ssid', r'SSID: (.*)'), ('freq', r'freq: ([\d.]+)'), ('signal', r'signal: (-?\d+)'),
+                    ('rxrate', r'rx bitrate: (.*)'), ('txrate', r'tx bitrate: (.*)')):
+        m = re.search(rx, link)
+        if m: w[key] = m.group(1).strip()
+    info = run('iw', 'dev', iface, 'info')
+    m = re.search(r'channel (\d+) \(([\d.]+) MHz\), width: (\d+) MHz', info)
+    if m: w['chan'], w['width'] = m.group(1), m.group(3)
+    m = re.search(r'txpower ([\d.]+) dBm', info)
+    if m: w['txpower'] = m.group(1)
+    return w
+
+def band(freq):
+    f = float(freq)
+    return '2.4 GHz' if f < 2500 else ('5 GHz' if f < 5925 else '6 GHz')
+
+def std(rate):
+    for tag, name in (('EHT', 'Wi-Fi 7 (802.11be)'), ('HE', 'Wi-Fi 6 (802.11ax)'), ('VHT', 'Wi-Fi 5 (802.11ac)'), ('MCS', 'Wi-Fi 4 (802.11n)')):
+        if re.search(r'\b' + tag, rate or ''): return name
+    return ''
+
+def short_rate(r):
+    m = re.match(r'([\d.]+) MBit/s', r or '')
+    return ('%g Mbit/s' % float(m.group(1))) if m else (r or '')
+
+def dns_servers(nm):
+    v = nm.get('IP4.DNS', []) + nm.get('IP6.DNS', [])
+    if not v:
+        for line in rd('/etc/resolv.conf').splitlines():
+            p = line.split()
+            if len(p) >= 2 and p[0] == 'nameserver': v.append(p[1])
+    return v
+
+def build(iface):
+    rows = []   # (label, value) ; label None = section header
+    nm = nm_dev(iface)
+    sysd = '/sys/class/net/' + iface
+    wifi = os.path.isdir(sysd + '/wireless') or os.path.isdir(sysd + '/phy80211')
+    kind = 'Wi-Fi' if wifi else 'Ethernet'
+    w = wifi_info(iface) if wifi else {}
+    conn = (nm.get('GENERAL.CONNECTION') or [''])[0]
+    rows.append((None, 'Connection'))
+    rows.append(('Interface', '%s (%s)' % (iface, kind)))
+    if conn and conn != w.get('ssid'): rows.append(('Profile', conn))
+    rows.append(('MAC', (nm.get('GENERAL.HWADDR') or [rd(sysd + '/address')])[0].upper()))
+    rows.append(('MTU', rd(sysd + '/mtu')))
+    sig_pct = None
+    if wifi:
+        rows.append((None, 'Wi-Fi'))
+        rows.append(('SSID', w.get('ssid', '?')))
+        rows.append(('BSSID', w.get('bssid', '?')))
+        if 'signal' in w:
+            dbm = int(w['signal']); sig_pct = max(0, min(100, 2 * (dbm + 100)))
+            rows.append(('Signal', '%d%% (%d dBm)' % (sig_pct, dbm)))
+        if 'freq' in w:
+            f = '%s MHz, %s' % (w['freq'].split('.')[0], band(w['freq']))
+            if 'chan' in w: f += ', ch %s, %s MHz wide' % (w['chan'], w['width'])
+            rows.append(('Frequency', f))
+        s = std(w.get('rxrate', '') + ' ' + w.get('txrate', ''))
+        if s: rows.append(('Standard', s))
+        if conn:
+            sec = run('nmcli', '-t', '-g', '802-11-wireless-security.key-mgmt', 'connection', 'show', 'id', conn).strip()
+            names = {'sae': 'WPA3-Personal (SAE)', 'wpa-psk': 'WPA2-Personal (PSK)', 'wpa-eap': 'WPA2-Enterprise',
+                     'owe': 'Enhanced Open (OWE)', 'none': 'WEP / none', '': 'Open'}
+            rows.append(('Security', names.get(sec, sec)))
+        rows.append(('Link speed', 'down %s / up %s' % (short_rate(w.get('rxrate', '?')), short_rate(w.get('txrate', '?')))))
+        if 'txpower' in w: rows.append(('TX power', '%s dBm' % w['txpower'].rstrip('0').rstrip('.')))
+    else:
+        sp = rd(sysd + '/speed', '-1'); dp = rd(sysd + '/duplex', '')
+        rows.append(('Link speed', ('%s Mbit/s %s duplex' % (sp, dp)).strip() if sp not in ('', '-1') else 'unknown'))
+    rows.append((None, 'IPv4'))
+    a4 = nm.get('IP4.ADDRESS', [])
+    if not a4:
+        for line in run('ip', '-o', '-4', 'addr', 'show', 'dev', iface).splitlines():
+            m = re.search(r'inet (\S+)', line)
+            if m: a4.append(m.group(1))
+    for a in a4 or ['none']:
+        if '/' in a:
+            n = ipaddress.ip_interface(a)
+            rows.append(('Address', str(n.ip)))
+            rows.append(('Subnet', '%s  (/%d, %s)' % (n.network.netmask, n.network.prefixlen, n.network.with_prefixlen)))
+        else:
+            rows.append(('Address', a))
+    gw = [g for g in nm.get('IP4.GATEWAY', []) if g and g != '--']
+    if not gw:
+        m = re.search(r'default via (\S+)', run('ip', '-4', 'route', 'show', 'default', 'dev', iface)); gw = [m.group(1)] if m else []
+    rows.append(('Gateway', ', '.join(gw) or 'none'))
+    dns = dns_servers(nm)
+    for i, d in enumerate(dns or ['none']): rows.append(('DNS' if i == 0 else '', d))
+    dom = nm.get('IP4.DOMAIN', [])
+    if dom: rows.append(('Search', ', '.join(dom)))
+    rows.append((None, 'IPv6'))
+    a6 = nm.get('IP6.ADDRESS', [])
+    if not a6:
+        a6 = re.findall(r'inet6 (\S+)', run('ip', '-o', '-6', 'addr', 'show', 'dev', iface))
+    for i, a in enumerate(a6 or ['none']): rows.append(('Address' if i == 0 else '', a))
+    gw6 = [g for g in nm.get('IP6.GATEWAY', []) if g and g != '--']
+    if gw6: rows.append(('Gateway', ', '.join(gw6)))
+    s, down, up = stats(iface)
+    rows.append((None, 'Traffic'))
+    rows.append(('Rate', 'down %s / up %s' % (rate(down), rate(up)) if down is not None else 'measuring...'))
+    rows.append(('Received', '%s, %s packets' % (human(s['rx_bytes']), format(s['rx_packets'], ','))))
+    rows.append(('Sent', '%s, %s packets' % (human(s['tx_bytes']), format(s['tx_packets'], ','))))
+    rows.append(('Errors', 'rx %d / tx %d' % (s['rx_errors'], s['tx_errors'])))
+    rows.append(('Dropped', 'rx %d / tx %d' % (s['rx_dropped'], s['tx_dropped'])))
+    vpn = [d for d in os.listdir('/sys/class/net') if d.startswith(VPN_PREFIXES)]
+    if vpn:
+        rows.append((None, 'VPN'))
+        for d in vpn:
+            m = re.search(r'inet (\S+)', run('ip', '-o', '-4', 'addr', 'show', 'dev', d))
+            rows.append((d, m.group(1) if m else 'up, no IPv4'))
+    if wifi:
+        icon = WIFI_ICONS[min(4, (sig_pct or 0) // 20)] if sig_pct is not None else WIFI_ICONS[0]
+    else:
+        icon = ETH_ICON
+    title = w.get('ssid') or conn or iface
+    return icon, kind, title, rows
+
+def esc(t): return t.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
+def render(rows, markup):
+    width = max(len(l) for l, _ in rows if l is not None) + 2
+    out = []
+    for l, v in rows:
+        if l is None:
+            if out: out.append('')
+            out.append("<span color='%s'><b>%s</b></span>" % (ACC, esc(v)) if markup else '== ' + v)
+        elif markup:
+            out.append("<span color='%s'>%s</span><span color='%s'>%s</span>" % (DIM, esc(l.ljust(width)), TXT, esc(v)))
+        else:
+            out.append(l.ljust(width) + v)
+    return '\n'.join(out)
+
+def main():
+    global RISE
+    args = [a for a in sys.argv[1:] if a != '--no-rise']
+    if len(args) != len(sys.argv[1:]): RISE = ''
+    mode = args[0] if args else ''
+    iface = default_iface()
+    if not iface:
+        if mode == '--polybar': print('%%{F%s}%%{T3}%s%%{T-}%%{F-}' % (DIM, OFF_ICON)); return
+        tip = 'Disconnected'
+        devs = [l.split(':') for l in run('nmcli', '-t', '-f', 'DEVICE,TYPE,STATE', 'device').splitlines()]
+        rows = [(None, 'Disconnected')] + [(d[0], '%s, %s' % (d[1], d[2])) for d in devs if len(d) == 3 and d[1] in ('wifi', 'ethernet')]
+        if mode == '--text': print(render(rows, False)); return
+        print(json.dumps({'text': "<span %scolor='%s' size='10pt'>%s</span>" % (RISE, DIM, OFF_ICON),
+                          'tooltip': render(rows, True), 'class': 'disconnected', 'alt': 'disconnected'}, ensure_ascii=False))
+        return
+    icon, kind, title, rows = build(iface)
+    if mode == '--polybar': print('%%{F%s}%%{T3}%s%%{T-}%%{F-}' % (ICON, icon)); return
+    if mode == '--text': print(render(rows, False)); return
+    print(json.dumps({'text': "<span %scolor='%s' size='10pt'>%s</span>" % (RISE, ICON, icon),
+                      'tooltip': render(rows, True), 'class': ['connected', 'wifi' if kind == 'Wi-Fi' else 'ethernet'],
+                      'alt': 'wifi' if kind == 'Wi-Fi' else 'ethernet'}, ensure_ascii=False))
+
+if __name__ == '__main__':
+    main()

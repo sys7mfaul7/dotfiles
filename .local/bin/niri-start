@@ -1,5 +1,5 @@
 #!/bin/sh
-# niri session launcher. Separate from bspwm-wl and X11 bspwm.
+# niri session launcher (r2d2). Separate from bspwm-wl and X11 bspwm.
 # Use from LightDM (niri-session package) or from a TTY:  niri-start
 [ -r /etc/profile ] && . /etc/profile >/dev/null 2>&1      # system + ~/.guix-profile PATH/XDG_DATA_DIRS
 export PATH="$HOME/.local/bin:$HOME/.config/niri/bin:$HOME/.guix-profile/bin:$PATH"

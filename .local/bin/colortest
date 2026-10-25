@@ -1,0 +1,135 @@
+#!/usr/bin/env bash
+# colortest : truecolor status + test bands for foot / tmux / neovim.
+#   colortest            status header, 24-bit bands, 16 + 256 colour palettes, verdicts
+#   colortest --no-band  status header and verdicts only
+#   colortest --help     this help
+# PASS is decided from capabilities (env, terminfo, tmux features, nvim option);
+# a script cannot see what the screen renders, so eyeball the gradients: smooth = truecolor,
+# visible steps/stripes = the 256-colour fallback is being used somewhere.
+set -u
+BAND=1
+case "${1:-}" in
+  -h|--help) sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+  --no-band) BAND=0 ;;
+  '') ;;
+  *) echo "colortest: unknown option '$1' (try --help)" >&2; exit 2 ;;
+esac
+
+E=$'\033'; R="${E}[0m"
+fg() { printf '%s[38;2;%d;%d;%dm' "$E" "$((16#${1:1:2}))" "$((16#${1:3:2}))" "$((16#${1:5:2}))"; }
+TXT=$(fg '#c0ffc0'); ACC=$(fg '#00ff41'); DIM=$(fg '#4f7f5a'); ICO=$(fg '#578a29'); BAD=$(fg '#ff5f5f'); WRN=$(fg '#d7d75f')
+COLS=$(tput cols 2>/dev/null || echo "${COLUMNS:-80}"); [ "$COLS" -gt 0 ] 2>/dev/null || COLS=80
+have() { command -v "$1" >/dev/null 2>&1; }
+row() { printf '%s%-26s%s%s%s\n' "$DIM" "$1" "$TXT" "$2" "$R"; }
+hdr() { printf '\n%s%s %s%s\n' "$ICO" "▌" "$ACC$1" "$R"; }
+
+# terminfo truecolour capability of a terminal type -> "RGB", "Tc", "setrgbf" list or ""
+ticaps() { infocmp -x "$1" 2>/dev/null | tr ', \t' '\n\n\n' | sed 's/[=#].*//' | grep -E '^(RGB|Tc|setrgbf|setrgbb)$' | sort -u | tr '\n' ' ' | sed 's/ $//'; }
+
+hdr "Environment"
+row "TERM" "${TERM:-unset}"
+row "COLORTERM" "${COLORTERM:-unset}"
+row "tput colors" "$(tput colors 2>/dev/null || echo '?')"
+TI=$(ticaps "${TERM:-dumb}")
+if infocmp "${TERM:-dumb}" >/dev/null 2>&1; then row "terminfo ($TERM)" "found; truecolour caps: ${TI:-none}"; else row "terminfo ($TERM)" "NOT FOUND"; fi
+
+INTMUX=0; OUTER=${TERM:-}; TMUXFEAT=''; TMUXDT=''; TMUXRGB=0
+if [ -n "${TMUX:-}" ] && have tmux; then
+  INTMUX=1
+  OUTER=$(tmux display -p '#{client_termname}' 2>/dev/null)
+  TMUXFEAT=$(tmux display -p '#{client_termfeatures}' 2>/dev/null)
+  TMUXDT=$(tmux show -gv default-terminal 2>/dev/null)
+  tmux show-messages -T 2>/dev/null | grep -q ' setrgbf: (string)' && TMUXRGB=1
+fi
+hdr "tmux"
+if ! have tmux; then row "tmux" "not installed"
+elif [ $INTMUX = 1 ]; then
+  row "inside tmux" "yes ($(tmux -V))"
+  row "outer terminal" "${OUTER:-?}"
+  row "default-terminal" "${TMUXDT:-?}"
+  row "client features" "${TMUXFEAT:-?}"
+  row "setrgbf/setrgbb" "$([ $TMUXRGB = 1 ] && echo present || echo missing)"
+else
+  row "inside tmux" "no ($(tmux -V))"
+  CF=''; for f in "${XDG_CONFIG_HOME:-$HOME/.config}/tmux/tmux.conf" "$HOME/.tmux.conf"; do [ -f "$f" ] && { CF=$f; break; }; done
+  row "config" "${CF:-none}"
+  [ -n "$CF" ] && row "configured" "$(grep -E '^\s*set.*(default-terminal|terminal-features|terminal-overrides)' "$CF" | sed 's/^\s*//; s/\s\+#.*//' | tr '\n' ';' | sed 's/;$//; s/;/  |  /g')"
+fi
+
+NVTGC=''
+hdr "neovim"
+if have nvim; then
+  NVTGC=$(timeout 15 nvim --headless -c 'lua io.stdout:write("TGC=" .. tostring(vim.o.termguicolors) .. "\n")' -c 'qa!' 2>/dev/null | tr -d '\r' | sed -n 's/.*TGC=\(true\|false\).*/\1/p' | tail -1)
+  row "version" "$(nvim --version | head -1)"
+  row "termguicolors" "${NVTGC:-unknown}"
+else row "nvim" "not installed"; fi
+
+if [ $BAND = 1 ]; then
+  W=$COLS
+  hdr "24-bit bands (should be smooth; steps or stripes = not truecolour)"
+  awk -v w="$W" -v blk='▀' 'function h2r(h, s, v,   i,f,p,q,t){ # hsv -> "r;g;b"
+      h = (h % 1) * 6; i = int(h); f = h - i; p = v*(1-s); q = v*(1-s*f); t = v*(1-s*(1-f))
+      if (i==0) return sprintf("%d;%d;%d", v*255,t*255,p*255); if (i==1) return sprintf("%d;%d;%d", q*255,v*255,p*255)
+      if (i==2) return sprintf("%d;%d;%d", p*255,v*255,t*255); if (i==3) return sprintf("%d;%d;%d", p*255,q*255,v*255)
+      if (i==4) return sprintf("%d;%d;%d", t*255,p*255,v*255); return sprintf("%d;%d;%d", v*255,p*255,q*255) }
+    function line(kind, top, bot,   x,a,b){ s = ""
+      for (x = 0; x < w; x++) { a = col(kind, x/(w-1), top); b = col(kind, x/(w-1), bot)
+        s = s sprintf("\033[38;2;%sm\033[48;2;%sm%s", a, b, blk) } print s "\033[0m" }
+    function col(kind, t, k){
+      if (kind == "rainbow") return h2r(t, 1 - k*0.55, 1)
+      if (kind == "rainbowd") return h2r(t, 1, 1 - k*0.6)
+      if (kind == "green") return sprintf("%d;%d;%d", 0, (t + k/(2*w))*255, (t + k/(2*w))*65)
+      return sprintf("%d;%d;%d", (t + k/(2*w))*255, (t + k/(2*w))*255, (t + k/(2*w))*255) }
+    BEGIN { line("rainbow", 0, 0.5); line("rainbowd", 0, 0.5); line("green", 0, 1); line("gray", 0, 1) }'
+  printf '%srainbow (light, dark) / black -> #00ff41 / black -> white%s\n' "$DIM" "$R"
+
+  hdr "16 ANSI colours"
+  for base in 0 8; do
+    for i in $(seq $base $((base + 7))); do printf '%s[48;5;%dm %s[38;5;%dm%3d %s' "$E" "$i" "$E" "$(( i == 0 || i == 8 ? 15 : 0 ))" "$i" "$R"; done; echo
+  done
+  hdr "256-colour cube (16-231) and greys (232-255) for comparison"
+  for r in 0 1 2 3 4 5; do
+    for g in 0 1 2 3 4 5; do for b in 0 1 2 3 4 5; do printf '%s[48;5;%dm  ' "$E" $((16 + r*36 + g*6 + b)); done; [ "$COLS" -lt 144 ] && [ $g = 2 ] && printf '%s\n' "$R"; done
+    printf '%s\n' "$R"
+  done
+  for i in $(seq 232 255); do printf '%s[48;5;%dm   ' "$E" "$i"; done; printf '%s\n' "$R"
+fi
+
+# ---- verdicts ----
+V_OK=0; V_FAIL=0
+verdict() { # layer status message
+  case "$2" in PASS) c=$ACC ;; WARN|SKIP) c=$WRN ;; *) c=$BAD; V_FAIL=1 ;; esac
+  printf '%s%-6s%s %s%-5s%s %s%s%s\n' "$TXT" "$1" "$R" "$c" "$2" "$R" "$DIM" "$3" "$R"
+}
+hdr "Verdict (capability-based; eyeball the bands above)"
+# foot / outer terminal
+case "$OUTER" in
+  foot*) if [ -n "$(ticaps "$OUTER")" ]; then
+           if [ $INTMUX = 1 ] || [ "${COLORTERM:-}" = truecolor ] || [ "${COLORTERM:-}" = 24bit ]; then verdict foot PASS "TERM=$OUTER, terminfo: $(ticaps "$OUTER")${COLORTERM:+, COLORTERM=$COLORTERM}"
+           else verdict foot WARN "TERM=$OUTER has RGB caps but COLORTERM is unset"; fi
+         else verdict foot FAIL "terminfo for $OUTER missing or has no RGB/Tc"; fi ;;
+  '') verdict foot SKIP "outer terminal unknown" ;;
+  *) if [ "${COLORTERM:-}" = truecolor ] || [ "${COLORTERM:-}" = 24bit ] || [ -n "$(ticaps "$OUTER")" ]; then verdict foot WARN "not in foot (TERM=$OUTER), but truecolour looks available"
+     else verdict foot FAIL "not in foot (TERM=$OUTER) and no truecolour advertised"; fi ;;
+esac
+# tmux
+if ! have tmux; then verdict tmux SKIP "tmux not installed"
+elif [ $INTMUX = 1 ]; then
+  m="default-terminal=$TMUXDT, TERM=$TERM"
+  if [ -z "$OUTER" ]; then verdict tmux WARN "no client attached (detached session), cannot read RGB features ($m)"
+  elif ! printf '%s' "$TMUXFEAT" | grep -q RGB && [ $TMUXRGB = 0 ]; then verdict tmux FAIL "no RGB feature for client $OUTER ($m)"
+  elif [ "$TMUXDT" != "$TERM" ]; then verdict tmux WARN "\$TERM differs from default-terminal ($m)"
+  else case "$TERM" in tmux-256color|tmux-direct|screen-256color) verdict tmux PASS "RGB on, $m" ;; *) verdict tmux WARN "unexpected TERM ($m)" ;; esac; fi
+else
+  if [ -n "${CF:-}" ] && grep -qE '^\s*set.*default-terminal.*(tmux|screen)-256color' "$CF" && grep -qE '^\s*set.*terminal-(features|overrides).*(RGB|Tc)' "$CF"; then
+    verdict tmux PASS "config sets 256color + RGB (run colortest inside tmux to check live)"
+  else verdict tmux WARN "config lacks default-terminal tmux-256color and/or RGB feature"; fi
+fi
+# nvim
+if ! have nvim; then verdict nvim SKIP "nvim not installed"
+elif [ "$NVTGC" = true ]; then
+  if [ $INTMUX = 1 ] && [ $TMUXRGB = 0 ] && ! printf '%s' "$TMUXFEAT" | grep -q RGB; then verdict nvim WARN "termguicolors=true but tmux has no RGB"
+  else verdict nvim PASS "termguicolors=true"; fi
+elif [ "$NVTGC" = false ]; then verdict nvim FAIL "termguicolors=false"
+else verdict nvim WARN "could not read termguicolors (headless nvim failed?)"; fi
+exit $V_FAIL

@@ -1,0 +1,169 @@
+#!/bin/sh
+# bspwm-undo — best-effort undo of window moves (bspwm-wl and X11 bspwm, plain bspc + jq).
+#   bspwm-undo save [NODE...]   remember where NODE(s) (default: focused window) are now
+#   bspwm-undo save-sel         marked windows, else the focused one (same targets as bspwm-sel)
+#   bspwm-undo save-dir DIR     focused window + its tiled neighbour in DIR (swaps / smart moves)
+#   bspwm-undo save-desk DESK   every window on DESK (before pulling them elsewhere)
+#   bspwm-undo restore [--dry-run]   put the last moved window(s) back (Super+U)
+#   bspwm-undo list | clear
+# bspwm has no undo: bindings that move windows call "save" first. One undo = one saved
+# action. Saves that turned out not to move anything are skipped. Last 10 actions kept.
+R=${XDG_RUNTIME_DIR:-/tmp/bspwm-undo-$USER}
+[ -d "$R" ] || mkdir -p -m 700 "$R" 2>/dev/null
+case "$WAYLAND_DISPLAY:$XDG_CURRENT_DESKTOP" in :*) S=x11 ;; *) S=wl ;; esac
+ST="$R/bspwm-undo.$S.stack"
+KEEP=10
+DRY=
+hex() { printf '0x%08X' "$(( $1 ))"; }
+exists() { [ -n "$1" ] && [ "$(( $1 ))" -ne 0 ] && bspc query -N -n "$(hex "$1")" >/dev/null 2>&1; }
+B() { if [ -n "$DRY" ]; then echo "  bspc $*"; else bspc "$@" 2>/dev/null; fi; }
+note() { command -v dunstify >/dev/null 2>&1 && { dunstify -u low -t 1500 -r 7341 "undo" "$1" >/dev/null 2>&1; return; }
+         command -v notify-send >/dev/null 2>&1 && notify-send -u low -t 1500 "undo" "$1" >/dev/null 2>&1; }
+
+# info NODE -> "desk state side split ratio brother parent x y w h"  (ids decimal; side 0=root 1=first 2=second)
+info() {
+  n=$(hex "$1"); d=$(bspc query -D -n "$n" 2>/dev/null) || return 1
+  t=$(bspc query -T -d "$d" 2>/dev/null | jq -r --argjson w "$(( $1 ))" '
+    [.root | .. | objects | select(has("firstChild"))] as $all
+    | ($all[] | select(.id == $w)) as $n
+    | ([$all[] | select(.firstChild.id == $w or .secondChild.id == $w)] | .[0]) as $p
+    | [ ($n.client.state // "none"),
+        (if $p == null then 0 elif $p.firstChild.id == $w then 1 else 2 end),
+        ($p.splitType // "-"), ($p.splitRatio // 0.5),
+        (if $p == null then 0 elif $p.firstChild.id == $w then $p.secondChild.id else $p.firstChild.id end),
+        ($p.id // 0), $n.rectangle.x, $n.rectangle.y, $n.rectangle.width, $n.rectangle.height ]
+    | map(tostring) | join(" ")' 2>/dev/null) || return 1
+  [ -n "$t" ] || return 1
+  echo "$(( d )) $t"
+}
+
+lock() { exec 9>"$R/bspwm-undo.lock"; flock -w 2 9 2>/dev/null || true; }
+
+save() { # save NODE...
+  lock
+  g=$(date +%s%N 2>/dev/null || date +%s)$$
+  ids=
+  for x in "$@"; do
+    w=$(bspc query -N -n "$x.window" 2>/dev/null) && ids="$ids $(( w ))"
+  done
+  [ -n "$ids" ] || return 0
+  # key repeat (held Super+Shift+arrow nudging a float): the same window(s) saved again
+  # within 2 s -> keep the older save, so one undo goes back to where the burst started
+  now=$(date +%s); key=$(echo $ids)
+  if [ -f "$ST.last" ]; then
+    read -r lt lk < "$ST.last"
+    if [ "$lk" = "$key" ] && [ $(( now - lt )) -lt 2 ] && [ -s "$ST" ] && [ "$key" = "${key% *}" ] \
+       && bspc query -N -n "$(hex "$key").floating" >/dev/null 2>&1; then
+      echo "$now $key" > "$ST.last"; return 0
+    fi
+  fi
+  echo "$now $key" > "$ST.last"
+  for w in $ids; do
+    i=$(info "$w") || continue
+    echo "$g $w $i" >> "$ST"
+  done
+  # keep the last $KEEP groups
+  if [ -f "$ST" ]; then
+    keepg=$(awk '{print $1}' "$ST" | uniq | tail -n "$KEEP" | head -1)
+    awk -v k="$keepg" 'f||$1==k{f=1;print}' "$ST" > "$ST.tmp" && mv -f "$ST.tmp" "$ST"
+  fi
+}
+
+dirfor() { # side split -> presel direction on the brother
+  case "$1:$2" in 1:vertical) echo west;; 2:vertical) echo east;; 1:horizontal) echo north;; *) echo south;; esac
+}
+
+# restore_one: one saved line (already split into positional vars). Returns 0 if it did something.
+restore_one() {
+  w=$1 sd=$2 ss=$3 sside=$4 ssplit=$5 sratio=$6 sbro=$7 spar=$8 sx=$9; shift 9; sy=$1 sw=$2 sh=$3
+  exists "$w" || return 1
+  set -- $(info "$w") || return 1
+  cd_=$1 cs=$2 cside=$3 cbro=$6
+  W=$(hex "$w")
+  case "$ss" in
+    tiled|pseudo_tiled)
+      if [ "$cs" = "$ss" ] && [ "$cd_" = "$sd" ] && [ "$cbro" = "$sbro" ] && [ "$cside" = "$sside" ]; then return 1; fi
+      [ "$cs" = tiled ] || [ "$cs" = pseudo_tiled ] || B node "$W" -t "$ss"
+      if [ "$sside" != 0 ] && exists "$sbro" && [ "$(( sbro ))" -ne "$(( w ))" ]; then
+        Bn=$(hex "$sbro"); dir=$(dirfor "$sside" "$ssplit")
+        [ -n "$DRY" ] && echo "  # back to the $dir side of $Bn (ratio $sratio)"
+        if B node "$Bn" -p "$dir" && B node "$Bn" -o "$sratio" && B node "$W" -n "$Bn"; then
+          return 0
+        fi
+        B node "$Bn" -p cancel
+      fi
+      if [ "$cd_" != "$sd" ] && bspc query -D -d "$(hex "$sd")" >/dev/null 2>&1; then
+        [ -n "$DRY" ] && echo "  # old neighbour gone: back to desktop $(hex "$sd")"
+        B node "$W" -d "$(hex "$sd")"; return 0
+      fi
+      [ "$cs" != "$ss" ] && return 0
+      return 1 ;;
+    floating)
+      cx=$8 cy=$9; shift 9; cw=$1 ch=$2
+      if [ "$cs" = floating ] && [ "$cd_" = "$sd" ] && [ "$cx $cy $cw $ch" = "$sx $sy $sw $sh" ]; then return 1; fi
+      did=1
+      if [ "$cd_" != "$sd" ] && bspc query -D -d "$(hex "$sd")" >/dev/null 2>&1; then B node "$W" -d "$(hex "$sd")"; did=0; fi
+      [ "$cs" = floating ] || { B node "$W" -t floating; did=0; }
+      if [ -z "$DRY" ]; then set -- $(info "$w"); cx=$8 cy=$9; shift 9; cw=$1 ch=$2; fi
+      dx=$(( sx - cx )) dy=$(( sy - cy )) dw=$(( sw - cw )) dh=$(( sh - ch ))
+      [ "$dx" -ne 0 ] || [ "$dy" -ne 0 ] && { B node "$W" -v "$dx" "$dy"; did=0; }
+      [ "$dw" -ne 0 ] || [ "$dh" -ne 0 ] && { B node "$W" -z bottom_right "$dw" "$dh"; did=0; }
+      return $did ;;
+  esac
+  # fullscreen / other states: just the desktop
+  if [ "$cd_" != "$sd" ] && bspc query -D -d "$(hex "$sd")" >/dev/null 2>&1; then B node "$W" -d "$(hex "$sd")"; return 0; fi
+  return 1
+}
+
+restore() {
+  lock
+  [ -s "$ST" ] || { [ -n "$DRY" ] && echo "nothing to undo"; note "nothing to undo"; return 0; }
+  groups=$(awk '{print $1}' "$ST" | uniq | sed '1!G;h;$!d')   # newest first
+  for g in $groups; do
+    lines=$(awk -v g="$g" '$1==g' "$ST")
+    [ -n "$DRY" ] && { echo "action $g:"; echo "$lines" | sed 's/^/  saved: /'; }
+    acted=1 first=
+    # a two-window swap: each now sits where the other was -> swap back
+    if [ "$(echo "$lines" | wc -l)" -eq 2 ]; then
+      set -- $(echo "$lines" | sed -n 1p); a=$2 ap=$9 as=$5 at=$4
+      set -- $(echo "$lines" | sed -n 2p); b=$2 bp=$9 bs=$5 bt=$4
+      if [ "$ap" != 0 ] && [ "$bp" != 0 ] && exists "$a" && exists "$b"; then
+        set -- $(info "$a"); cap=$7 cas=$3
+        set -- $(info "$b"); cbp=$7 cbs=$3
+        if [ "$cap:$cas" = "$bp:$bs" ] && [ "$cbp:$cbs" = "$ap:$as" ]; then
+          [ -n "$DRY" ] && echo "  # swapped: swap back"
+          B node "$(hex "$a")" -s "$(hex "$b")"; acted=0; first=$a
+        fi
+      fi
+    fi
+    if [ "$acted" != 0 ]; then
+      tmp=$(echo "$lines" | while read -r _g w rest; do
+        # shellcheck disable=SC2086
+        restore_one "$w" $rest >&2 && echo "$w"
+      done 2>&1)
+      [ -n "$DRY" ] && echo "$tmp" | grep -v '^[0-9]*$'
+      done_ids=$(echo "$tmp" | grep '^[0-9][0-9]*$')
+      [ -n "$done_ids" ] && { acted=0; first=$(echo "$done_ids" | head -1); }
+    fi
+    if [ -n "$DRY" ]; then
+      if [ "$acted" = 0 ]; then echo "  # then focus $(hex "$first")"; return 0; fi
+      echo "  # already in place: would skip to the previous action"; continue
+    fi
+    awk -v g="$g" '$1!=g' "$ST" > "$ST.tmp" && mv -f "$ST.tmp" "$ST"
+    if [ "$acted" = 0 ]; then bspc node "$(hex "$first")" -f 2>/dev/null; return 0; fi
+  done
+  note "nothing to undo"
+  return 0
+}
+
+case "$1" in
+  save) shift; [ $# -gt 0 ] || set -- focused; save "$@" ;;
+  save-sel) m=$(bspc query -N -n .marked.window 2>/dev/null); [ -n "$m" ] || m=focused; save $m ;;
+  save-dir) save focused "$2.local.!floating.window" ;;
+  save-desk) save $(bspc query -N -d "$2" -n .window 2>/dev/null) ;;
+  restore|undo) [ "$2" = --dry-run ] || [ "$2" = -n ] && DRY=1; restore ;;
+  list) [ -f "$ST" ] && cat "$ST" ;;
+  clear) rm -f "$ST" "$ST.last" ;;
+  *) echo "usage: bspwm-undo save [NODE...]|save-sel|save-dir DIR|save-desk DESK|restore [--dry-run]|list|clear" >&2; exit 2 ;;
+esac
+exit 0

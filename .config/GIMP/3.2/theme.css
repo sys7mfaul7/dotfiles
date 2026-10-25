@@ -2,7 +2,7 @@
  *
  * This file is written on GIMP startup and on every theme change.
  * It is NOT supposed to be edited manually. Edit your personal
- * gimp.css file instead (~/.config/GIMP/3.2/gimp.css).
+ * gimp.css file instead (/home/USER/.config/GIMP/3.2/gimp.css).
  */
 
 @import url("file:///gnu/store/a6ysv315b3bgq273vamsimp1nf33p1nz-gimp-3.2.6/share/gimp/3.0/themes/Default/gimp-dark.css");

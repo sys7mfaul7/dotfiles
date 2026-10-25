@@ -35,8 +35,8 @@ K 'super + slash'            'colorpick'
 K 'super + shift + t'        'foot --app-id=foot-float'
 K 'super + ctrl + t'         'foot'
 K 'super + ctrl + shift + t' 'foot --app-id=foot-float'
-K 'super + space'            '$HOME/.local/bin/bspwm-wl-apps'
-K 'super + ctrl + space'     '$HOME/.local/bin/bspwm-wl-menu'
+K 'super + space'            '/home/USER/.local/bin/bspwm-wl-apps'
+K 'super + ctrl + space'     '/home/USER/.local/bin/bspwm-wl-menu'
 # File managers: d=vifm, alt=nnn; +shift floating, +ctrl sudo
 K 'super + d'                      'fm-term vifm tiled user'
 K 'super + shift + d'              'fm-term vifm float user'
@@ -103,11 +103,11 @@ K 'super + p'                "$X11B/bspwm-sel pin"
 K 'super + shift + p'        'bsp-pip'
 K 'super + shift + alt + p' 'bsp-pip --big'
 # ---- layout ----
-K 'super + u'                'bspc node @parent -R 90'
+K 'super + u'                'bspwm-undo restore'   # undo the last window move (bspwm-undo)
 K 'super + ctrl + alt + b'   'bspc node @/ -B'
-K 'super + ctrl + equal'     "$WB/wl-center"
-K 'super + shift + equal'    "$WB/wl-center fit"
-K 'super + plus'             "$WB/wl-center fit"
+K 'super + ctrl + equal'     "bspwm-undo save; $WB/wl-center"
+K 'super + shift + equal'    "bspwm-undo save; $WB/wl-center fit"
+K 'super + plus'             "bspwm-undo save; $WB/wl-center fit"
 K 'super + a'                'bspc node -f @parent'
 K 'super + shift + a'        'bspc node -f @first.leaf || bspc node -f last.local.leaf'
 # ---- desktops ----
@@ -120,16 +120,16 @@ K 'super + shift + apostrophe' 'bspc desktop -f last'
 K 'ctrl + super + alt + l'   "$WB/wl-blank"
 K 'super + Prior'            'bspc desktop -f next.local'
 K 'super + Next'             'bspc desktop -f prev.local'
-K 'super + shift + Prior'    "$X11B/bspwm-sel shift next"
-K 'super + shift + Next'     "$X11B/bspwm-sel shift prev"
-K 'super + alt + shift + Prior' "$X11B/bspwm-sel shiftfollow next"
-K 'super + alt + shift + Next' "$X11B/bspwm-sel shiftfollow prev"
+K 'super + shift + Prior'    "bspwm-undo save-sel; $X11B/bspwm-sel shift next"
+K 'super + shift + Next'     "bspwm-undo save-sel; $X11B/bspwm-sel shift prev"
+K 'super + alt + shift + Prior' "bspwm-undo save-sel; $X11B/bspwm-sel shiftfollow next"
+K 'super + alt + shift + Next' "bspwm-undo save-sel; $X11B/bspwm-sel shiftfollow prev"
 for i in 1 2 3 4 5 6 7 8 9 0; do
   n=$i; [ "$i" = 0 ] && n=10
   K "super + $i"               "bspc desktop -f ^$n"
-  K "super + ctrl + $i"        "bspc node -d ^$n"
-  K "super + shift + $i"       "$X11B/bspwm-sel send $i"
-  K "super + alt + shift + $i" "$X11B/bspwm-sel sendfollow $i"
+  K "super + ctrl + $i"        "bspwm-undo save; bspc node -d ^$n"
+  K "super + shift + $i"       "bspwm-undo save-sel; $X11B/bspwm-sel send $i"
+  K "super + alt + shift + $i" "bspwm-undo save-sel; $X11B/bspwm-sel sendfollow $i"
 done
 # ---- focus / cycle ----
 K 'alt + Tab'                'bspc node -f prev.local.!hidden.window'
@@ -141,23 +141,23 @@ K 'super + ctrl + shift + Tab' 'bspc node -f prev.local.!hidden.window'
 for d in h:west j:south k:north l:east Left:west Down:south Up:north Right:east; do
   k=${d%%:*}; dir=${d#*:}
   K "super + $k"         "bspc node -f $dir.!sticky.!hidden.local"
-  KE "super + shift + $k" "$WB/wl-smartmove $dir"
+  KE "super + shift + $k" "bspwm-undo save-dir $dir; $WB/wl-smartmove $dir"
 done
 for d in Left:west Down:south Up:north Right:east; do
   k=${d%%:*}; dir=${d#*:}
-  K "ctrl + alt + $k"            "bspc node -s $dir.local"
-  K "super + alt + $k"           "$WB/wl-altdir $dir"   # floating: edge, tiled: presel
+  K "ctrl + alt + $k"            "bspwm-undo save-dir $dir; bspc node -s $dir.local"
+  K "super + alt + $k"           "bspwm-undo save; $WB/wl-altdir $dir"   # floating: edge, tiled: presel
 done
 # fast nudge for floating windows (80px, repeats while held)
-KE 'super + alt + shift + Left' 'bspc node focused.floating -v -80 0'
-KE 'super + alt + shift + Right' 'bspc node focused.floating -v 80 0'
-KE 'super + alt + shift + Up' 'bspc node focused.floating -v 0 -80'
-KE 'super + alt + shift + Down' 'bspc node focused.floating -v 0 80'
+KE 'super + alt + shift + Left' 'bspwm-undo save; bspc node focused.floating -v -80 0'
+KE 'super + alt + shift + Right' 'bspwm-undo save; bspc node focused.floating -v 80 0'
+KE 'super + alt + shift + Up' 'bspwm-undo save; bspc node focused.floating -v 0 -80'
+KE 'super + alt + shift + Down' 'bspwm-undo save; bspc node focused.floating -v 0 80'
 # ---- preselection ----
 K 'super + ctrl + v'         'bspc node -p south'
 K 'super + ctrl + q'         'bspc node -p cancel'
 K 'super + alt + Escape'     "bspc node -p cancel; $WB/wl-smartmove cancel"
-K 'super + Return'           "$X11B/bspwm-sel toggle"
+K 'super + Return'           "bspwm-undo save; $X11B/bspwm-sel toggle"
 K 'super + shift + Escape'    "$X11B/bspwm-sel clear"
 # ---- resize ----
 KE 'super + ctrl + Up'        "$X11B/bspwm-cresize shrink v"
@@ -165,21 +165,19 @@ KE 'super + ctrl + Down'      "$X11B/bspwm-cresize grow v"
 KE 'super + ctrl + Left'      "$X11B/bspwm-cresize shrink h"
 KE 'super + ctrl + Right'     "$X11B/bspwm-cresize grow h"
 KE 'super + KP_Add'           "$X11B/bspwm-resize grow"
-KE 'super + minus'            "$X11B/bspwm-resize shrink"
 KE 'super + KP_Subtract'      "$X11B/bspwm-resize shrink"
-KE 'super + alt + plus'       'bspc node -z top_right 20 -20; bspc node -z bottom_left -20 20'
-KE 'super + alt + minus'      'bspc node -z top_right -20 20; bspc node -z bottom_left 20 -20'
-KE 'super + ctrl + plus'      'bspc node -z top_left -50 -25; bspc node -z bottom_right 50 25'
-KE 'super + ctrl + minus'     'bspc node -z top_left 50 25; bspc node -z bottom_right -50 -25'
 # ---- scratchpad ----
 K 'super + s'                "$WB/wl-scratch toggle"
 K 'super + shift + s'        "$WB/wl-scratch add"
 K 'super + ctrl + s'         "$WB/wl-scratch remove"
 # ---- desktop rename / equal columns ----
-K 'super + ctrl + r'         "$WB/wl-rename"            # type a name; "-" or "reset" = default number; Esc cancels
-K 'super + equal'            "$WB/wl-eqkey"             # floating: centre, tiled: equal-width columns
-K 'super + KP_Equal'         "$WB/wl-eqkey"             # keypad = : same as Super+=
-K 'super + shift + KP_Equal' "$WB/wl-center fit"
+K 'super + ctrl + r'         'bspc node @parent -R 90'    # rotate this split clockwise
+K 'super + ctrl + shift + r' 'bspc node @parent -R 270'   # rotate this split back (counter-clockwise)
+K 'super + alt + equal'      "$WB/wl-rename"            # rename this desktop; "-" or "reset" = default number; Esc cancels
+for i in 1 2 3 4 5 6 7 8 9 0; do K "super + alt + $i" "$WB/wl-rename $i"; done   # rename desktop N (0 = 10)
+K 'super + equal'            "bspwm-undo save; $WB/wl-eqkey"             # floating: centre, tiled: equal-width columns
+K 'super + KP_Equal'         "bspwm-undo save; $WB/wl-eqkey"             # keypad = : same as Super+=
+K 'super + shift + KP_Equal' "bspwm-undo save; $WB/wl-center fit"
 K 'super + ctrl + alt + equal' "$WB/wl-eqcols -r"   # equal columns + equal rows in each column
 # ---- window stacking / minimize / floats / opacity / emoji ----
 K 'super + shift + bracketleft'  "$WB/wl-stack raise"
@@ -262,6 +260,9 @@ if [ -z "$BSPWM_WL_STARTED" ]; then
   command -v cliphist >/dev/null && wl-paste --watch cliphist store >/dev/null 2>&1 &
   command -v dunst >/dev/null && dunst >"$L/dunst.log" 2>&1 &
 fi
+
+# Guix update checker for the bar (every 6 h; flock in the script prevents duplicates)
+[ -x "$HOME/.local/bin/guix-updates-loop" ] && setsid -f "$HOME/.local/bin/guix-updates-loop" </dev/null >/dev/null 2>&1
 
 # Screen sharing: PipeWire + wlr screencast portal
 ( S="$HOME/.local/state/bspwm-wl"

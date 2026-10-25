@@ -7,7 +7,7 @@
 #   --enable-features=TouchpadOverscrollHistoryNavigation
 #   --password-store=gnome-libsecret
 #   (Omarchy also adds --disable-features=WaylandWpColorManagerV1, a Hyprland-only crash workaround,
-#    and --load-extension=/usr/share/omarchy/... paths that do not exist here: omitted)
+#    and --load-extension=/usr/share/omarchy/... paths that do not exist on r2d2: omitted)
 # electron apps (electron-flags.conf):
 #   --enable-features=UseOzonePlatform --ozone-platform=wayland
 #   or env: ELECTRON_OZONE_PLATFORM_HINT=wayland

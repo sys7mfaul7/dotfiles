@@ -1,0 +1,19 @@
+#!/bin/sh
+# waybar-guix-updates: JSON for the waybar custom/updates module.
+C="$HOME/.cache"
+n=$(cat "$C/Updates.txt" 2>/dev/null); case $n in ''|*[!0-9]*) n=0;; esac
+rb=$(cat "$C/Updates.rebuilds" 2>/dev/null); case $rb in ''|*[!0-9]*) rb=0;; esac
+when=never; [ -f "$C/guix-updates.stamp" ] && when=$(date -d "@$(cat "$C/guix-updates.stamp")" '+%a %d %b %H:%M %Z' 2>/dev/null)
+checking=0
+if [ -f "$C/guix-updates.lock" ] && ! flock -n "$C/guix-updates.lock" true 2>/dev/null; then checking=1; fi
+cls=updates; [ "$n" -eq 0 ] && cls=zero; [ $checking = 1 ] && cls=checking
+tip=$(
+  echo "Guix updates: $n new version(s)"
+  [ "$rb" -gt 0 ] && echo "(+$rb rebuild-only)"
+  echo "Last check: $when"
+  [ $checking = 1 ] && echo "Checking now..."
+  if [ "$n" -gt 0 ]; then echo; head -n 20 "$C/Updates.list"; [ "$n" -gt 20 ] && echo "... and $((n-20)) more"; fi
+  echo; echo "Click: guix pull && guix upgrade"
+)
+jq -cn --arg t "$n" --arg tip "$tip" --arg c "$cls" \
+  '{text:$t, tooltip:($tip|gsub("&";"&amp;")|gsub("<";"&lt;")|gsub(">";"&gt;")), class:$c}'

@@ -1,0 +1,21 @@
+#!/bin/sh
+# fingerprint-enroll: enrol a finger with fprintd (Realtek 2541:fa03 sensor)
+# and verify it.  Usage: fingerprint-enroll [finger]   (default right-index-finger)
+# Fingers: left|right-thumb, -index-finger, -middle-finger, -ring-finger, -little-finger
+# Fingerprint is only a shortcut; the password always keeps working.
+set -eu
+FINGER=${1:-right-index-finger}
+command -v fprintd-enroll >/dev/null 2>&1 || {
+    echo "fprintd-enroll not found. Run the system reconfigure first (see ~/guix-r2d2/AUTH-SETUP.md)." >&2
+    exit 1; }
+
+echo "Currently enrolled:"
+fprintd-list "$(id -un)" || true
+echo
+echo "Enrolling $FINGER: press, lift, press again... until it says enroll-completed."
+fprintd-enroll -f "$FINGER"
+echo
+echo "Now verify: touch the sensor with the same finger."
+fprintd-verify -f "$FINGER"
+echo
+echo "To remove all enrolled fingers later: fprintd-delete $(id -un)"

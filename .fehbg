@@ -1,2 +1,2 @@
 #!/bin/sh
-feh --no-fehbg --bg-fill "$HOME/.local/share/wallpapers/sys7mfaul7-03c-glitch-clear.jpg" 
+feh --no-fehbg --bg-fill '/home/USER/.local/share/wallpapers/sys7mfaul7-03c-glitch-clear.jpg' 

@@ -1,4 +1,4 @@
-# h4ck3r-themed qutebrowser config (4K @ Xft.dpi 144)
+# h4ck3r-themed qutebrowser config for r2d2 (4K @ Xft.dpi 144)
 # -*- mode: python; coding: utf-8 -*-
 config.load_autoconfig(False)
 
@@ -241,7 +241,7 @@ config.bind(",m", "spawn --userscript view_in_mpv")
 config.bind(",r", "spawn --userscript readability")
 
 # Password fill — only useful when pass or keepassxc is installed.
-# Tools not installed yet; binding kept for when they are.
+# Tools not present on r2d2 yet; binding kept for when they are.
 # config.bind(",p", "spawn --userscript qute-pass")
 
 # Handy extras

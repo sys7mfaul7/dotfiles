@@ -1,0 +1,39 @@
+#!/bin/sh
+# yubikey-enroll: register a YubiKey for pam_u2f on r2d2
+# (login, LightDM, sudo, swaylock, i3lock).  Password always keeps working.
+#   1st run : creates ~/.config/Yubico/u2f_keys for this user
+#   later   : appends ANOTHER key (e.g. a backup key) to the same line
+# Plug in only the key you want to add, then touch it when it blinks.
+set -eu
+U=$(id -un)
+D="$HOME/.config/Yubico"          # pam_u2f default: ~/.config/Yubico/u2f_keys
+F="$D/u2f_keys"
+
+command -v pamu2fcfg >/dev/null 2>&1 || {
+    echo "pamu2fcfg not found. Run the system reconfigure first (see ~/guix-r2d2/AUTH-SETUP.md)." >&2
+    exit 1; }
+
+umask 077
+mkdir -p "$D"
+chmod 700 "$D"
+
+if [ -s "$F" ]; then
+    n=$(head -n1 "$F" | tr ':' '\n' | tail -n +2 | wc -l)
+    echo "u2f_keys already has $n key(s) for $U; adding another one."
+    echo "Make sure the NEW key is plugged in (not one already registered)."
+    cp -p "$F" "$F.bak-$(date +%Y%m%d-%H%M%S)"
+    echo "Touch the YubiKey when it blinks..."
+    NEW=$(pamu2fcfg -n) || { echo "pamu2fcfg failed; nothing changed." >&2; exit 1; }
+    [ -n "$NEW" ] || { echo "no credential returned; nothing changed." >&2; exit 1; }
+    printf '%s%s\n' "$(head -n1 "$F" | tr -d '\n')" "$NEW" > "$F.tmp"
+else
+    echo "Registering the first YubiKey for $U."
+    echo "Touch the YubiKey when it blinks..."
+    pamu2fcfg -u "$U" > "$F.tmp" || { rm -f "$F.tmp"; echo "pamu2fcfg failed; nothing changed." >&2; exit 1; }
+    [ -s "$F.tmp" ] || { rm -f "$F.tmp"; echo "no credential returned; nothing changed." >&2; exit 1; }
+fi
+mv "$F.tmp" "$F"
+chmod 600 "$F"
+n=$(head -n1 "$F" | tr ':' '\n' | tail -n +2 | wc -l)
+echo "Done: $F now holds $n key(s) for $U."
+echo "Test in a terminal (keep another root/sudo shell open):  sudo -k; sudo true"

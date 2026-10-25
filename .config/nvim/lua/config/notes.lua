@@ -3,7 +3,8 @@ local okr, rm = pcall(require, "render-markdown")
 if okr then
   rm.setup({ file_types = { "markdown", "codecompanion" },
     heading = { backgrounds = { "H4Head1", "H4Head2", "H4Head3", "H4Head4", "H4Head5", "H4Head6" } },
-    code = { highlight = "H4Code" } })
+    code = { highlight = "H4Code" },
+    latex = { enabled = false } })
 end
 -- Org mode
 local oko, org = pcall(require, "orgmode")
@@ -14,15 +15,18 @@ if oko then
     org_default_notes_file = "~/org/refile.org",
   })
 end
-local okh, hl = pcall(require, "headlines")
-if okh then
+vim.api.nvim_create_autocmd("FileType", { pattern = "org", once = true, callback = function(ev)
+  vim.cmd.packadd("headlines.nvim")
+  local okh, hl = pcall(require, "headlines")
+  if not okh then return end
   hl.setup({
-    markdown = { headline_highlights = false }, -- render-markdown handles markdown
     org = { headline_highlights = { "H4Head1", "H4Head2", "H4Head3", "H4Head4", "H4Head5", "H4Head6" },
       bullets = { "◉", "○", "✸", "✿" }, codeblock_highlight = "H4Code", dash_highlight = "H4Dash",
       quote_highlight = "H4Dash", fat_headlines = false },
   })
-end
+  for ft in pairs(hl.config) do if ft ~= "org" then hl.config[ft] = nil end end
+  vim.api.nvim_buf_call(ev.buf, function() pcall(hl.refresh) end)
+end })
 local function colors()
   local s = function(g, o) vim.api.nvim_set_hl(0, g, o) end
   local fg = { "#00ff41", "#8fef8f", "#c0ffc0", "#5fbf5f", "#4f9f4f", "#3f7f3f" }

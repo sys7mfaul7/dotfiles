@@ -17,7 +17,7 @@ Everything uses one green-on-black theme. No blue anywhere.
 | Dim | `#4f7f5a` |
 | Charcoal panels | `#0a0e14` |
 
-Fonts: the X11 session uses **DejaVu Sans Mono** (regular; Bold only for emphasis) with **Symbols Nerd Font** for icons, see [Fonts](#fonts). The Wayland sessions and the apps (GTK, Qt, foot, bemenu, fuzzel, dunst, qutebrowser UI, Emacs, Zed) use the same DejaVu Sans Mono, with Symbols Nerd Font Mono for icons. `.config/fontconfig/fonts.conf` makes it the default for monospace, sans-serif, serif and system-ui; web pages still use their own fonts. Menus are one-line dmenu style on pure black.
+Fonts: the X11 session uses **DejaVu Sans Mono** (regular; Bold only for emphasis) with **Symbols Nerd Font** for icons, see [Fonts](#fonts). The Wayland sessions and the apps (GTK, Qt, foot, bemenu, dunst, qutebrowser UI, Emacs, Zed) use the same DejaVu Sans Mono, with Symbols Nerd Font Mono for icons. `.config/fontconfig/fonts.conf` makes it the default for monospace, sans-serif, serif and system-ui; web pages still use their own fonts. Menus are one-line dmenu style on pure black.
 
 > The bspwm-wl compositor source lives in a separate private repo. This repo only holds its config (`.config/bspwm-wl`).
 
@@ -35,7 +35,7 @@ The repo mirrors `$HOME`, so every path here is the path it installs to.
   niri/          config.kdl, waybar/, bin/
   fontconfig/    fonts.conf (DejaVu Sans Mono as the default family), conf.d (emoji)
   xdg-desktop-portal(-wlr)/   screen-sharing portal config
-  foot/ nvim/ doom/ zed/ qutebrowser/ vifm/ nnn/plugins/ mpv/ dunst/ fuzzel/ gtk-3.0/ gtk-4.0/ qt5ct/ qt6ct/ ...
+  foot/ nvim/ doom/ zed/ qutebrowser/ vifm/ nnn/plugins/ mpv/ dunst/ gtk-3.0/ gtk-4.0/ qt5ct/ qt6ct/ ...
 .local/bin/      launchers and helpers (bsp-pip, bsp-pin, bspwm-sel, chromium-wl, floorp, slack, ...)
 .local/share/    applications/*.desktop, wayland-sessions, wallpapers (two), icons/hicolor, emoji
 guix-config/       config.scm (system), my-packages/ (local Guix channel: fonts, niri-session...), NOTES.md

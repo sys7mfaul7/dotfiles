@@ -1,0 +1,51 @@
+#!/bin/sh
+# guix-updates-check: count packages in ~/.guix-profile that have newer
+# versions on the latest channels. Uses `guix time-machine` with a dry-run
+# upgrade, so it never runs `guix pull` and never touches ~/.config/guix/current.
+# Writes: ~/.cache/Updates.txt (count), ~/.cache/Updates.list (packages),
+#         ~/.cache/Updates.rebuilds (same-version rebuild count), log in ~/.cache/guix-updates.log
+C="$HOME/.cache"; mkdir -p "$C"
+LOG="$C/guix-updates.log"; CNT="$C/Updates.txt"; LST="$C/Updates.list"; RB="$C/Updates.rebuilds"
+PROFILE="$HOME/.guix-profile"; CH="$HOME/.config/guix/channels.scm"
+log() { echo "$(date '+%F %T %Z') $*" >>"$LOG"; }
+signal_bars() {  # tell the user's waybars to re-read the module (signal 8)
+  for p in $(pgrep -x waybar; pgrep -x .waybar-real); do kill -RTMIN+8 "$p" 2>/dev/null; done
+}
+exec 9>"$C/guix-updates.lock"
+if ! flock -n 9; then log "another check is already running; skipping"; exit 0; fi
+# keep the log small
+[ -f "$LOG" ] && [ "$(wc -l <"$LOG")" -gt 2000 ] && { tail -n 1000 "$LOG" >"$LOG.tmp" && mv -f "$LOG.tmp" "$LOG"; }
+GUIX="$HOME/.config/guix/current/bin/guix"; [ -x "$GUIX" ] || GUIX=guix
+if [ -f "$CH" ]; then set -- -C "$CH"; else set --; fi
+export LC_ALL=en_US.utf8
+log "check started (channels: $([ -f "$CH" ] && echo "$CH" || echo default))"
+signal_bars
+OUT=$(mktemp "$C/guix-updates.out.XXXXXX")
+nice -n 19 ionice -c3 "$GUIX" time-machine "$@" -- package -p "$PROFILE" --dry-run -u >"$OUT" 2>&1  # -u must come last (it takes an optional regexp)
+rc=$?
+if [ $rc -ne 0 ]; then
+  log "FAILED (exit $rc); keeping previous count. Last output:"
+  tail -n 25 "$OUT" | sed 's/^/    /' >>"$LOG"
+  rm -f "$OUT"; signal_bars; exit 1
+fi
+# Upgrade lines look like "   name<TAB>old → new<TAB>/gnu/store/..." (version bump)
+# or "   name<TAB>ver (dependencies or package changed)<TAB>..." (rebuild only).
+awk -F'\t' '
+  /would be upgraded:|will be upgraded:/ {f=1; next}
+  f && /^[^ \t]/ {f=0}
+  f && NF>=2 {
+    n=$1; sub(/^[ \t]+/,"",n)
+    if ($2 ~ /→|->/) print n "  " $2
+  }' "$OUT" | sort -u >"$LST.tmp"
+awk -F'\t' '
+  /would be upgraded:|will be upgraded:/ {f=1; next}
+  f && /^[^ \t]/ {f=0}
+  f && NF>=2 && $2 !~ /→|->/ {c++}
+  END {print c+0}' "$OUT" >"$RB.tmp"
+n=$(wc -l <"$LST.tmp" | tr -d " ")
+printf '%s\n' "$n" >"$CNT.tmp"
+mv -f "$LST.tmp" "$LST"; mv -f "$RB.tmp" "$RB"; mv -f "$CNT.tmp" "$CNT"
+date +%s >"$C/guix-updates.stamp"
+log "check done: $n package(s) with new versions, $(cat "$RB") rebuild-only"
+rm -f "$OUT"
+signal_bars

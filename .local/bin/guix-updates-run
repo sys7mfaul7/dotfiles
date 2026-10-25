@@ -1,0 +1,13 @@
+#!/bin/sh
+# guix-updates-run: opened by clicking the bar's updates icon (in a floating foot).
+G="$HOME/.config/guix/current/bin/guix"
+echo "== guix pull =="
+if "$G" pull; then
+  echo; echo "== guix upgrade =="
+  "$G" upgrade   # path re-resolves to the freshly pulled guix
+fi
+echo; echo "== re-checking for updates =="
+"$HOME/.local/bin/guix-updates-check"
+echo
+printf 'Done, press Enter '
+read _
