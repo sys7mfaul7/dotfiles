@@ -142,6 +142,7 @@ binds {
     Mod+Space        hotkey-overlay-title="Apps: bspwm-wl-apps" { spawn-sh "~/.local/bin/bspwm-wl-apps"; }
     Mod+Ctrl+Space   { spawn-sh "bspwm-wl-menu"; }
     Mod+Alt+Space    hotkey-overlay-title="Run: rofi" { spawn-sh "rofi -show run -theme ~/.config/bspwm/rofi/dmenu.rasi"; }
+    Mod+Alt+X        hotkey-overlay-title="Passwords: tessen" { spawn-sh "tessen -d rofi"; }
     Mod+D            hotkey-overlay-title="Files: vifm" { spawn-sh "fm-term vifm tiled user"; }
     Mod+Alt+D        { spawn-sh "fm-term nnn tiled user"; }
     Mod+C            { spawn-sh "~/.config/bspwm-wl/bin/wl-calc"; }

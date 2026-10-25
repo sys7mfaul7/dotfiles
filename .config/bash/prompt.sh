@@ -22,7 +22,7 @@ __ps_mode() {
   bind "set vi-ins-mode-string \"${t}${M}+\"" 2>/dev/null
   bind "set vi-cmd-mode-string \"${t}${M}:\"" 2>/dev/null
 }
-PS0='\n\[\e[3;38;2;79;127;90m\] - cmd start: $(TZ=America/Chicago date "+%a %b %-d %Y %-I:%M:%S %p %Z")\[\e[0m\]\n\n'
+PS0='\n\[\e[3;38;2;47;90;47m\] - cmd start: $(TZ=America/Chicago date "+%a %b %-d %Y %-I:%M:%S %p %Z")\[\e[0m\]\n\n'
 
 # finished stamp + duration + audit log
 __cmd_log="${XDG_STATE_HOME:-$HOME/.local/state}/bash/cmd-audit.log"
@@ -34,12 +34,14 @@ __cmd_finished() {
     local end=$EPOCHSECONDS d=$(( EPOCHSECONDS - _cmd_start )) dur
     if [ $d -ge 3600 ]; then dur="$((d/3600))h$((d%3600/60))m$((d%60))s"
     elif [ $d -ge 60 ]; then dur="$((d/60))m$((d%60))s"; else dur="${d}s"; fi
-    printf '\n\e[3;38;2;79;127;90m - cmd finished: %s (took %s, exit %s)\e[0m\n' "$(__cmd_fmt $end)" "$dur" "$rc"
+    printf '\n\e[3;38;2;47;90;47m - cmd finished: %s (took %s, exit %s)\e[0m\n' "$(__cmd_fmt $end)" "$dur" "$rc"
     local cmd; cmd=$(HISTTIMEFORMAT= history 1 | sed 's/^ *[0-9]* *//')
     mkdir -p "${__cmd_log%/*}"; ( umask 077; printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$(__cmd_fmt $_cmd_start)" "$(__cmd_fmt $end)" "$dur" "$rc" "$PWD" "$cmd" >> "$__cmd_log" )
     unset _cmd_ran
   fi
 }
-trap '[ "$BASH_COMMAND" != "__cmd_finished" ] && [ "$BASH_COMMAND" != "__ps_mode" ] && [ -z "$_cmd_ran" ] && { _cmd_ran=1; _cmd_start=$EPOCHSECONDS; }' DEBUG
+# readline widgets (fzf Ctrl-T/Ctrl-R, bind -x) and Tab-completion functions
+# also fire DEBUG; skip them so they do not count as a command run.
+trap '[ -z "${READLINE_LINE+x}" ] && [ -z "${COMP_LINE+x}" ] && [ "$BASH_COMMAND" != "__cmd_finished" ] && [ "$BASH_COMMAND" != "__ps_mode" ] && [ -z "$_cmd_ran" ] && { _cmd_ran=1; _cmd_start=$EPOCHSECONDS; }' DEBUG
 PROMPT_COMMAND='__cmd_finished; __ps_mode'
 alias cmdlog='column -t -s $'"'"'\t'"'"' "$__cmd_log" | less -S +G'

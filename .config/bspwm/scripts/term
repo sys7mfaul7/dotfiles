@@ -33,7 +33,7 @@ case "$1" in
         for t in xterm foot alacritty kitty st ghostty; do
             command -v "$t" >/dev/null && list="$list$t\n"
         done
-        c=$(printf "$list" | rofi -dmenu -p "terminal ($T)" -theme "$B/rofi/dmenu.rasi") || exit 0
+        c=$(printf "$list" | rofi -dmenu -p "TERM $T" -theme "$B/rofi/dmenu.rasi") || exit 0
         [ -n "$c" ] && printf '%s\n' "$c" >"$SAVE" ;;
     --float) shift; launch FloaTerm "$@" ;;
     --run)   shift; launch "" "$@" ;;

@@ -1,0 +1,355 @@
+#!/usr/bin/env python3
+# waybar-sys : CPU / memory / disk text + detailed tooltips for waybar (bspwm-wl),
+# same layout and colours as waybar-net.
+#   waybar-sys cpu  [--loop]  -> waybar JSON {text, tooltip, class}; --loop = continuous, 1 line/1 s
+#   waybar-sys mem  [--loop]  -> same, --loop = 1 line/3 s
+#   waybar-sys disk           -> one-shot (run by waybar every 30 s)
+#   waybar-sys <mode> --text  -> tooltip block as plain text (for a terminal)
+# Bar text is just the number; the icon lives in the module "format" in config.jsonc.
+# Numbers match waybar's built-in cpu/memory/disk modules (same formulas, truncated).
+import json, os, sys, time, glob
+
+DIM = '#4f7f5a'; TXT = '#c0ffc0'; ACC = '#00ff41'; MID = '#5fbf5f'
+CLK = os.sysconf('SC_CLK_TCK'); PAGE = os.sysconf('SC_PAGE_SIZE')
+RUN = os.environ.get('XDG_RUNTIME_DIR') or '/tmp'
+
+def rd(path, default=''):
+    try:
+        with open(path) as f: return f.read().strip()
+    except Exception:
+        return default
+
+# Every value that changes between refreshes is printed at a fixed width so the
+# tooltip window never resizes (labels are a fixed column too, see LW).
+LW = 15   # label column: process names are cut/padded to this
+
+def human(n):
+    """always 10 chars: '  437.2 MiB', '      0 B  '"""
+    n = float(n)
+    for u in ('B', 'KiB', 'MiB', 'GiB', 'TiB'):
+        if n < 1024 or u == 'TiB':
+            return ('%6d %-3s' % (n, u)) if u == 'B' else ('%6.1f %-3s' % (n, u))
+        n /= 1024
+
+def brate(n):
+    return human(n) + '/s'
+
+def fit(t, w):
+    t = str(t)
+    return (t[:w - 1] + '…') if len(t) > w else t.ljust(w)
+
+def esc(t): return str(t).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
+def render(rows, markup):
+    width = LW + 2
+    out = []
+    for l, v in rows:
+        if l is not None: l = fit(l, LW)
+        if l is None:
+            if out: out.append('')
+            out.append("<span color='%s'><b>%s</b></span>" % (ACC, esc(v)) if markup else '== ' + v)
+        elif markup:
+            out.append("<span color='%s'>%s</span><span color='%s'>%s</span>" % (DIM, esc(l.ljust(width)), TXT, esc(v)))
+        else:
+            out.append(l.ljust(width) + v)
+    return '\n'.join(out)
+
+def hwmon(name):
+    for h in glob.glob('/sys/class/hwmon/hwmon*'):
+        if rd(h + '/name') == name: return h
+    return None
+
+def temp(path):
+    v = rd(path)
+    return ('%5.1f °C' % (int(v) / 1000)) if v.lstrip('-').isdigit() else None
+
+def uptime():
+    s = int(float(rd('/proc/uptime', '0').split()[0]))
+    d, s = divmod(s, 86400); h, s = divmod(s, 3600); m = s // 60
+    return '%3dd %02dh %02dm' % (d, h, m)
+
+def procs():
+    """pid -> (comm, utime+stime ticks, rss bytes)"""
+    out = {}
+    for p in os.listdir('/proc'):
+        if not p.isdigit(): continue
+        try:
+            with open('/proc/%s/stat' % p) as f: s = f.read()
+        except Exception:
+            continue
+        r = s.rfind(')'); comm = s[s.find('(') + 1:r]; f = s[r + 2:].split()
+        out[int(p)] = (comm, int(f[11]) + int(f[12]), int(f[21]) * PAGE)
+    return out
+
+# ---------------------------------------------------------------- CPU
+def cpu_times():
+    t = {}
+    for line in rd('/proc/stat').splitlines():
+        if not line.startswith('cpu'): break
+        p = line.split(); v = [int(x) for x in p[1:]]
+        t[p[0]] = (v[3] + v[4], sum(v), v)
+    return t
+
+def pct(a, b, key):
+    if key not in a or key not in b: return 0
+    di = b[key][0] - a[key][0]; dt = b[key][1] - a[key][1]
+    return int(100 * (1 - di / dt)) if dt > 0 else 0
+
+CPUSTATIC = None
+def cpu_static():
+    global CPUSTATIC
+    if CPUSTATIC: return CPUSTATIC
+    model = ''; cores = set(); threads = 0
+    phys = core = None
+    for line in rd('/proc/cpuinfo').splitlines():
+        k, _, v = line.partition(':'); k = k.strip(); v = v.strip()
+        if k == 'model name' and not model: model = v
+        elif k == 'processor': threads += 1
+        elif k == 'physical id': phys = v
+        elif k == 'core id': cores.add((phys, v))
+    c0 = '/sys/devices/system/cpu/cpu0/cpufreq/'
+    CPUSTATIC = dict(model=model, cores=len(cores), threads=threads,
+                     fmax=int(rd(c0 + 'cpuinfo_max_freq', '0') or 0), fmin=int(rd(c0 + 'cpuinfo_min_freq', '0') or 0),
+                     driver=rd(c0 + 'scaling_driver'), k10=hwmon('k10temp'), gpu=hwmon('amdgpu'))
+    return CPUSTATIC
+
+def cpu_build(t0, t1, p0, p1, dt):
+    st = cpu_static(); rows = []
+    total = pct(t0, t1, 'cpu')
+    rows.append((None, 'Processor'))
+    rows.append(('Model', st['model']))
+    rows.append(('Cores', '%d cores / %d threads' % (st['cores'], st['threads'])))
+    fr = [int(x) for x in (rd(f) for f in glob.glob('/sys/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_cur_freq')) if x.isdigit()]
+    if fr:
+        rows.append(('Frequency', 'avg %5.2f GHz, peak %5.2f GHz' % (sum(fr) / len(fr) / 1e6, max(fr) / 1e6)))
+        rows.append(('Range', '%.2f - %.2f GHz' % (st['fmin'] / 1e6, st['fmax'] / 1e6)))
+    c0 = '/sys/devices/system/cpu/cpu0/cpufreq/'
+    gov = rd(c0 + 'scaling_governor'); epp = rd(c0 + 'energy_performance_preference')
+    if gov: rows.append(('Governor', gov + (' / EPP %s' % epp if epp else '') + (' (%s)' % st['driver'] if st['driver'] else '')))
+    if st['k10']:
+        t = temp(st['k10'] + '/temp1_input')
+        if t: rows.append(('Temp (Tctl)', t))
+    if st['gpu']:
+        t = temp(st['gpu'] + '/temp1_input')
+        if t: rows.append(('iGPU temp', t))
+    rows.append((None, 'Usage'))
+    rows.append(('Total', '%3d%%' % total))
+    if 'cpu' in t0 and 'cpu' in t1:
+        a, b = t0['cpu'][2], t1['cpu'][2]; d = [y - x for x, y in zip(a, b)]; s = sum(d) or 1
+        rows.append(('Breakdown', 'user %3d%%  sys %3d%%  iowait %3d%%  irq %3d%%' % (
+            100 * (d[0] + d[1]) / s, 100 * d[2] / s, 100 * d[4] / s, 100 * (d[5] + d[6]) / s)))
+    n = st['threads']; per = [pct(t0, t1, 'cpu%d' % i) for i in range(n)]
+    for i in range(0, n, 8):
+        chunk = per[i:i + 8]
+        rows.append(('CPU %d-%d' % (i, i + len(chunk) - 1), ' '.join('%3d%%' % v for v in chunk)))
+    la = rd('/proc/loadavg').split()
+    if len(la) >= 4:
+        rows.append(('Load avg', '%6.2f %6.2f %6.2f  (1/5/15 min)' % tuple(float(x) for x in la[:3])))
+        rows.append(('Tasks', '%4s running / %6s total' % tuple(la[3].split('/'))))
+    rows.append(('Uptime', uptime()))
+    if p0 and dt > 0:
+        use = []
+        for pid, (comm, ticks, _) in p1.items():
+            if pid in p0 and p0[pid][0] == comm:
+                v = (ticks - p0[pid][1]) / CLK / dt * 100
+                if v > 0: use.append((v, comm, pid))
+        use.sort(reverse=True)
+        rows.append((None, 'Top processes (% of one thread)'))
+        for v, comm, pid in use[:5]: rows.append((comm, '%6.1f%%  pid %7d' % (v, pid)))
+        for _ in range(5 - len(use[:5])): rows.append(('-', '%6s%%  pid %7s' % ('-', '-')))
+    return total, rows
+
+def cpu_main(loop, text):
+    t0 = cpu_times(); p0 = procs(); a = time.monotonic()
+    while True:
+        time.sleep(1)
+        t1 = cpu_times(); p1 = procs(); b = time.monotonic()
+        total, rows = cpu_build(t0, t1, p0, p1, b - a)
+        if text: print(render(rows, False)); return
+        cls = 'high' if total >= 80 else ('mid' if total >= 50 else 'low')
+        print(json.dumps({'text': str(total), 'tooltip': render(rows, True), 'class': cls, 'percentage': total}, ensure_ascii=False), flush=True)
+        if not loop: return
+        t0, p0, a = t1, p1, b
+
+# ---------------------------------------------------------------- memory
+def meminfo():
+    m = {}
+    for line in rd('/proc/meminfo').splitlines():
+        k, _, v = line.partition(':'); p = v.split()
+        if p: m[k] = int(p[0]) * 1024
+    return m
+
+def mem_build():
+    m = meminfo(); rows = []
+    tot = m.get('MemTotal', 1); av = m.get('MemAvailable', m.get('MemFree', 0))
+    pc = int(100 * (tot - av) / tot)
+    rows.append((None, 'Memory'))
+    rows.append(('Used', '%s of %s (%3d%%)' % (human(tot - av), human(tot), pc)))
+    rows.append(('Available', human(av)))
+    rows.append(('Free', human(m.get('MemFree', 0))))
+    rows.append(('Cache', '%s (+%s reclaimable slab)' % (human(m.get('Cached', 0)), human(m.get('SReclaimable', 0)))))
+    rows.append(('Buffers', human(m.get('Buffers', 0))))
+    rows.append(('Shared', human(m.get('Shmem', 0))))
+    rows.append(('Dirty', human(m.get('Dirty', 0))))
+    temps = []
+    for h in sorted(glob.glob('/sys/class/hwmon/hwmon*')):
+        if rd(h + '/name') == 'spd5118':
+            t = temp(h + '/temp1_input')
+            if t: temps.append(t)
+    if temps: rows.append(('DIMM temps', ', '.join(temps)))
+    rows.append((None, 'Swap'))
+    sw = rd('/proc/swaps').splitlines()[1:]
+    if not sw: rows.append(('Swap', 'off'))
+    for line in sw:
+        p = line.split()
+        if len(p) < 5: continue
+        dev, size, used, prio = p[0], int(p[2]) * 1024, int(p[3]) * 1024, p[4]
+        name = os.path.basename(dev)
+        rows.append((name, '%s of %s used (%3d%%), prio %s' % (human(used), human(size), 100 * used // size if size else 0, prio)))
+        if name.startswith('zram'):
+            z = '/sys/block/' + name
+            alg = [w.strip('[]') for w in rd(z + '/comp_algorithm').split() if w.startswith('[')]
+            ms = rd(z + '/mm_stat').split()
+            if ms:
+                orig, comp, used_mem = int(ms[0]), int(ms[1]), int(ms[2])
+                ratio = ('%6.1fx' % (orig / comp)) if comp else '     -x'
+                rows.append(('  zram ' + (alg[0] if alg else '?'), '%s ->%s (%s)' % (human(orig), human(comp), ratio)))
+                rows.append(('  zram RAM', human(used_mem)))
+    pr = sorted(((rss, comm, pid) for pid, (comm, _, rss) in procs().items() if rss > 0), reverse=True)
+    rows.append((None, 'Top processes (RSS)'))
+    for rss, comm, pid in pr[:5]: rows.append((comm, '%s  pid %7d' % (human(rss), pid)))
+    return pc, rows
+
+def mem_main(loop, text):
+    while True:
+        pc, rows = mem_build()
+        if text: print(render(rows, False)); return
+        cls = 'high' if pc >= 85 else ('mid' if pc >= 60 else 'low')
+        print(json.dumps({'text': str(pc), 'tooltip': render(rows, True), 'class': cls, 'percentage': pc}, ensure_ascii=False), flush=True)
+        if not loop: return
+        time.sleep(3)
+
+# ---------------------------------------------------------------- disk
+REAL_FS = {'ext2', 'ext3', 'ext4', 'xfs', 'btrfs', 'vfat', 'exfat', 'ntfs', 'ntfs3', 'fuseblk', 'f2fs', 'jfs', 'reiserfs', 'zfs', 'bcachefs', 'iso9660', 'udf'}
+
+def unesc(s): return s.replace('\\040', ' ').replace('\\011', '\t').replace('\\134', '\\')
+
+def mounts():
+    """list of (mountpoint, source, fstype, opts, root)"""
+    out = []
+    for line in rd('/proc/self/mountinfo').splitlines():
+        a, _, b = line.partition(' - ')
+        p = a.split(); q = b.split()
+        if len(p) < 6 or len(q) < 2: continue
+        out.append((unesc(p[4]), unesc(q[1]), q[0], p[5], unesc(p[3])))
+    return out
+
+def blk_parent(name):
+    """partition name -> whole disk name (nvme0n1p2 -> nvme0n1)"""
+    if os.path.exists('/sys/class/block/%s/partition' % name):
+        return os.path.basename(os.path.dirname(os.path.realpath('/sys/class/block/' + name)))
+    return name
+
+def disk_model(disk):
+    d = '/sys/block/%s/device/' % disk
+    return ' '.join((rd(d + 'vendor') + ' ' + rd(d + 'model')).split()) if disk.startswith('sd') else ' '.join(rd(d + 'model').split())
+
+def describe(src):
+    try:
+        st = os.stat(src); name = os.path.basename(os.path.realpath('/sys/dev/block/%d:%d' % (os.major(st.st_rdev), os.minor(st.st_rdev))))
+    except Exception:
+        name = os.path.basename(os.path.realpath(src))
+    if name.startswith('dm-'):
+        uuid = rd('/sys/block/%s/dm/uuid' % name); slaves = os.listdir('/sys/block/%s/slaves' % name) if os.path.isdir('/sys/block/%s/slaves' % name) else []
+        kind = 'LUKS' + uuid.split('-')[1][4:] if uuid.startswith('CRYPT-LUKS') else ('dm-crypt' if uuid.startswith('CRYPT') else 'LVM' if uuid.startswith('LVM') else 'device-mapper')
+        under = ', '.join(slaves) or '?'
+        disks = [blk_parent(s) for s in slaves]
+        return '%s (%s on %s)' % (src, kind + ' encrypted' if 'LUKS' in kind or 'crypt' in kind else kind, under), disks
+    return src, [blk_parent(name)] if os.path.exists('/sys/class/block/' + name) else []
+
+def diskstats():
+    d = {}
+    for line in rd('/proc/diskstats').splitlines():
+        p = line.split()
+        if len(p) > 9: d[p[2]] = (int(p[5]) * 512, int(p[9]) * 512)
+    return d
+
+def disk_build():
+    rows = []; pct_root = 0; seen = set(); used_disks = {}
+    allm = mounts()
+    binds = {}
+    for mp, src, fs, opts, root in allm:
+        if fs in REAL_FS and src.startswith('/dev/') and root != '/':
+            binds.setdefault(src, []).append(mp)
+    for mp, src, fs, opts, root in allm:
+        if fs not in REAL_FS or not src.startswith('/dev/') or root != '/' or src in seen: continue
+        seen.add(src)
+        try: s = os.statvfs(mp)
+        except Exception: continue
+        if not s.f_blocks: continue
+        total = s.f_blocks * s.f_frsize; used = (s.f_blocks - s.f_bfree) * s.f_frsize; free = s.f_bavail * s.f_frsize
+        p = (s.f_blocks - s.f_bfree) * 100 // s.f_blocks
+        if mp == '/': pct_root = p
+        dev, disks = describe(src)
+        for dk in disks: used_disks.setdefault(dk, []).append(mp)
+        rows.append((None, mp))
+        rows.append(('Used', '%s of %s (%3d%%)' % (human(used), human(total), p)))
+        rows.append(('Free', human(free)))
+        rows.append(('Device', dev))
+        rows.append(('Type', '%s, %s' % (fs, 'read-only' if 'ro' in opts.split(',') else 'read-write')))
+        if s.f_files:
+            rows.append(('Inodes', '%3d%% used' % ((s.f_files - s.f_ffree) * 100 // s.f_files)))
+        if src in binds: rows.append(('Bind mounts', ', '.join(binds[src])))
+    # drives: I/O rate averaged since last run (cache in $XDG_RUNTIME_DIR)
+    ds = diskstats(); now = time.time()
+    cache = os.path.join(RUN, 'waybar-sys-disk.%d' % os.getuid()); old = {}; dt = 0
+    try:
+        with open(cache) as f: j = json.load(f)
+        dt = now - j['t']; old = j['d']
+    except Exception:
+        pass
+    try:
+        with open(cache + '.tmp', 'w') as f: json.dump({'t': now, 'd': ds}, f)
+        os.replace(cache + '.tmp', cache)
+    except Exception:
+        pass
+    drives = sorted(d for d in os.listdir('/sys/block') if d.startswith(('nvme', 'sd', 'mmcblk', 'vd')))
+    for dk in drives:
+        b = '/sys/block/' + dk
+        rows.append((None, 'Drive %s' % dk))
+        rows.append(('Model', disk_model(dk) or '?'))
+        rows.append(('Size', human(int(rd(b + '/size', '0') or 0) * 512) + (', removable' if rd(b + '/removable') == '1' else '')))
+        t = None
+        for h in glob.glob(b + '/device/hwmon*') + glob.glob(b + '/device/device/hwmon*'):
+            t = temp(h + '/temp1_input')
+            if t: break
+        if t: rows.append(('Temp', t))
+        rows.append(('Mounted', ', '.join(used_disks.get(dk, [])) or 'not mounted'))
+        if dk in ds:
+            r, w = ds[dk]
+            if dk in old and 1 <= dt < 600:
+                rows.append(('I/O rate', 'read %s / write %s (%3ds avg)' % (brate(max(0, r - old[dk][0]) / dt), brate(max(0, w - old[dk][1]) / dt), min(dt, 999))))
+            else:
+                rows.append(('I/O rate', 'read %12s / write %12s (   - avg)' % ('-', '-')))
+            rows.append(('Since boot', 'read %s / written %s' % (human(r), human(w))))
+    return pct_root, rows
+
+def disk_main(text):
+    p, rows = disk_build()
+    if text: print(render(rows, False)); return
+    cls = 'high' if p >= 90 else ('mid' if p >= 75 else 'low')
+    print(json.dumps({'text': str(p), 'tooltip': render(rows, True), 'class': cls, 'percentage': p}, ensure_ascii=False), flush=True)
+
+def main():
+    a = sys.argv[1:]; mode = a[0] if a else ''
+    loop = '--loop' in a; text = '--text' in a
+    try:
+        if mode == 'cpu': cpu_main(loop and not text, text)
+        elif mode == 'mem': mem_main(loop and not text, text)
+        elif mode == 'disk': disk_main(text)
+        else: print('usage: waybar-sys cpu|mem|disk [--loop|--text]', file=sys.stderr); sys.exit(2)
+    except (BrokenPipeError, KeyboardInterrupt):
+        pass
+
+if __name__ == '__main__':
+    main()

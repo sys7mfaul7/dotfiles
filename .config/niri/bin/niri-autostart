@@ -29,3 +29,6 @@ swaybg -m fill -i "$W" >"$L/swaybg.log" 2>&1 &
   done ) 9>"$XDG_RUNTIME_DIR/niri-waybar.lock" &
 # Guix update checker for the bar (every 6 h; flock in the script prevents duplicates)
 [ -x "$HOME/.local/bin/guix-updates-loop" ] && setsid -f "$HOME/.local/bin/guix-updates-loop" </dev/null >/dev/null 2>&1
+# KeePassXC = Secret Service keyring (org.freedesktop.secrets), starts minimized to the tray
+command -v keepassxc >/dev/null && ! pgrep -x .keepassxc-real >/dev/null && ! pgrep -x keepassxc >/dev/null && \
+  setsid -f keepassxc --minimized >"$L/keepassxc.log" 2>&1 </dev/null

@@ -1,0 +1,7 @@
+# ~/.config/tessen/config : Wayland pass picker (Super+Alt+X in bspwm-wl and niri)
+# part of sys7mfaul7 dotfiles
+dmenu_backend="rofi"
+# rofi.rasi = dmenu.rasi look plus a fixed PASS prompt
+rofi_config_file="$HOME/.config/tessen/rofi.rasi"
+pass_backend="pass"
+notify="true"

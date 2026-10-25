@@ -1,0 +1,17 @@
+#!/bin/sh
+# clock-fmt : bar clock for waybar (bspwm-wl) and polybar (X11 bspwm)
+# part of sys7mfaul7 dotfiles
+#   clock-fmt          print the clock in the current mode
+#   clock-fmt toggle   switch between full date/time and time only (bar right-click)
+S="${XDG_CACHE_HOME:-$HOME/.cache}/clock-fmt.mode"
+case "$1" in
+  toggle)
+    if [ "$(cat "$S" 2>/dev/null)" = time ]; then echo full > "$S"; else echo time > "$S"; fi
+    pkill -RTMIN+9 -f "^waybar -c" 2>/dev/null
+    exit 0 ;;
+esac
+if [ "$(cat "$S" 2>/dev/null)" = time ]; then
+  TZ=America/Chicago date "+%-I:%M%P"
+else
+  TZ=America/Chicago date "+%a, %d %b %Y %-I:%M%P"
+fi

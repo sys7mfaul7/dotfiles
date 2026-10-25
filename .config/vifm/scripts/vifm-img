@@ -8,8 +8,8 @@ case "$TERM" in
   *) fmt=symbols ;;
 esac
 if [ "$fmt" = sixel ]; then
-  printf '\033[%d;%dH' $((y+1)) $((x+1)) > /dev/tty
-  chafa -f sixel -s "${w}x${h}" --animate=off "$f" > /dev/tty
+  # %pd: vifm places the cursor and passes stdout straight to the terminal
+  chafa -f sixel -s "${w}x${h}" --animate=off "$f"
 else
   chafa -f symbols --symbols=block+border+space -c 256 -s "${w}x${h}" --animate=off "$f"
 fi

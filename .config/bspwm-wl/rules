@@ -21,7 +21,7 @@ BarTUI-audio      state=floating focus=on center=on size=50%x60%
 BarTUI-net        state=floating focus=on center=on size=820x560
 BarTUI-bt         state=floating focus=on center=on size=50%x60%
 BarTUI-top        state=floating focus=on center=on size=50%x60%
-BarCal            state=floating focus=on rectangle=560x250+2720+50
+BarCal            state=floating focus=on rectangle=720x250+2560+50
 # --- apps ---
 mpv               state=floating focus=on center=on size=723x407
 org.pulseaudio.pavucontrol state=floating center=on
@@ -30,6 +30,7 @@ Viewnior          state=floating focus=on center=on
 nsxiv             state=floating focus=on center=on
 feh               state=floating focus=on center=on
 zenity            state=floating center=on
+org.keepassxc.KeePassXC state=floating center=on size=50%x60%
 # Desktop pins that were disabled in X11 (uncomment to use):
 # org.telegram.desktop desktop=^4
 # thunar               desktop=^2

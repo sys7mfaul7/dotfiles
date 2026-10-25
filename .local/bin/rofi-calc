@@ -2,4 +2,4 @@
 # rofi-calc : bc calculator in the one-line menu   (Super+C)
 # part of sys7mfaul7 dotfiles
 T="$HOME/.config/bspwm/rofi/dmenu.rasi"
-exec "$HOME/.local/bin/calc-core" rofi -dmenu -i -p calc -theme "$T"
+exec "$HOME/.local/bin/calc-core" rofi -dmenu -i -p CALC -theme "$T"

@@ -2,4 +2,4 @@
 # bspwm-wl Super+Space: one-line app menu (desktop entries, incl. Flatpak) via j4-dmenu-desktop + bemenu
 export BEMENU_BACKEND=wayland
 export XDG_DATA_DIRS="$HOME/.local/share/flatpak/exports/share:$HOME/.guix-profile/share:/run/current-system/profile/share:${XDG_DATA_DIRS:-/usr/share}"
-exec j4-dmenu-desktop --no-generic --term=foot --dmenu="bemenu -i -p 'apps' -H 22 --fn 'DejaVu Sans Mono, Symbols Nerd Font Mono 11' --tb '#000000' --tf '#00ff41' --fb '#000000' --ff '#c0ffc0' --nb '#000000' --nf '#c0ffc0' --ab '#000000' --af '#c0ffc0' --hb '#1f6f2f' --hf '#c0ffc0' -B 0 --hp 8"
+exec j4-dmenu-desktop --no-generic --term=foot --dmenu="bemenu -i -p 'APP' -H 22 --fn 'DejaVu Sans Mono, Symbols Nerd Font Mono 11' --tb '#000000' --tf '#00ff41' --fb '#000000' --ff '#c0ffc0' --nb '#000000' --nf '#c0ffc0' --ab '#000000' --af '#c0ffc0' --hb '#1f6f2f' --hf '#c0ffc0' -B 0 --hp 8"

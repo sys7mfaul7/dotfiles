@@ -5,7 +5,7 @@
 . "$HOME/.config/bspwm/theme"
 c=$( { find "$WALLPAPER_DIR" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) -printf '%f\n' 2>/dev/null | sort
        echo "(none: plain black)"; } |
-     rofi -dmenu -i -p wallpaper -theme "$HOME/.config/bspwm/rofi/dmenu.rasi") || exit 0
+     rofi -dmenu -i -p WALL -theme "$HOME/.config/bspwm/rofi/dmenu.rasi") || exit 0
 case $c in
     "(none: plain black)") exec "$HOME/.config/bspwm-wl/bin/wl-wallpaper" set "$HOME/.config/bspwm-wl/solid/solid-black.png" ;;
     "") exit 0 ;;

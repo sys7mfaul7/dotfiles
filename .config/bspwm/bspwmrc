@@ -114,5 +114,8 @@ command -v transmission-daemon >/dev/null && ! pgrep -x transmission-da >/dev/nu
 [ -x "$HOME/.local/bin/llm-serve" ] && "$HOME/.local/bin/llm-serve" &
 # clipboard history (Super+V)
 pgrep -x clipmenud >/dev/null || clipmenud &
+# KeePassXC = Secret Service keyring (org.freedesktop.secrets), starts minimized to the tray
+command -v keepassxc >/dev/null && ! pgrep -x .keepassxc-real >/dev/null && ! pgrep -x keepassxc >/dev/null &&
+    setsid -f keepassxc --minimized >/dev/null 2>&1 </dev/null
 # coloured borders for pinned windows
 pgrep -f "[b]sp-pin-borders" >/dev/null || setsid -f "$HOME/.local/bin/bsp-pin-borders" >/dev/null 2>&1

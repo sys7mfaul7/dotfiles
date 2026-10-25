@@ -55,7 +55,7 @@ case "$1" in
 esac
 
 build_main
-sel=$(pick bluetooth) || exit 0; [ -n "$sel" ] || exit 0
+sel=$(pick BT) || exit 0; [ -n "$sel" ] || exit 0
 key=$(lookup "$sel"); [ -n "$key" ] || exit 0
 case "$key" in
   ON)  $BT power on >/dev/null 2>&1 && note "Powered on" || note "Power on failed" ;;
@@ -67,7 +67,7 @@ case "$key" in
     $BT power on >/dev/null 2>&1
     build_scan
     [ -s "$map" ] || { note "No new devices found"; exit 0; }
-    sel=$(pick pair) || exit 0; mac=$(lookup "$sel"); [ -n "$mac" ] || exit 0
+    sel=$(pick PAIR) || exit 0; mac=$(lookup "$sel"); [ -n "$mac" ] || exit 0
     note "Pairing $sel…"
     if timeout 40 $BT --agent NoInputNoOutput pair "$mac" 2>&1 | grep -q -i -e "Pairing successful" -e "AlreadyExists"; then
       $BT trust "$mac" >/dev/null 2>&1

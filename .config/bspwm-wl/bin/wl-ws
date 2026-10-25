@@ -1,0 +1,70 @@
+#!/bin/sh
+# wl-ws : bspwm-wl waybar workspaces with polybar-ws shades (part of sys7mfaul7 dotfiles)
+#   wl-ws watch      single watcher (flock): bspc subscribe -> state file -> RTMIN+10 to waybar
+#   wl-ws get N      JSON for custom/wsN (N = position 1..10; shows the desktop's name, 10 as 0)
+#   wl-ws scroll prev|next   cycle desktops on this monitor, skipping M
+# classes: focused, prev (bspc last), urgent, occupied, empty; colours in style.css
+export BSPWM_SOCKET="${BSPWM_SOCKET:-/run/user/1000/bspwmwayland-0_0_0-socket}"
+R="${XDG_RUNTIME_DIR:-/run/user/1000}"
+S="$R/wl-ws.state"
+SIG=10
+
+state() { # lines: POS<TAB>CLASS<TAB>NAME (POS = 1..10 by position, so renamed desktops keep their slot)
+  f=$(bspc query -D -d focused 2>/dev/null)
+  p=$(bspc query -D -d last 2>/dev/null)
+  u=" $(bspc query -D -d .urgent 2>/dev/null | tr '\n' ' ') "
+  o=" $(bspc query -D -d .occupied 2>/dev/null | tr '\n' ' ') "
+  i=0
+  for d in $(bspc query -D 2>/dev/null); do
+    name=$(bspc query -D -d "$d" --names 2>/dev/null)
+    if [ "$name" = M ]; then   # minimize desktop: listed only while it holds windows
+      case "$o" in *" $d "*) printf 'M\tmin\tM\n';; esac; continue; fi
+    i=$((i+1))
+    if [ "$d" = "$f" ]; then c=focused
+    else case "$u" in *" $d "*) c=urgent;; *)
+      if [ "$d" = "$p" ]; then c=prev
+      else case "$o" in *" $d "*) c=occupied;; *) c=empty;; esac; fi;; esac
+    fi
+    printf '%s\t%s\t%s\n' "$i" "$c" "$name"
+  done
+}
+
+case "$1" in
+watch)
+  exec 9>"$R/wl-ws.lock"
+  # on waybar reload wait for the old watcher to exit; if it never does, it keeps signalling waybar
+  flock -w 5 9 || { printf '\n'; exit 0; }
+  F=$(mktemp -u "$R/wl-ws.XXXXXX"); mkfifo "$F" || exit 1
+  bspc subscribe desktop node_add node_remove node_transfer node_flag >"$F" 2>/dev/null & SP=$!
+  trap 'kill $SP 2>/dev/null; rm -f "$F"; exit 0' EXIT INT TERM PIPE HUP
+  last=__none__
+  upd() {
+    new=$(state)
+    [ "$new" = "$last" ] && return 0
+    last=$new
+    printf '%s\n' "$new" >"$S.tmp" && mv -f "$S.tmp" "$S"
+    pkill -RTMIN+$SIG -f '^waybar -c' 2>/dev/null
+  }
+  upd
+  printf '\n' || exit 0          # this module shows nothing itself
+  while read -r _; do upd; kill -0 $PPID 2>/dev/null || exit 0; done <"$F"
+  ;;
+get)
+  n=$2
+  if [ -f "$S" ]; then line=$(awk -F'\t' -v d="$n" '$1==d' "$S")
+  else line=$(state | awk -F'\t' -v d="$n" '$1==d'); fi
+  if [ -z "$line" ]; then echo '{"text":"","class":"none"}'; exit 0; fi
+  printf '%s\n' "$line" | awk -F'\t' '{
+    c=$2; t=$3; if (t=="10") t="0"
+    gsub(/&/,"\\&amp;",t); gsub(/</,"\\&lt;",t); gsub(/>/,"\\&gt;",t)
+    gsub(/\\/,"\\\\",t); gsub(/"/,"\\\"",t)
+    printf "{\"text\":\"%s\",\"class\":\"%s\",\"tooltip\":\"desktop %s\"}\n", t, c, $1 }'
+  ;;
+scroll)
+  f=$(bspc query -D -d focused --names)
+  t=$(bspc query -D -m focused --names | grep -vx M | awk -v f="$f" -v dir="$2" '{a[NR]=$0; if($0==f) i=NR}
+      END{ if(!i) i=1; j=(dir=="next")? i+1 : i-1; if(j<1) j=NR; if(j>NR) j=1; print a[j] }')
+  [ -n "$t" ] && bspc desktop -f "$t"
+  ;;
+*) echo "usage: wl-ws watch|get N|scroll prev|next" >&2; exit 2;;
+esac

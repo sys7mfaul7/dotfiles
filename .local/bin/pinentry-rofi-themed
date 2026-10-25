@@ -1,0 +1,14 @@
+#!/bin/sh
+# pinentry for gpg-agent, styled like the rest of the desktop.
+# Wayland (bspwm-wl, Niri): bemenu bar over waybar, same look as wl-powermenu.
+# X11 bspwm: rofi with the dmenu theme.
+if [ -n "$WAYLAND_DISPLAY" ]; then
+  export BEMENU_BACKEND=wayland
+  # patched renderers: prompt+input area capped at 20% of the bar (see ~/.local/bin/bemenu)
+  R=/home/USER/.local/lib/bemenu-gap20-root/lib/bemenu; [ -d "$R" ] && export BEMENU_RENDERERS="$R"
+  export BEMENU_OPTS="-H 22 --fn 'DejaVu Sans Mono, Symbols Nerd Font Mono 11' --tb '#000000' --tf '#00ff41' --fb '#000000' --ff '#c0ffc0' --nb '#000000' --nf '#c0ffc0' --hb '#1f6f2f' --hf '#c0ffc0' --ab '#000000' --af '#c0ffc0'"
+  # drop gpg-agent's long description so the bar reads just "PIN"
+  sed -u "s/^SETDESC .*/NOP/" | exec /home/USER/.guix-profile/bin/pinentry-bemenu "$@"
+  exit
+fi
+exec /home/USER/.guix-profile/bin/pinentry-rofi "$@" -- -theme /home/USER/.config/bspwm/rofi/dmenu.rasi

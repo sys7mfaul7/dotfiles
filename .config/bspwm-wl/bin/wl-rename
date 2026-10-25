@@ -1,6 +1,7 @@
 #!/bin/sh
 # wl-rename [N] : rename the focused desktop (or desktop N, 1..9, 0 = 10) via a one-line bemenu prompt.
 #   Enter a name  -> rename (shown on waybar)
+#   Prompt reads "RENAME <current name>".
 #   Empty / Esc   -> cancel
 #   "-" or "reset"-> back to its default number (1..10 by position; 10 shows as 0)
 #   wl-rename reset-all -> reset desktops 1..10 to defaults
@@ -45,7 +46,7 @@ case "$1" in
 esac
 cur=$(bspc query -D -d "$did" --names)
 [ "$cur" = M ] && { dunstify -t 1500 "Rename" "M is the minimize tray; not renamed"; exit 0; }
-new=$(prompt "rename $(strip "$cur") (- resets)") || exit 0
+new=$(prompt "RENAME $(strip "$cur")") || exit 0
 # trim spaces; cap length
 new=$(printf '%s' "$new" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' | cut -c1-24)
 [ -n "$new" ] || exit 0

@@ -58,6 +58,6 @@ nnoremap I cw<c-a>
 nnoremap A cw
 nnoremap ,c :write | edit $MYVIFMRC | restart full<cr>
 
-" removable media mounted by udisks/udiskie: :media
-command! media cd /run/media/$USER
-nnoremap gm :media<cr>
+" removable media mounted by udisks/udiskie: :rmedia
+command! rmedia cd /run/media/$USER
+nnoremap gm :rmedia<cr>

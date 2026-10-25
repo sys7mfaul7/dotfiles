@@ -12,7 +12,7 @@
 
 (use-service-modules base dbus desktop networking ssh xorg cups
                      virtualization docker linux lightdm shepherd
-                     authentication)
+                     authentication security-token)
 (use-package-modules linux firmware wm admin security-token)   ; kbd for console font
 
 (define %keyboard (keyboard-layout "us"))
@@ -32,19 +32,22 @@
   (pam-entry
    (control "sufficient")
    (module (file-append pam-u2f "/lib/security/pam_u2f.so"))
-   (arguments '("cue" "nouserok"))))
+   ;; authfile in /etc (root-owned, from ~/guix-config/u2f_mappings): reading a
+   ;; per-user file in $HOME makes pam_u2f drop privileges, and on r2d2 it then
+   ;; fails to regain them (setgroups EPERM), breaking sudo and the password.
+   (arguments '("cue" "nouserok" "authfile=/etc/u2f_mappings"))))
 
 (define %pam-fprintd-entry
   (pam-entry
    (control "sufficient")
    (module (file-append fprintd-r2d2 "/lib/security/pam_fprintd.so"))
-   (arguments '("max-tries=1" "timeout=10"))))
+   (arguments '("max-tries=3" "timeout=30"))))
 
 (define (add-auth-shortcuts pam)
   (if (member (pam-service-name pam) %auth-shortcut-services)
       (pam-service
        (inherit pam)
-       (auth (cons* %pam-u2f-entry %pam-fprintd-entry
+       (auth (cons* %pam-fprintd-entry %pam-u2f-entry
                     (pam-service-auth pam))))
       pam))
 
@@ -157,6 +160,12 @@
      (service openssh-service-type)
      ;; /etc/doas.conf: wheel members may run commands as root; password
      ;; cached per terminal for 5 minutes (persist)
+     ;; Smart-card daemon: YubiKey OATH/PIV/OpenPGP for ykman, gpg and pass.
+     (service pcscd-service-type)
+     ;; YubiKey mappings for pam_u2f (public key handles, not secrets).
+     ;; Update with `yubikey-enroll`, then reconfigure.
+     (simple-service 'u2f-mappings etc-service-type
+                     (list (list "u2f_mappings" (local-file "u2f_mappings"))))
      (simple-service 'doas-conf etc-service-type
                      (list `("doas.conf"
                              ,(plain-file "doas.conf" "permit persist :wheel\n"))))

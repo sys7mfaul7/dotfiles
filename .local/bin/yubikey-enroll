@@ -36,4 +36,8 @@ mv "$F.tmp" "$F"
 chmod 600 "$F"
 n=$(head -n1 "$F" | tr ':' '\n' | tail -n +2 | wc -l)
 echo "Done: $F now holds $n key(s) for $U."
-echo "Test in a terminal (keep another root/sudo shell open):  sudo -k; sudo true"
+# pam_u2f reads the root-owned copy /etc/u2f_mappings (built from this file)
+cp "$F" "$HOME/guix-r2d2/u2f_mappings" && chmod 644 "$HOME/guix-r2d2/u2f_mappings"
+echo "Copied to ~/guix-r2d2/u2f_mappings. Apply it with:"
+echo "  sudo guix system reconfigure -L ~/guix-r2d2/r2d2-packages ~/guix-r2d2/config.scm"
+echo "Then test in a terminal (keep another root shell open):  sudo -k; sudo true"

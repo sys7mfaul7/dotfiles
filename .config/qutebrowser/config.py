@@ -1,3 +1,4 @@
+import os
 # h4ck3r-themed qutebrowser config for r2d2 (4K @ Xft.dpi 144)
 # -*- mode: python; coding: utf-8 -*-
 config.load_autoconfig(False)
@@ -240,9 +241,18 @@ config.bind("<Ctrl-Shift-K>", "tab-move -")
 config.bind(",m", "spawn --userscript view_in_mpv")
 config.bind(",r", "spawn --userscript readability")
 
-# Password fill — only useful when pass or keepassxc is installed.
-# Tools not present on r2d2 yet; binding kept for when they are.
-# config.bind(",p", "spawn --userscript qute-pass")
+# Password fill from pass (GPG key on the YubiKey: rofi PIN prompt, then touch).
+# Uses the system copy of qute-pass so it follows qutebrowser upgrades.
+# Entries are matched by domain in their path (e.g. websites/github.com/user);
+# ,a lists every entry when nothing matches the site.
+_qp = ("spawn --userscript /run/current-system/profile/share/qutebrowser/userscripts/qute-pass"
+       " --dmenu-invocation 'rofi -dmenu -i -p PASS -theme "
+       + os.path.expanduser("~/.config/bspwm/rofi/dmenu.rasi") + "'")
+config.bind(",p", _qp)                      # username + password
+config.bind(",P", _qp + " --password-only") # password only
+config.bind(",u", _qp + " --username-only") # username only
+config.bind(",o", _qp + " --otp-only")      # OTP code (pass-otp)
+config.bind(",a", _qp + " --unfiltered")    # pick from all entries
 
 # Handy extras
 config.bind(",M", "hint links spawn mpv {hint-url}")

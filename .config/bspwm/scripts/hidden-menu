@@ -11,7 +11,7 @@ for id in $(bspc query -N -n .hidden.window); do
     list="$list$id  [$d] ${name:-?}\n"
 done
 [ -n "$list" ] || { dunstify -u low "hidden windows" "none"; exit 0; }
-c=$(printf "$list" | rofi -dmenu -p hidden -theme "$B/rofi/dmenu.rasi") || exit 0
+c=$(printf "$list" | rofi -dmenu -p HIDDEN -theme "$B/rofi/dmenu.rasi") || exit 0
 id=${c%% *}
 bspc node "$id" -d focused
 bspc node "$id" -g hidden=off

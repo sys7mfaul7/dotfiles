@@ -1,0 +1,11 @@
+/* ~/.config/tessen/rofi.rasi : tessen (Super+Alt+X) rofi look
+ * part of sys7mfaul7 dotfiles
+ * Same one-line bar as dmenu.rasi; tessen passes no -p, so rofi would say
+ * "dmenu". A fixed text widget replaces the prompt with "PASS". */
+@import "/home/USER/.config/bspwm/rofi/dmenu.rasi"
+inputbox { children: [ textbox-pass, entry ]; }
+textbox-pass {
+    expand: false; str: "PASS";
+    padding: 0.2em 0.55em 0 0;
+    background-color: @bg; text-color: @accent;
+}

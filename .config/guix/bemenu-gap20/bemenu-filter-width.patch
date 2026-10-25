@@ -1,0 +1,29 @@
+diff --git a/lib/renderers/cairo_renderer.h b/lib/renderers/cairo_renderer.h
+index f0543f5..93456e4 100644
+--- a/lib/renderers/cairo_renderer.h
++++ b/lib/renderers/cairo_renderer.h
+@@ -6,6 +6,7 @@
+ #include <assert.h>
+ #include <math.h>
+ #include <cairo.h>
++#include <stdlib.h>
+ #include <pango/pangocairo.h>
+ 
+ struct cairo {
+@@ -496,7 +497,15 @@ bm_cairo_paint(struct cairo *cairo, uint32_t width, uint32_t max_height, struct
+     } else {
+         /* single-line mode */
+         bm_pango_get_text_extents(cairo, &paint, &result, "lorem ipsum lorem ipsum lorem ipsum lorem");
+-        uint32_t cl = fmin(title_x + result.x_advance, width / 4);
++        /* local patch (r2d2): cap the prompt+filter area at BEMENU_FILTER_WIDTH percent
++         * of the bar's logical width (default 20) instead of width/4 in buffer pixels. */
++        double filter_frac = 0.20;
++        const char *filter_env = getenv("BEMENU_FILTER_WIDTH");
++        if (filter_env) {
++            double v = strtod(filter_env, NULL);
++            if (v > 0 && v < 100) filter_frac = v / 100.0;
++        }
++        uint32_t cl = fmin(title_x + result.x_advance, (width / cairo->scale) * filter_frac);
+ 
+         if (count > 0) {
+             paint.pos = (struct pos){ cl, vpadding + border_size };

@@ -50,7 +50,7 @@ def rate(n):
     bits = n * 8
     for u in ('bit/s', 'kbit/s', 'Mbit/s', 'Gbit/s'):
         if bits < 1000 or u == 'Gbit/s':
-            return ('%.0f %s' % (bits, u)) if u == 'bit/s' else ('%.1f %s' % (bits, u))
+            return ('%5.0f %-6s' % (bits, u)) if u == 'bit/s' else ('%5.1f %-6s' % (bits, u))
         bits /= 1000
 
 def stats(iface):
@@ -108,7 +108,7 @@ def std(rate):
 
 def short_rate(r):
     m = re.match(r'([\d.]+) MBit/s', r or '')
-    return ('%g Mbit/s' % float(m.group(1))) if m else (r or '')
+    return ('%6.1f Mbit/s' % float(m.group(1))) if m else (r or '')
 
 def dns_servers(nm):
     v = nm.get('IP4.DNS', []) + nm.get('IP6.DNS', [])
@@ -138,7 +138,7 @@ def build(iface):
         rows.append(('BSSID', w.get('bssid', '?')))
         if 'signal' in w:
             dbm = int(w['signal']); sig_pct = max(0, min(100, 2 * (dbm + 100)))
-            rows.append(('Signal', '%d%% (%d dBm)' % (sig_pct, dbm)))
+            rows.append(('Signal', '%3d%% (%4d dBm)' % (sig_pct, dbm)))
         if 'freq' in w:
             f = '%s MHz, %s' % (w['freq'].split('.')[0], band(w['freq']))
             if 'chan' in w: f += ', ch %s, %s MHz wide' % (w['chan'], w['width'])
@@ -186,10 +186,10 @@ def build(iface):
     s, down, up = stats(iface)
     rows.append((None, 'Traffic'))
     rows.append(('Rate', 'down %s / up %s' % (rate(down), rate(up)) if down is not None else 'measuring...'))
-    rows.append(('Received', '%s, %s packets' % (human(s['rx_bytes']), format(s['rx_packets'], ','))))
-    rows.append(('Sent', '%s, %s packets' % (human(s['tx_bytes']), format(s['tx_packets'], ','))))
-    rows.append(('Errors', 'rx %d / tx %d' % (s['rx_errors'], s['tx_errors'])))
-    rows.append(('Dropped', 'rx %d / tx %d' % (s['rx_dropped'], s['tx_dropped'])))
+    rows.append(('Received', '%10s, %13s packets' % (human(s['rx_bytes']), format(s['rx_packets'], ','))))
+    rows.append(('Sent', '%10s, %13s packets' % (human(s['tx_bytes']), format(s['tx_packets'], ','))))
+    rows.append(('Errors', 'rx %6d / tx %6d' % (s['rx_errors'], s['tx_errors'])))
+    rows.append(('Dropped', 'rx %6d / tx %6d' % (s['rx_dropped'], s['tx_dropped'])))
     vpn = [d for d in os.listdir('/sys/class/net') if d.startswith(VPN_PREFIXES)]
     if vpn:
         rows.append((None, 'VPN'))

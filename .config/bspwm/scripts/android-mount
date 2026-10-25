@@ -7,7 +7,7 @@ D="$HOME/.config/bspwm/rofi/dmenu.rasi"
 note() { dunstify -u low -r 9003 phone "$1"; }
 
 if mountpoint -q "$M"; then
-    c=$(printf 'unmount\nopen\n' | rofi -dmenu -p "phone mounted" -theme "$D") || exit 0
+    c=$(printf 'unmount\nopen\n' | rofi -dmenu -p "PHONE" -theme "$D") || exit 0
     case $c in
         unmount) fusermount -u "$M" && note "unmounted" ;;
         open)    exec xdg-open "$M" ;;

@@ -4,12 +4,12 @@ tooltip { background: #000000; border: 1px solid #1f6f2f; color: #c0ffc0; }
 /* gtk.css has "label, button label { color:#c0ffc0 }", which beats the colour
    inherited from the button; make workspace labels follow their button again. */
 #workspaces button label { color: inherit; }
-/* occupied = text, empty (ext-workspace "hidden" state) = dim, focused = accent */
-#workspaces button { padding: 0 5px; color: #c0ffc0; background: transparent; }
-#workspaces button.hidden { color: #4f7f5a; }
-#workspaces button.active { color: #c0ffc0; background: #1f6f2f; }
+/* focused = bold prompt green, occupied = mid green, empty (ext-workspace "hidden") = dark green */
+#workspaces button { padding: 0 5px; color: #5fbf5f; background: transparent; }
+#workspaces button.hidden { color: #2f5a2f; }
+#workspaces button.active { color: #c0ffc0; background: transparent; }
 #workspaces button.urgent { color: #ff5f5f; }
-#workspaces button:hover { background: #0f1f14; color: #c0ffc0; }
+#workspaces button:hover { background: #0f1f14; color: #00ff41; }
 /* scratchpad indicator: on = shown, off = has hidden windows */
 #custom-scratch { padding: 0 5px; }
 #custom-scratch.on { color: #00ff41; }
@@ -17,10 +17,24 @@ tooltip { background: #000000; border: 1px solid #1f6f2f; color: #c0ffc0; }
 #custom-wintitle { color: #c0ffc0; }
 #taskbar button.active { color: #c0ffc0; }
 #custom-launcher { padding: 0 6px 0 8px; }
-#network, #custom-net, #custom-colorpicker, #custom-bluetooth, #battery, #cpu, #memory, #disk, #pulseaudio, #custom-updates, #custom-clock, #tray { padding: 0 6px; }
+#network, #custom-net, #custom-colorpicker, #custom-bluetooth, #battery, #cpu, #memory, #disk, #custom-cpu, #custom-memory, #custom-disk, #pulseaudio, #custom-updates, #custom-clock, #tray { padding: 0 6px; }
 #custom-power { padding: 0 10px 0 6px; }
 #workspaces button.active, #workspaces button.focused { font-weight: bold; }   /* emphasis: focused workspace */
 
 /* guix updates: dim when 0, accent while checking */
 #custom-updates.zero { color: #4f7f5a; }
 #custom-updates.checking { color: #00ff41; }
+#workspaces button.active label, #workspaces button.focused label { font-weight: bold; }   /* * {font-weight:normal} hits the label directly */
+
+/* wl-ws workspaces (custom/ws1..ws10, like polybar-ws): focused bold #c0ffc0,
+   previous (bspc last) light green, occupied mid green, empty dark green */
+#custom-ws1, #custom-ws2, #custom-ws3, #custom-ws4, #custom-ws5, #custom-ws6, #custom-ws7, #custom-ws8, #custom-ws9, #custom-ws10 { padding: 0 8px; color: #5fbf5f; background: transparent; }
+#custom-ws1.empty, #custom-ws2.empty, #custom-ws3.empty, #custom-ws4.empty, #custom-ws5.empty, #custom-ws6.empty, #custom-ws7.empty, #custom-ws8.empty, #custom-ws9.empty, #custom-ws10.empty { color: #2f5a2f; }
+#custom-ws1.occupied, #custom-ws2.occupied, #custom-ws3.occupied, #custom-ws4.occupied, #custom-ws5.occupied, #custom-ws6.occupied, #custom-ws7.occupied, #custom-ws8.occupied, #custom-ws9.occupied, #custom-ws10.occupied { color: #5fbf5f; }
+#custom-ws1.prev, #custom-ws2.prev, #custom-ws3.prev, #custom-ws4.prev, #custom-ws5.prev, #custom-ws6.prev, #custom-ws7.prev, #custom-ws8.prev, #custom-ws9.prev, #custom-ws10.prev { color: #8fef8f; }
+#custom-ws1.urgent, #custom-ws2.urgent, #custom-ws3.urgent, #custom-ws4.urgent, #custom-ws5.urgent, #custom-ws6.urgent, #custom-ws7.urgent, #custom-ws8.urgent, #custom-ws9.urgent, #custom-ws10.urgent { color: #ff5f5f; }
+#custom-ws1.focused, #custom-ws2.focused, #custom-ws3.focused, #custom-ws4.focused, #custom-ws5.focused, #custom-ws6.focused, #custom-ws7.focused, #custom-ws8.focused, #custom-ws9.focused, #custom-ws10.focused { color: #c0ffc0; font-weight: bold; }
+#custom-ws1:hover, #custom-ws2:hover, #custom-ws3:hover, #custom-ws4:hover, #custom-ws5:hover, #custom-ws6:hover, #custom-ws7:hover, #custom-ws8:hover, #custom-ws9:hover, #custom-ws10:hover { background: #0f1f14; }
+#custom-wswatch { padding: 0; margin: 0; }
+#custom-wsM { padding: 0 8px; color: #5fbf5f; background: transparent; }   /* minimized windows waiting on M */
+#custom-wsM:hover { background: #0f1f14; }

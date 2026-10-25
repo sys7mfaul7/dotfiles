@@ -7,16 +7,27 @@
  "modules-left": [
   "custom/launcher",
   "custom/dots",
-  "ext/workspaces",
+  "custom/wswatch",
+  "custom/ws1",
+  "custom/ws2",
+  "custom/ws3",
+  "custom/ws4",
+  "custom/ws5",
+  "custom/ws6",
+  "custom/ws7",
+  "custom/ws8",
+  "custom/ws9",
+  "custom/ws10",
+  "custom/wsM",
   "custom/scratch"
  ],
  "modules-center": [
   "custom/wintitle"
  ],
  "modules-right": [
-  "cpu",
-  "memory",
-  "disk",
+  "custom/cpu",
+  "custom/memory",
+  "custom/disk",
   "custom/net",
   "network#vpn",
   "custom/colorpicker",
@@ -109,14 +120,20 @@
   "format": " <span rise='1pt' color='#539e06'></span> ",
   "tooltip": false
  },
- "cpu": {
-  "interval": 1,
-  "format": " <span rise='1pt' color='#578a29'></span> {usage}%",
+ "custom/cpu": {
+  "exec": "$HOME/.local/bin/waybar-sys cpu --loop",
+  "return-type": "json",
+  "format": " <span rise='1pt' color='#578a29'></span> {}%",
+  "tooltip": true,
+  "escape": false,
   "on-click": "~/.config/bspwm-wl/bin/wl-bartui top"
  },
- "memory": {
-  "interval": 3,
-  "format": " <span rise='1pt' color='#578a29'></span> {percentage}%",
+ "custom/memory": {
+  "exec": "$HOME/.local/bin/waybar-sys mem --loop",
+  "return-type": "json",
+  "format": " <span rise='1pt' color='#578a29'></span> {}%",
+  "tooltip": true,
+  "escape": false,
   "on-click": "~/.config/bspwm-wl/bin/wl-bartui top"
  },
  "pulseaudio": {
@@ -147,11 +164,13 @@
   "tooltip": true,
   "on-click": "foot --app-id=foot-float -e $HOME/.local/bin/guix-updates-run"
  },
- "disk": {
+ "custom/disk": {
+  "exec": "$HOME/.local/bin/waybar-sys disk",
+  "return-type": "json",
   "interval": 30,
-  "path": "/",
-  "format": " <span rise='1pt' color='#578a29'>󰋊</span> {percentage_used}%",
-  "tooltip-format": "{used} of {total} used on {path}",
+  "format": " <span rise='1pt' color='#578a29'>󰋊</span> {}%",
+  "tooltip": true,
+  "escape": false,
   "on-click": "~/.config/bspwm-wl/bin/wl-bartui top"
  },
  "tray": {
@@ -164,11 +183,13 @@
   "on-click": "~/.config/bspwm-wl/bin/wl-powermenu"
  },
  "custom/clock": {
-  "exec": "TZ=America/Chicago date \"+%a, %d %b %Y %-I:%M%P\"",
+  "exec": "~/.local/bin/clock-fmt",
   "interval": 1,
+  "signal": 9,
   "format": "{}",
   "tooltip": false,
-  "on-click": "~/.config/bspwm-wl/bin/wl-bartui calendar"
+  "on-click": "~/.config/bspwm-wl/bin/wl-bartui calendar",
+  "on-click-right": "~/.local/bin/clock-fmt toggle"
  },
  "custom/scratch": {
   "exec": "~/.config/bspwm-wl/bin/wl-scratchstatus",
@@ -182,5 +203,129 @@
   "format": "{}",
   "tooltip": false,
   "escape": false
+ },
+ "custom/ws1": {
+  "exec": "~/.config/bspwm-wl/bin/wl-ws get 1",
+  "return-type": "json",
+  "interval": "once",
+  "signal": 10,
+  "format": "{}",
+  "tooltip": false,
+  "on-click": "bspc desktop -f ^1",
+  "on-scroll-up": "~/.config/bspwm-wl/bin/wl-ws scroll prev",
+  "on-scroll-down": "~/.config/bspwm-wl/bin/wl-ws scroll next"
+ },
+ "custom/ws2": {
+  "exec": "~/.config/bspwm-wl/bin/wl-ws get 2",
+  "return-type": "json",
+  "interval": "once",
+  "signal": 10,
+  "format": "{}",
+  "tooltip": false,
+  "on-click": "bspc desktop -f ^2",
+  "on-scroll-up": "~/.config/bspwm-wl/bin/wl-ws scroll prev",
+  "on-scroll-down": "~/.config/bspwm-wl/bin/wl-ws scroll next"
+ },
+ "custom/ws3": {
+  "exec": "~/.config/bspwm-wl/bin/wl-ws get 3",
+  "return-type": "json",
+  "interval": "once",
+  "signal": 10,
+  "format": "{}",
+  "tooltip": false,
+  "on-click": "bspc desktop -f ^3",
+  "on-scroll-up": "~/.config/bspwm-wl/bin/wl-ws scroll prev",
+  "on-scroll-down": "~/.config/bspwm-wl/bin/wl-ws scroll next"
+ },
+ "custom/ws4": {
+  "exec": "~/.config/bspwm-wl/bin/wl-ws get 4",
+  "return-type": "json",
+  "interval": "once",
+  "signal": 10,
+  "format": "{}",
+  "tooltip": false,
+  "on-click": "bspc desktop -f ^4",
+  "on-scroll-up": "~/.config/bspwm-wl/bin/wl-ws scroll prev",
+  "on-scroll-down": "~/.config/bspwm-wl/bin/wl-ws scroll next"
+ },
+ "custom/ws5": {
+  "exec": "~/.config/bspwm-wl/bin/wl-ws get 5",
+  "return-type": "json",
+  "interval": "once",
+  "signal": 10,
+  "format": "{}",
+  "tooltip": false,
+  "on-click": "bspc desktop -f ^5",
+  "on-scroll-up": "~/.config/bspwm-wl/bin/wl-ws scroll prev",
+  "on-scroll-down": "~/.config/bspwm-wl/bin/wl-ws scroll next"
+ },
+ "custom/ws6": {
+  "exec": "~/.config/bspwm-wl/bin/wl-ws get 6",
+  "return-type": "json",
+  "interval": "once",
+  "signal": 10,
+  "format": "{}",
+  "tooltip": false,
+  "on-click": "bspc desktop -f ^6",
+  "on-scroll-up": "~/.config/bspwm-wl/bin/wl-ws scroll prev",
+  "on-scroll-down": "~/.config/bspwm-wl/bin/wl-ws scroll next"
+ },
+ "custom/ws7": {
+  "exec": "~/.config/bspwm-wl/bin/wl-ws get 7",
+  "return-type": "json",
+  "interval": "once",
+  "signal": 10,
+  "format": "{}",
+  "tooltip": false,
+  "on-click": "bspc desktop -f ^7",
+  "on-scroll-up": "~/.config/bspwm-wl/bin/wl-ws scroll prev",
+  "on-scroll-down": "~/.config/bspwm-wl/bin/wl-ws scroll next"
+ },
+ "custom/ws8": {
+  "exec": "~/.config/bspwm-wl/bin/wl-ws get 8",
+  "return-type": "json",
+  "interval": "once",
+  "signal": 10,
+  "format": "{}",
+  "tooltip": false,
+  "on-click": "bspc desktop -f ^8",
+  "on-scroll-up": "~/.config/bspwm-wl/bin/wl-ws scroll prev",
+  "on-scroll-down": "~/.config/bspwm-wl/bin/wl-ws scroll next"
+ },
+ "custom/ws9": {
+  "exec": "~/.config/bspwm-wl/bin/wl-ws get 9",
+  "return-type": "json",
+  "interval": "once",
+  "signal": 10,
+  "format": "{}",
+  "tooltip": false,
+  "on-click": "bspc desktop -f ^9",
+  "on-scroll-up": "~/.config/bspwm-wl/bin/wl-ws scroll prev",
+  "on-scroll-down": "~/.config/bspwm-wl/bin/wl-ws scroll next"
+ },
+ "custom/ws10": {
+  "exec": "~/.config/bspwm-wl/bin/wl-ws get 10",
+  "return-type": "json",
+  "interval": "once",
+  "signal": 10,
+  "format": "{}",
+  "tooltip": false,
+  "on-click": "bspc desktop -f ^10",
+  "on-scroll-up": "~/.config/bspwm-wl/bin/wl-ws scroll prev",
+  "on-scroll-down": "~/.config/bspwm-wl/bin/wl-ws scroll next"
+ },
+ "custom/wsM": {
+  "exec": "$HOME/.config/bspwm-wl/bin/wl-ws get M",
+  "return-type": "json",
+  "interval": "once",
+  "signal": 10,
+  "format": "{}",
+  "tooltip": true,
+  "on-click": "$HOME/.config/bspwm-wl/bin/wl-minimize"
+ },
+ "custom/wswatch": {
+  "exec": "~/.config/bspwm-wl/bin/wl-ws watch",
+  "format": "{}",
+  "tooltip": false
  }
 }

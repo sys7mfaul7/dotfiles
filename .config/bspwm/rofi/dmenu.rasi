@@ -5,7 +5,17 @@
  * generated/theme.rasi, written from ~/.config/bspwm/theme. */
 @import "../generated/theme.rasi"
 
-configuration { show-icons: false; drun-display-format: "{name}"; }
+configuration {
+    show-icons: false; drun-display-format: "{name}";
+    /* all-caps prompts, same words as the bemenu menus in bspwm-wl */
+    display-drun: "APP";
+    display-run: "RUN";
+    display-window: "WIN";
+    display-combi: "MENU";
+    display-filebrowser: "FILE";
+    display-keys: "KEYS";
+    display-ssh: "SSH";
+}
 
 * {
     background-color: @bg;
@@ -17,9 +27,11 @@ window {
     width: 100%; height: 1.50em;   /* = 22px at 96 DPI with an 11pt font; scales with DPI */
     children: [ bar ];
 }
-bar      { orientation: horizontal; children: [ prompt, entry, listview ]; padding: 0 0.7em; }
+bar      { orientation: horizontal; children: [ inputbox, listview ]; padding: 0 0.7em; }
+/* prompt + typed text share a fixed box so the item list starts ~20% in */
+inputbox { orientation: horizontal; expand: false; width: calc( 20% - 0.7em ); children: [ prompt, entry ]; }
 prompt   { padding: 0.2em 0.55em 0 0; text-color: @accent; }
-entry    { expand: false; width: 18em; padding: 0.2em 0.7em 0 0.3em; placeholder: ""; cursor: text; }
+entry    { expand: true; padding: 0.2em 0.7em 0 0.3em; placeholder: ""; cursor: text; }
 listview { layout: horizontal; lines: 100; dynamic: true; scrollbar: false; }
 element  { padding: 0.2em 0.8em 0 0.8em; children: [ element-text ]; }
 element-text { background-color: inherit; text-color: inherit; }

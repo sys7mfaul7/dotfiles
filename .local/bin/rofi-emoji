@@ -2,4 +2,4 @@
 # rofi-emoji : emoji picker in the one-line menu   (Super+Shift+`)
 # part of sys7mfaul7 dotfiles
 T="$HOME/.config/bspwm/rofi/dmenu.rasi"
-exec "$HOME/.local/bin/emoji-core" rofi -dmenu -i -p emoji -theme "$T"
+exec "$HOME/.local/bin/emoji-core" rofi -dmenu -i -p EMOJI -theme "$T"

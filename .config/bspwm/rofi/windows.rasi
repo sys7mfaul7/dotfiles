@@ -2,7 +2,10 @@
  * part of sys7mfaul7 dotfiles */
 @import "../generated/theme.rasi"
 
-configuration { show-icons: true; window-format: "{c}  {t}"; }
+configuration {
+    show-icons: true; window-format: "{c}  {t}";
+    display-window: "WIN";
+}
 
 * { background-color: transparent; text-color: @fg; margin: 0; padding: 0; spacing: 0; }
 window {

@@ -20,7 +20,7 @@ case "${1:-menu}" in
     delay)  sleep "${2:-5}"; grab Screen ;;
     menu)
         c=$(printf 'area\nscreen\nwindow\nin 5s\nin 10s\n' |
-            rofi -dmenu -p screenshot -theme "$HOME/.config/bspwm/rofi/dmenu.rasi") || exit 0
+            rofi -dmenu -p SHOT -theme "$HOME/.config/bspwm/rofi/dmenu.rasi") || exit 0
         sleep 0.3   # let the menu disappear first
         case $c in
             area) "$0" area ;; screen) "$0" full ;; window) "$0" window ;;

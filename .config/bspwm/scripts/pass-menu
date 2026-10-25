@@ -5,7 +5,7 @@
 command -v pass >/dev/null || { dunstify -u normal pass "pass is not installed"; exit 1; }
 S="${PASSWORD_STORE_DIR:-$HOME/.password-store}"
 entry=$(cd "$S" 2>/dev/null && find . -name '*.gpg' | sed 's|^\./||; s|\.gpg$||' | sort |
-    rofi -dmenu -i -p pass -kb-custom-1 Shift+Return -theme "$HOME/.config/bspwm/rofi/dmenu.rasi")
+    rofi -dmenu -i -p PASS -kb-custom-1 Shift+Return -theme "$HOME/.config/bspwm/rofi/dmenu.rasi")
 rc=$?
 [ -n "$entry" ] || exit 0
 case $rc in

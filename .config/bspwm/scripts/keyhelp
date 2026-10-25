@@ -12,5 +12,5 @@ awk '
         printf "%-44s %-10s %s\n", k, sec, desc; desc = ""; next }
     { desc = "" }
 ' "$HOME/.config/bspwm/sxhkdrc" |
-    rofi -dmenu -i -p keys -theme "$HOME/.config/bspwm/rofi/windows.rasi" \
+    rofi -dmenu -i -p KEYS -theme "$HOME/.config/bspwm/rofi/windows.rasi" \
         -theme-str 'element-icon { enabled: false; } listview { columns: 1; lines: 18; }' >/dev/null

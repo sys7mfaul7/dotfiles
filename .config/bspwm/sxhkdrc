@@ -94,7 +94,7 @@ super + shift + grave
 
 # clipboard history
 super + {v,alt + c}
-    CM_LAUNCHER=rofi clipmenu -p clip -theme ~/.config/bspwm/rofi/dmenu.rasi
+    CM_LAUNCHER=rofi clipmenu -p CLIP -theme ~/.config/bspwm/rofi/dmenu.rasi
 
 # colour picker
 super + slash

@@ -65,6 +65,7 @@ K 'super + alt + v'          'pavucontrol'
 K 'super + alt + n'          "$WB/wl-bartui network"
 K 'super + alt + b'          'bt-menu'
 K 'super + alt + p'          "$WB/wl-powermenu"
+K 'super + alt + x'          'tessen -d rofi'   # pass picker (rofi; type or copy)
 K 'super + alt + s'          "$WB/wl-shot area"
 K 'super + alt + o'          "$WB/wl-scratchterm"
 K 'super + alt + h'          'pkill -USR1 -x .waybar-real'
@@ -159,6 +160,7 @@ K 'super + ctrl + q'         'bspc node -p cancel'
 K 'super + alt + Escape'     "bspc node -p cancel; $WB/wl-smartmove cancel"
 K 'super + Return'           "bspwm-undo save; $X11B/bspwm-sel toggle"
 K 'super + shift + Escape'    "$X11B/bspwm-sel clear"
+K 'super + Escape'            "pkill -x bemenu; pkill -x pinentry-bemenu; pkill -x rofi; pkill -x .rofi-real"   # close a menu that lost focus
 # ---- resize ----
 KE 'super + ctrl + Up'        "$X11B/bspwm-cresize shrink v"
 KE 'super + ctrl + Down'      "$X11B/bspwm-cresize grow v"
@@ -259,6 +261,9 @@ if [ -z "$BSPWM_WL_STARTED" ]; then
     done ) 9>"${XDG_RUNTIME_DIR:-/tmp}/bspwm-wl-waybar.lock" &
   command -v cliphist >/dev/null && wl-paste --watch cliphist store >/dev/null 2>&1 &
   command -v dunst >/dev/null && dunst >"$L/dunst.log" 2>&1 &
+  # KeePassXC = Secret Service keyring (org.freedesktop.secrets), starts minimized to the tray
+  command -v keepassxc >/dev/null && ! pgrep -x .keepassxc-real >/dev/null && ! pgrep -x keepassxc >/dev/null && \
+    setsid -f keepassxc --minimized >"$L/keepassxc.log" 2>&1 </dev/null
 fi
 
 # Guix update checker for the bar (every 6 h; flock in the script prevents duplicates)

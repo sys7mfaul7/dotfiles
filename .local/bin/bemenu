@@ -1,0 +1,14 @@
+#!/bin/sh
+# ~/.local/bin/bemenu : run bemenu 0.6.23 with a local one-line patch that caps the
+# prompt+input area at $BEMENU_FILTER_WIDTH percent of the bar (default 20; stock = width/4).
+# Patched build: ~/.config/guix/bemenu-gap20 (GC root ~/.local/lib/bemenu-gap20-root).
+# Falls back to the normal profile bemenu if the patched build is missing.
+P="$HOME/.local/lib/bemenu-gap20-root"
+if [ -x "$P/bin/bemenu" ]; then
+  export BEMENU_RENDERERS="$P/lib/bemenu"
+  exec "$P/bin/bemenu" "$@"
+fi
+for d in "$HOME/.guix-profile/bin" /run/current-system/profile/bin; do
+  [ -x "$d/bemenu" ] && exec "$d/bemenu" "$@"
+done
+echo "bemenu: not found" >&2; exit 127
