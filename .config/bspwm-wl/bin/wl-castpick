@@ -1,9 +1,10 @@
 #!/bin/sh
+. "$HOME/.config/rices/current/ui.sh" 2>/dev/null   # RICE_SELECT_BG/FG: menu highlight of the active rice
 # Screencast chooser for xdg-desktop-portal-wlr (chooser_type=dmenu).
 # stdin: one line per choice, "Monitor: <output> ..." or "Window: <title> (<app_id>)".
 # Print the chosen line; print nothing to cancel.
 export PATH="$HOME/.guix-profile/bin:/run/current-system/profile/bin:$PATH"
 export BEMENU_BACKEND=wayland
 exec bemenu -i -l 20 -p 'CAST' -H 22 --fn 'DejaVu Sans Mono, Symbols Nerd Font Mono 11' \
-  --tb '#000000' --tf '#00ff41' --fb '#000000' --ff '#c0ffc0' --nb '#000000' --nf '#c0ffc0' \
-  --hb '#1f6f2f' --hf '#c0ffc0' --ab '#000000' --af '#c0ffc0' -B 0
+  --tb '#000000' --tf "${RICE_MENU_TITLE:-#00ff41}" --fb '#000000' --ff '#c0ffc0' --nb '#000000' --nf '#c0ffc0' \
+  --hb "${RICE_SELECT_BG:-#1f6f2f}" --hf "${RICE_SELECT_FG:-#c0ffc0}" --ab '#000000' --af '#c0ffc0' -B 0

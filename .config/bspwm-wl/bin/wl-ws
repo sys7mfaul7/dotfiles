@@ -43,7 +43,7 @@ watch)
     [ "$new" = "$last" ] && return 0
     last=$new
     printf '%s\n' "$new" >"$S.tmp" && mv -f "$S.tmp" "$S"
-    pkill -RTMIN+$SIG -f '^waybar -c' 2>/dev/null
+    pkill -RTMIN+$SIG -f '^(/[^ ]*/)?waybar -c' 2>/dev/null
   }
   upd
   printf '\n' || exit 0          # this module shows nothing itself

@@ -1,4 +1,5 @@
 #!/bin/sh
+. "$HOME/.config/rices/current/ui.sh" 2>/dev/null   # RICE_SELECT_BG/FG: menu highlight of the active rice
 # bt-menu : one-line bemenu Bluetooth manager (MACs hidden; map in temp file)
 # Usage: bt-menu            interactive
 #        bt-menu --list     print main menu lines (no menu, for testing)
@@ -8,8 +9,8 @@ TAB=$(printf '\t')
 map=$(mktemp); trap 'rm -f "$map"' EXIT
 menu() {
   BEMENU_BACKEND=wayland bemenu -i -p "$1" -H 22 --fn 'DejaVu Sans Mono, Symbols Nerd Font Mono 11' \
-  --tb '#000000' --tf '#00ff41' --fb '#000000' --ff '#c0ffc0' --nb '#000000' --nf '#c0ffc0' \
-  --hb '#1f6f2f' --hf '#c0ffc0' --ab '#000000' --af '#c0ffc0' -B 0
+  --tb '#000000' --tf "${RICE_MENU_TITLE:-#00ff41}" --fb '#000000' --ff '#c0ffc0' --nb '#000000' --nf '#c0ffc0' \
+  --hb "${RICE_SELECT_BG:-#1f6f2f}" --hf "${RICE_SELECT_FG:-#c0ffc0}" --ab '#000000' --af '#c0ffc0' -B 0
 }
 note() { dunstify -a bt-menu -t 4000 "Bluetooth" "$1" 2>/dev/null || true; }
 powered() { $BT show 2>/dev/null | grep -q "Powered: yes"; }

@@ -1,3 +1,4 @@
+@import url("../../rices/current/waybar.css");   /* rice: per-theme selection highlight (theme.conf [ui]) */
 * { font-family: "DejaVu Sans Mono", "Symbols Nerd Font Mono"; font-weight: normal; font-size: 11pt; min-height: 0; border: none; border-radius: 0; box-shadow: none; }
 window#waybar { background: #000000; color: #c0ffc0; }
 tooltip { background: #000000; border: 1px solid #1f6f2f; color: #c0ffc0; }

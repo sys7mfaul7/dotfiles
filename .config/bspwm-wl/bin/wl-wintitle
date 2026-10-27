@@ -6,7 +6,14 @@ bspc subscribe node_focus desktop_focus node_remove node_transfer node_flag >"$F
 trap 'kill $SP 2>/dev/null; rm -f "$F"; exit 0' EXIT INT TERM PIPE HUP
 last=__none__
 show() {
-  t=$(bspc query -T -n focused.window 2>/dev/null | jq -r '(.title // "") as $t | if $t == "" then .client.className else $t end' 2>/dev/null)
+  j=$(bspc query -T -n focused.window 2>/dev/null)
+  t=$(printf '%s' "$j" | jq -r '(.title // "") as $t | if $t == "" then .client.className else $t end' 2>/dev/null)
+  # Chromium: prefix the profile ("client") name, see chromium-profile
+  case $(printf '%s' "$j" | jq -r '.client.className // ""' 2>/dev/null) in
+    chromium-browser|chrome-*)
+      p=$("$HOME/.local/bin/chromium-profile" name "$(bspc query -N -n focused.window)" 2>/dev/null)
+      [ -n "$p" ] && t="[$p] $t" ;;
+  esac
   t=$(printf '%s' "$t" | cut -c1-80 | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
   [ "$t" = "$last" ] && return 0
   last=$t

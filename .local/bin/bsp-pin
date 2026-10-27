@@ -2,11 +2,11 @@
 # Toggle pin (sticky + floating) on focused window; pinned windows get a yellow border (#ffe600 focused, #7a6e00 unfocused)
 id=${1:-$(bspc query -N -n focused.window)} || exit 0; [ -n "$id" ] || exit 0
 if bspc query -N -n "$id.sticky" >/dev/null; then
-  bspc node "$id" -g sticky=off
+  bspc node "$id" -g sticky=off; bspc node "$id" -l normal
   [ -n "$(bspc query -N -n "$id.floating")" ] && [ -f "${XDG_RUNTIME_DIR:-/tmp}/pin-wasfloat-$id" ] || bspc node "$id" -t tiled
   rm -f "${XDG_RUNTIME_DIR:-/tmp}/pin-wasfloat-$id"
 else
   bspc query -N -n "$id.floating" >/dev/null && touch "${XDG_RUNTIME_DIR:-/tmp}/pin-wasfloat-$id"
-  bspc node "$id" -t floating; bspc node "$id" -g sticky=on
+  bspc node "$id" -t floating; bspc node "$id" -g sticky=on; bspc node "$id" -l above
 fi
 ~/.local/bin/bsp-pin-borders once

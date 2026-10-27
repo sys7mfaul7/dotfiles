@@ -1,0 +1,84 @@
+#!/bin/sh
+# chromium-profile [pick|open DIR|tag|watch|name NODE] : tell Chromium profile
+# windows apart on Wayland. All normal Chromium windows share one app_id
+# (chromium-browser), so the profile is tracked per window:
+#   pick   bemenu PROFILE menu -> new window in that profile (Super+Alt+B)
+#   open D new window for profile directory D ("Profile 2", ...)
+#   tag    bemenu: set/correct the profile of the focused Chromium window
+#   watch  (autostart) a new window inherits the profile it was opened for,
+#          or of the Chromium window focused just before it (Ctrl+N, popups);
+#          PWAs (app_id chrome-<id>-Profile_N) are mapped directly
+#   name N print the profile name for node N (used by wl-wintitle)
+# Profile names come ONLY from "Local State" profile.info_cache[*].name.
+# Part of sys7mfaul7 dotfiles.
+LS="$HOME/.config/chromium/Local State"
+R="${XDG_RUNTIME_DIR:-/tmp}/chromium-profile"; mkdir -p "$R/map"
+
+# bemenu look = the power menu's (colours are rice-managed there; no hex here)
+menu() {
+  . "$HOME/.config/rices/current/ui.sh" 2>/dev/null
+  pm="$HOME/.config/bspwm-wl/bin/wl-powermenu"
+  bg=$(sed -n "s/.*--tb '\(#[0-9a-fA-F]\{6\}\)'.*/\1/p" "$pm" | head -1)
+  fg=$(sed -n "s/.*--nf '\(#[0-9a-fA-F]\{6\}\)'.*/\1/p" "$pm" | head -1)
+  set -- -i -p "$1" -H 22 --fn 'DejaVu Sans Mono, Symbols Nerd Font Mono 11' -B 0
+  [ -n "$bg" ] && set -- "$@" --tb "$bg" --fb "$bg" --nb "$bg" --ab "$bg"
+  [ -n "$fg" ] && set -- "$@" --ff "$fg" --nf "$fg" --af "$fg"
+  [ -n "$RICE_MENU_TITLE" ] && set -- "$@" --tf "$RICE_MENU_TITLE"
+  [ -n "$RICE_SELECT_BG" ] && set -- "$@" --hb "$RICE_SELECT_BG" --hf "${RICE_SELECT_FG:-$fg}"
+  BEMENU_BACKEND=wayland bemenu "$@"
+}
+
+profiles() { jq -r '.profile.info_cache // {} | to_entries[] | "\(.value.name)\t\(.key)"' "$LS" 2>/dev/null; }
+dirname_of() { profiles | awk -F'\t' -v n="$1" '$1 == n { print $2; exit }'; }
+name_of() { profiles | awk -F'\t' -v d="$1" '$2 == d { print $1; exit }'; }
+
+node_name() {
+  n=$1
+  [ -s "$R/map/$n" ] && { cat "$R/map/$n"; return; }
+  c=$(bspc query -T -n "$n" 2>/dev/null | jq -r '.client.className // empty')
+  case $c in
+    chrome-*-Default) name_of Default ;;
+    chrome-*-Profile_*) name_of "Profile ${c##*-Profile_}" ;;
+  esac
+}
+
+case "${1:-pick}" in
+  open)
+    [ -n "$2" ] || exit 2
+    printf '%s\n' "$2" >"$R/pending"
+    exec "$HOME/.local/bin/chromium-wl" --profile-directory="$2" ;;
+  pick)
+    n=$(profiles | cut -f1 | menu PROFILE) || exit 0
+    d=$(dirname_of "$n"); [ -n "$d" ] || exit 0
+    exec "$0" open "$d" ;;
+  tag)
+    n=$(bspc query -N -n focused.window) || exit 0
+    case $(bspc query -T -n "$n" | jq -r .client.className) in chromium*|Chromium*) ;; *) exit 0 ;; esac
+    p=$(profiles | cut -f1 | menu TAG) || exit 0
+    printf '%s\n' "$p" >"$R/map/$n" ;;
+  name) node_name "$2" ;;
+  watch)
+    exec 9>"$R/watch.lock"; flock -n 9 || exit 0
+    last=
+    bspc subscribe node_add node_focus node_remove 2>/dev/null |
+    while read -r ev a b c e; do
+      case $ev in
+        node_focus)
+          case $(bspc query -T -n "$c" 2>/dev/null | jq -r '.client.className // ""') in
+            chromium-browser) last=$c ;;
+          esac ;;
+        node_add)
+          cls=$(bspc query -T -n "$e" 2>/dev/null | jq -r '.client.className // ""')
+          [ "$cls" = chromium-browser ] || continue
+          p=
+          if [ -f "$R/pending" ] && [ $(( $(date +%s) - $(stat -c %Y "$R/pending") )) -le 20 ]; then
+            p=$(name_of "$(cat "$R/pending")"); rm -f "$R/pending"
+          elif [ -n "$last" ] && [ -s "$R/map/$last" ]; then
+            p=$(cat "$R/map/$last")
+          fi
+          [ -n "$p" ] && printf '%s\n' "$p" >"$R/map/$e" ;;
+        node_remove) rm -f "$R/map/$c" ;;
+      esac
+    done ;;
+  *) echo "usage: chromium-profile [pick|open DIR|tag|watch|name NODE]" >&2; exit 2 ;;
+esac

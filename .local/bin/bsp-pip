@@ -11,6 +11,7 @@ exec 2>>"${XDG_RUNTIME_DIR:-/tmp}/bsp-pip.log"
 id=${1:-$(bspc query -N -n focused.window)} || exit 0; [ -n "$id" ] || exit 0
 bspc query -N -n "$id.sticky" >/dev/null || "$HOME/.local/bin/bsp-pin" "$id"
 bspc query -N -n "$id.floating" >/dev/null || bspc node "$id" -t floating
+bspc node "$id" -l above   # always on top
 PIP_ID="$id" PIP_GAP="$GAP" PIP_SCALE="$SCALE" python3 - <<'PY'
 import json, os, subprocess as sp
 nid = os.environ["PIP_ID"]; gap = int(os.environ["PIP_GAP"]); k = int(os.environ["PIP_SCALE"])

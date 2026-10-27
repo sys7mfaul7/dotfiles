@@ -1,0 +1,11 @@
+#!/bin/sh
+# river-menu : one-line app launcher / command runner for river (wmenu)
+# part of sys7mfaul7 dotfiles
+#   river-menu        apps (.desktop entries)
+#   river-menu run    commands
+[ -z "$DBUS_SESSION_BUS_ADDRESS" ] && [ -r "$XDG_RUNTIME_DIR/dbus-env" ] && . "$XDG_RUNTIME_DIR/dbus-env"
+. "$HOME/.config/river/menu-opts"
+case "$1" in
+    run) eval exec wmenu-run $WMENU_ARGS ;;
+    *)   exec j4-dmenu-desktop --term=foot --no-generic --dmenu="wmenu $WMENU_ARGS" ;;
+esac

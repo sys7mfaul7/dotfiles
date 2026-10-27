@@ -13,6 +13,12 @@ bspc config normal_border_color  '#1a2a1f'
 # Needs the sticky-border build of bspwm-wl; errors harmlessly on older builds.
 bspc config sticky_focused_border_color '#ffe600' 2>/dev/null
 bspc config sticky_border_color         '#7a6e00' 2>/dev/null
+# Popup/context-menu frame drawn by the compositor (popborder build, bspwm-wl.new-popup2).
+# Only apps whose menus draw no frame of their own (Chromium family); GTK menus get theirs from gtk.css.
+# Errors harmlessly on older builds.
+bspc config popup_border_width 1 2>/dev/null
+bspc config popup_border_match 'chromium,chrome-,brave' 2>/dev/null
+bspc config popup_border_color '#3d6b46' 2>/dev/null
 bspc config presel_feedback true
 bspc config presel_feedback_color '#1f6f2f'
 bspc config split_ratio 0.5
@@ -35,6 +41,7 @@ K 'super + slash'            'colorpick'
 K 'super + shift + t'        'foot --app-id=foot-float'
 K 'super + ctrl + t'         'foot'
 K 'super + ctrl + shift + t' 'foot --app-id=foot-float'
+K 'super + ctrl + alt + t'   'rice-menu'   # colour theme (rice) picker
 K 'super + space'            '/home/USER/.local/bin/bspwm-wl-apps'
 K 'super + ctrl + space'     '/home/USER/.local/bin/bspwm-wl-menu'
 # File managers: d=vifm, alt=nnn; +shift floating, +ctrl sudo
@@ -48,6 +55,8 @@ K 'super + alt + ctrl + d'         'fm-term nnn tiled sudo'
 K 'super + alt + ctrl + shift + d' 'fm-term nnn float sudo'
 K 'super + c'                "$WB/wl-calc"
 K 'super + b'                'chromium-wl'
+K 'super + alt + shift + b'  'chromium-profile pick'   # Chromium: new window in a chosen profile (shown as [Name] in the bar title)
+K 'super + alt + shift + t'  'chromium-profile tag'    # Chromium: set/correct the profile tag of the focused window
 K 'super + shift + b'        'bspc rule -a chromium-browser -o state=floating center=on rectangle=1204x1152+0+0 && chromium-wl'
 K 'super + ctrl + b'         'qutebrowser'
 K 'super + ctrl + shift + b' 'bspc rule -a qutebrowser -o state=floating center=on rectangle=1204x1152+0+0 && qutebrowser'
@@ -61,6 +70,7 @@ K 'super + e'                'zed'
 K 'super + shift + e'        'bspc rule -a dev.zed.Zed -o state=floating center=on rectangle=1600x900+0+0; zed'
 K 'super + v'                "$WB/wl-clip"
 K 'super + alt + c'          "$WB/wl-clip"
+K 'super + alt + shift + c'  "$WB/wl-autocenter toggle"   # wide monitor: centre a lone window at 1/3 width (on/off)
 K 'super + alt + v'          'pavucontrol'
 K 'super + alt + n'          "$WB/wl-bartui network"
 K 'super + alt + b'          'bt-menu'
@@ -114,8 +124,8 @@ K 'super + shift + a'        'bspc node -f @first.leaf || bspc node -f last.loca
 # ---- desktops ----
 K 'super + bracketleft'      'bspc desktop -f prev'
 K 'super + bracketright'     'bspc desktop -f next'
-K 'super + r'                'bspc node @/ --rotate 90'
-K 'super + shift + r'        'bspc node @/ --rotate -90'
+K 'super + ctrl + r'         'bspc node @/ --rotate 90'    # rotate the whole desktop
+K 'super + ctrl + shift + r' 'bspc node @/ --rotate -90'   # rotate the whole desktop back
 K 'super + apostrophe'       'bspc desktop -f last'
 K 'super + shift + apostrophe' 'bspc desktop -f last'
 K 'ctrl + super + alt + l'   "$WB/wl-blank"
@@ -173,8 +183,8 @@ K 'super + s'                "$WB/wl-scratch toggle"
 K 'super + shift + s'        "$WB/wl-scratch add"
 K 'super + ctrl + s'         "$WB/wl-scratch remove"
 # ---- desktop rename / equal columns ----
-K 'super + ctrl + r'         'bspc node @parent -R 90'    # rotate this split clockwise
-K 'super + ctrl + shift + r' 'bspc node @parent -R 270'   # rotate this split back (counter-clockwise)
+K 'super + r'                'bspc node @parent -R 90'    # rotate this split clockwise
+K 'super + shift + r'        'bspc node @parent -R 270'   # rotate this split back (counter-clockwise)
 K 'super + alt + equal'      "$WB/wl-rename"            # rename this desktop; "-" or "reset" = default number; Esc cancels
 for i in 1 2 3 4 5 6 7 8 9 0; do K "super + alt + $i" "$WB/wl-rename $i"; done   # rename desktop N (0 = 10)
 K 'super + equal'            "bspwm-undo save; $WB/wl-eqkey"             # floating: centre, tiled: equal-width columns
@@ -264,6 +274,17 @@ if [ -z "$BSPWM_WL_STARTED" ]; then
   # KeePassXC = Secret Service keyring (org.freedesktop.secrets), starts minimized to the tray
   command -v keepassxc >/dev/null && ! pgrep -x .keepassxc-real >/dev/null && ! pgrep -x keepassxc >/dev/null && \
     setsid -f keepassxc --minimized >"$L/keepassxc.log" 2>&1 </dev/null
+  # jack-autoswitch: front headset jack / iFi / speakers routing (mutes built-in speakers+mic; flock = single instance)
+  setsid -f "$HOME/.local/bin/jack-autoswitch" >/dev/null 2>&1 </dev/null
+  # Nextcloud desktop sync client, tray only (single instance; profile path survives Guix upgrades)
+  command -v nextcloud >/dev/null && ! pgrep -x .nextcloud-real >/dev/null && ! pgrep -x nextcloud >/dev/null && \
+    setsid -f nextcloud --background >/dev/null 2>&1 </dev/null
+  # wide monitors: lone tiled window centred at 1/3 width, 3rd window = 3rd column (flock inside)
+  setsid -f "$WB/wl-autocenter" watch >/dev/null 2>&1 </dev/null
+  # Chromium profile tags for the bar title (flock inside)
+  setsid -f "$HOME/.local/bin/chromium-profile" watch >/dev/null 2>&1 </dev/null
+  # local LLM server for Neovim/agents (llama.cpp, 127.0.0.1:8080; no-op if already running)
+  [ -x "$HOME/.local/bin/llama-local" ] && LLAMA_NOWAIT=1 setsid -f "$HOME/.local/bin/llama-local" start >/dev/null 2>&1 </dev/null
 fi
 
 # Guix update checker for the bar (every 6 h; flock in the script prevents duplicates)

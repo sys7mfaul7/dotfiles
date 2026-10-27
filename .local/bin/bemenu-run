@@ -3,12 +3,26 @@
 # prompt+input area at $BEMENU_FILTER_WIDTH percent of the bar (default 20; stock = width/4).
 # Patched build: ~/.config/guix/bemenu-gap20 (GC root ~/.local/lib/bemenu-gap20-root).
 # Falls back to the normal profile bemenu-run if the patched build is missing.
-P="$HOME/.local/lib/bemenu-gap20-root"
-if [ -x "$P/bin/bemenu-run" ]; then
-  export BEMENU_RENDERERS="$P/lib/bemenu"
-  exec "$P/bin/bemenu-run" "$@"
+# Prompt text (-p/--prompt) is rewritten to Unicode sans-serif bold so only the
+# prompt looks bold; input/list font and colours are untouched.
+# Disable with BEMENU_BOLD_PROMPT=0.
+if [ "${BEMENU_BOLD_PROMPT:-1}" != 0 ] && [ -x "$HOME/.local/bin/bold-text" ]; then
+  _np=0
+  for _a do
+    shift
+    if [ "$_np" = 1 ]; then
+      _a=$("$HOME/.local/bin/bold-text" "$_a"); _np=0
+    else
+      case $_a in
+        -p|--prompt) _np=1 ;;
+        --prompt=*) _a="--prompt=$("$HOME/.local/bin/bold-text" "${_a#--prompt=}")" ;;
+      esac
+    fi
+    set -- "$@" "$_a"
+  done
+  unset _a _np
 fi
-for d in "$HOME/.guix-profile/bin" /run/current-system/profile/bin; do
-  [ -x "$d/bemenu-run" ] && exec "$d/bemenu-run" "$@"
-done
+P="$HOME/.local/lib/bemenu-gap20-root"
+if [ -x "$P/bin/bemenu-run" ]; then export BEMENU_RENDERERS="$P/lib/bemenu"; exec "$P/bin/bemenu-run" "$@"; fi
+for d in "$HOME/.guix-profile/bin" /run/current-system/profile/bin; do [ -x "$d/bemenu-run" ] && exec "$d/bemenu-run" "$@"; done
 echo "bemenu-run: not found" >&2; exit 127

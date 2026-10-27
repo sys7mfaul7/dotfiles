@@ -1,0 +1,130 @@
+#!/bin/sh
+# wl-autocenter [watch|apply|toggle|status] : on wide monitors (aspect >= 2.2,
+# e.g. 3440x1440) a lone tiled window is centered at 1/3 of the monitor width
+# (via per-desktop left/right padding, still tiled). 2 windows = normal split.
+# A 3rd window added to 2 side-by-side columns becomes a 3rd equal column,
+# unless the desktop had an active preselection. After 3: plain bspwm.
+# Floating/fullscreen/sticky/hidden windows don't count. Only padding we set
+# ourselves is ever reset. Off switch: $XDG_RUNTIME_DIR/wl-autocenter.off
+# (toggle: Super+Alt+Shift+C). Works with X11 bspwm too (bspc + jq only).
+# Part of sys7mfaul7 dotfiles.
+R="${XDG_RUNTIME_DIR:-/tmp}"; S="$R/wl-autocenter"; OFF="$R/wl-autocenter.off"
+mkdir -p "$S"
+Q='.window.!hidden.!floating.!fullscreen.!sticky'
+
+count() { bspc query -N -d "$1" -n "$Q" 2>/dev/null | wc -l; }
+
+# apply_desk DESK_ID : set/clear our padding on one desktop
+apply_desk() {
+  d=$1
+  m=$(bspc query -M -d "$d" 2>/dev/null) || return 0
+  set -- $(bspc query -T -m "$m" | jq -r '"\(.rectangle.width) \(.rectangle.height) \(.padding.left) \(.padding.right)"')
+  mw=$1 mh=$2 ml=$3 mr=$4
+  cur=$(bspc config -d "$d" left_padding 2>/dev/null)
+  ours=$(cat "$S/$d" 2>/dev/null)
+  want=0
+  if [ ! -e "$OFF" ] && [ "$mh" -gt 0 ] && [ $((mw * 10 / mh)) -ge 22 ] && [ "$(count "$d")" -eq 1 ]; then
+    want=$(( (mw - ml - mr - mw / 3) / 2 ))
+  fi
+  if [ "$want" -gt 0 ]; then
+    # don't override padding the user set by hand
+    [ "$cur" = 0 ] || [ "$cur" = "$ours" ] || return 0
+    [ "$cur" = "$want" ] && [ "$(bspc config -d "$d" right_padding)" = "$want" ] && return 0
+    bspc config -d "$d" left_padding "$want"; bspc config -d "$d" right_padding "$want"
+    echo "$want" >"$S/$d"
+  elif [ -n "$ours" ]; then
+    if [ "$cur" = "$ours" ]; then
+      bspc config -d "$d" left_padding 0; bspc config -d "$d" right_padding 0
+    fi
+    rm -f "$S/$d"
+  fi
+}
+
+apply_all() { for d in $(bspc query -D); do apply_desk "$d"; done; }
+
+# third DESK NODE : 2 side-by-side columns + new node -> 3 equal columns
+third() {
+  d=$1 n=$2
+  [ -e "$OFF" ] && return 0
+  [ "$(count "$d")" -eq 3 ] || return 0
+  bspc query -N -n "$n.window.tiled" >/dev/null 2>&1 || return 0
+  # a preselection still pending anywhere on the desktop -> leave it alone
+  [ "$(bspc query -T -d "$d" | jq '[.. | objects | select(.presel? != null)] | length')" -eq 0 ] || return 0
+  # Target = the 2-column container once N is taken out: N's sibling if N
+  # landed directly under the root, else the root itself.
+  t=$(bspc query -T -d "$d" | jq -r --argjson n "$(printf '%d' "$n")" '
+    def leaf: .client != null;
+    def cols: .splitType == "vertical" and (.firstChild|leaf) and (.secondChild|leaf);
+    .root as $r
+    | if $r == null or ($r|leaf) then "no"
+      elif $r.firstChild.id == $n then (if ($r.secondChild|cols) then $r.secondChild.id else "no" end)
+      elif $r.secondChild.id == $n then (if ($r.firstChild|cols) then $r.firstChild.id else "no" end)
+      elif $r.splitType != "vertical" then "no"
+      else ([$r.firstChild, $r.secondChild] | map(select(leaf|not))) as $i
+        | ([$r.firstChild, $r.secondChild] | map(select(leaf))) as $l
+        | if ($i|length) == 1 and ($l|length) == 1
+             and (($i[0].firstChild.id == $n and ($i[0].secondChild|leaf))
+               or ($i[0].secondChild.id == $n and ($i[0].firstChild|leaf)))
+          then $r.id else "no" end
+      end')
+  [ "$t" != no ] && [ -n "$t" ] || return 0
+  t=$(printf '0x%08X' "$t")
+  bspc node "$t" -p east && bspc node "$n" -n "$t" || { bspc node "$t" -p cancel 2>/dev/null; return 0; }
+  bspc node "@$d:/" -r 0.6667; bspc node "@$d:/1" -r 0.5
+}
+
+# second DESK : the centered (narrow) window made bspwm split top/bottom;
+# turn the 2-window root into side-by-side columns like an unpadded desktop.
+second() {
+  d=$1
+  [ -e "$S/$d" ] && [ "$(count "$d")" -eq 2 ] || return 0
+  r=$(bspc query -T -d "$d" | jq -r '.root | if .client == null and .splitType == "horizontal"
+      and .firstChild.client != null and .secondChild.client != null then "y" else "n" end')
+  [ "$r" = y ] || return 0
+  bspc node "@$d:/" -y vertical 2>/dev/null || bspc node "@$d:/" -R 270
+  bspc node "@$d:/" -r 0.5
+}
+
+case "${1:-watch}" in
+  apply) apply_all ;;
+  status) [ -e "$OFF" ] && echo off || echo on ;;
+  toggle)
+    if [ -e "$OFF" ]; then rm -f "$OFF"; msg="on"; else : >"$OFF"; msg="off"; fi
+    apply_all
+    command -v notify-send >/dev/null && notify-send -u low -t 1500 "Auto-center" "$msg"
+    ;;
+  watch)
+    exec 9>"$R/wl-autocenter.lock"
+    flock -n 9 || exit 0
+    apply_all
+    presel=" "
+    bspc subscribe node_add node_remove node_transfer node_state node_flag node_presel \
+        desktop_focus desktop_add monitor_add monitor_geometry 2>/dev/null |
+    while read -r ev a b c e f g; do
+      case $ev in
+        node_presel)
+          # bspwm-wl reports a consumed preselection as "cancel" right before
+          # the node_add, so remember when each desktop's presel went away.
+          case $e in
+            cancel) presel=$(echo "$presel" | sed "s/ $b / /"); eval "pc_${b#0x}=$(date +%s)" ;;
+            *) case $presel in *" $b "*) ;; *) presel="$presel$b " ;; esac ;;
+          esac ;;
+        node_add)
+          eval "t0=\${pc_${b#0x}:-0}"; now=$(date +%s)
+          case $presel in
+            *" $b "*) presel=$(echo "$presel" | sed "s/ $b / /") ;;
+            *) [ $((now - t0)) -le 1 ] || { second "$b"; third "$b" "$e"; } ;;
+          esac
+          eval "pc_${b#0x}=0"
+          apply_desk "$b" ;;
+        node_remove) apply_desk "$b" ;;
+        node_transfer)  # a transfer onto a preselection consumes it
+          presel=$(echo "$presel" | sed "s/ $f / /")
+          apply_desk "$b"; [ -n "$f" ] && apply_desk "$f" ;;
+        node_state|node_flag) apply_desk "$b" ;;
+        *) apply_all ;;
+      esac
+    done
+    ;;
+  *) echo "usage: wl-autocenter [watch|apply|toggle|status]" >&2; exit 2 ;;
+esac
