@@ -1,0 +1,5 @@
+#!/bin/sh
+# rice : switch colour theme across all apps (see ~/.config/rices/README.md)
+# part of sys7mfaul7 dotfiles
+PY=$(command -v python3 || echo "$HOME/.guix-profile/bin/python3")
+exec "$PY" "$HOME/.config/rices/lib/rice.py" "$@"

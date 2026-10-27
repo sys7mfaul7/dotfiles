@@ -1,0 +1,21 @@
+#!/bin/sh
+. "$HOME/.config/rices/current/ui.sh" 2>/dev/null   # RICE_SELECT_BG/FG: menu highlight of the active rice
+# rice-menu : theme picker (Super+Ctrl+Alt+T in bspwm-wl, X11 bspwm and Niri)
+# part of sys7mfaul7 dotfiles
+# Wayland: bemenu with the same look as Super+D; X11: rofi dmenu theme.
+export PATH="$HOME/.local/bin:$HOME/.guix-profile/bin:$PATH"
+cur=$(rice current)
+list=$(rice names | while IFS="$(printf '\t')" read -r name slug; do
+  [ "$slug" = "$cur" ] && printf '%s  (current)\n' "$name" || printf '%s\n' "$name"; done)
+if [ -n "$WAYLAND_DISPLAY" ]; then
+  pick=$(printf '%s\n' "$list" | BEMENU_BACKEND=wayland bemenu -p 'THEME' -l 8 -H 22 --fn 'DejaVu Sans Mono, Symbols Nerd Font Mono 11' \
+    --tb '#000000' --tf "${RICE_MENU_TITLE:-#00ff41}" --fb '#000000' --ff '#c0ffc0' --nb '#000000' --nf '#c0ffc0' \
+    --hb "${RICE_SELECT_BG:-#1f6f2f}" --hf "${RICE_SELECT_FG:-#c0ffc0}" --ab '#000000' --af '#c0ffc0' -B 0) || exit 0
+else
+  pick=$(printf '%s\n' "$list" | rofi -dmenu -i -p "THEME" -theme "$HOME/.config/bspwm/rofi/dmenu.rasi") || exit 0
+fi
+pick=${pick%  (current)}
+slug=$(rice names | awk -F '\t' -v n="$pick" '$1 == n { print $2 }')
+[ -n "$slug" ] || exit 0
+mkdir -p "$HOME/.local/state"
+rice set "$slug" > "$HOME/.local/state/rice.log" 2>&1 || notify-send -u critical rice "switch failed: see ~/.local/state/rice.log"

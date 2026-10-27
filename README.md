@@ -28,6 +28,8 @@ Retro orange-on-black theme:
 | Dim | `#xxxxxx` |
 | Charcoal panels | `#xxxxxx` |
 
+**Theme switcher (`rice`).** Green is the master theme; the other themes (Monochrome Orange/Blue, Azure Glow, GitHub Dark, R2-D2) are one-to-one colour maps of it, kept in `.config/rices/<theme>/theme.conf`. `rice set <theme>` rewrites only the colour tokens of the files listed in `.config/rices/managed.list` and reloads what can reload live (waybar, borders, dunst, tray icons via `rice-tray`). `rice-menu` picks one from a menu. After a fresh install run `rice build` once (it generates each theme's `map.tsv`, `palette.sh`, `foot.ini`, `ui.sh` and `waybar.css`, which are not in git). Edit colours only while green is active, then `rice scan && rice build`. Wallpapers are not in the repo; each theme looks for `wallpaper.jpg` in its folder (see `.config/rices/README.md`). The files in this repo are the green versions.
+
 Fonts: the X11 session uses **DejaVu Sans Mono** (regular; Bold only for emphasis) with **Symbols Nerd Font** for icons, see [Fonts](#fonts). The Wayland sessions and the apps (GTK, Qt, foot, bemenu, dunst, qutebrowser UI, Emacs, Zed) use the same DejaVu Sans Mono, with Symbols Nerd Font Mono for icons. `.config/fontconfig/fonts.conf` makes it the default for monospace, sans-serif, serif and system-ui. Menus are one-line "dmenu top position bar" style on pure black.
 
 > The bspwm-wl compositor source lives in a separate private repo. This repo only holds its config (`.config/bspwm-wl`).
@@ -41,13 +43,14 @@ The repo mirrors `$HOME`, so every path here is the path it installs to.
 .Xresources .Xdefaults .xsession .gtkrc-2.0 .fehbg .dmrc    X11 / session
 .gitconfig .guile guix-home-config.scm MiSTer.ini
 .config/
+  rices/        theme switcher: per-theme theme.conf, managed.list, lib/rice.py
   bspwm-wl/      bspwmrc, rules, flags, bin/ (wl-* helpers), waybar/, wallselect.lua, solid/
   bspwm/         X11 session: bspwmrc, theme, sxhkdrc, polybar/, rofi/, scripts/
   niri/          config.kdl, waybar/, bin/
   fontconfig/    fonts.conf (DejaVu Sans Mono as the default family), conf.d (emoji)
   xdg-desktop-portal(-wlr)/   screen-sharing portal config
   foot/ nvim/ doom/ zed/ qutebrowser/ vifm/ nnn/plugins/ mpv/ dunst/ gtk-3.0/ gtk-4.0/ qt5ct/ qt6ct/ ...
-.local/bin/      launchers and helpers (bsp-pip, bsp-pin, bspwm-sel, chromium-wl, floorp, slack, ...)
+.local/bin/      launchers and helpers (rice, rice-menu, rice-tray, bemenu wrappers, chromium-profile, bsp-pip, bsp-pin, bspwm-sel, chromium-wl, floorp, slack, ...)
 .local/share/    applications/*.desktop, wayland-sessions, wallpapers (two), icons/hicolor, emoji
 guix-config/       config.scm (system), my-packages/ (local Guix channel: fonts, niri-session...), NOTES.md
 ```

@@ -120,3 +120,16 @@ __pycache__/
 .config/bspwm/generated/
 .config/bspwm/dpi
 .config/bspwm/terminal
+# rice: generated per theme by `rice build`, state, wallpapers (licences unknown)
+.config/rices/current
+.config/rices/state/
+.config/rices/archive/
+.config/rices/domain.txt
+.config/rices/*/map.tsv
+.config/rices/*/palette.sh
+.config/rices/*/foot.ini
+.config/rices/*/ui.sh
+.config/rices/*/waybar.css
+.config/rices/*/wallpaper.*
+.config/rices/*/*.jpg
+.config/rices/*/*.png

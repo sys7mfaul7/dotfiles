@@ -1,0 +1,236 @@
+#!/usr/bin/env python3
+"""rice-tray [list|scan [--notify]|recolor [--theme SLUG] [--quiet]]
+
+Waybar tray icons vs the active rice.
+  list     every StatusNotifierItem: id, icon source, themed or not
+  scan     print only UNTHEMED items (exit 1 if any); --notify sends one
+           low-priority dunst notification per newly seen unthemed item
+           (waybar runs this from the tray's on-update)
+  recolor  pixmap-only items (Electron apps such as Slack): tint the app's
+           own tray pixmap to the theme accent (green-master 00ff41 through
+           the theme's map.tsv), save it as icon rice-tray-<id> and map it in
+           the waybar tray "icons" config. `rice set` runs this on a switch.
+Reads only the tray properties Id/Title/IconName/IconPixmap over D-Bus.
+Part of sys7mfaul7 dotfiles.
+"""
+import glob, json, os, re, struct, subprocess, sys, zlib
+
+HOME = os.path.expanduser("~")
+RICES = os.path.join(HOME, ".config/rices")
+WAYBAR = os.path.join(HOME, ".config/bspwm-wl/waybar/config.jsonc")
+ICONDIR = os.path.join(HOME, ".local/share/icons/hicolor/32x32/apps")
+STATE = os.path.join(os.environ.get("XDG_RUNTIME_DIR", "/tmp"), "rice-tray.seen")
+MASTER_ACCENT = "00ff41"
+
+
+def bus_env():
+    env = dict(os.environ)
+    try:
+        pid = subprocess.run(["pgrep", "-f", "waybar -c"], capture_output=True, text=True).stdout.split()[0]
+        for kv in open("/proc/%s/environ" % pid, "rb").read().split(b"\0"):
+            if kv.startswith(b"DBUS_SESSION_BUS_ADDRESS="):
+                env["DBUS_SESSION_BUS_ADDRESS"] = kv.split(b"=", 1)[1].decode()
+    except Exception:
+        pass
+    return env
+
+
+ENV = bus_env()
+
+
+def prop(svc, path, name):
+    r = subprocess.run(["busctl", "--user", "--json=short", "get-property", svc, path,
+                        "org.kde.StatusNotifierItem", name], capture_output=True, text=True, env=ENV)
+    if r.returncode:
+        return None
+    try:
+        return json.loads(r.stdout).get("data")
+    except ValueError:
+        return None
+
+
+def items():
+    d = None
+    r = subprocess.run(["busctl", "--user", "--json=short", "get-property", "org.kde.StatusNotifierWatcher",
+                        "/StatusNotifierWatcher", "org.kde.StatusNotifierWatcher",
+                        "RegisteredStatusNotifierItems"], capture_output=True, text=True, env=ENV)
+    try:
+        d = json.loads(r.stdout)["data"]
+    except Exception:
+        return []
+    out = []
+    for it in d:
+        if "/" in it:
+            svc, path = it.split("/", 1); path = "/" + path
+        else:
+            svc, path = it, "/StatusNotifierItem"
+        out.append({"svc": svc, "path": path, "id": prop(svc, path, "Id") or "",
+                    "icon": prop(svc, path, "IconName") or ""})
+    return out
+
+
+def strip_jsonc(s):
+    return re.sub(r'^\s*//.*$', '', s, flags=re.M)
+
+
+def waybar_icons():
+    try:
+        s = open(WAYBAR, encoding="utf-8").read()
+        m = re.search(r'"tray"\s*:\s*\{', s)
+        blk = s[m.end():s.index("}", m.end())] if m else ""
+        im = re.search(r'"icons"\s*:\s*\{([^}]*)', s[m.end():]) if m else None
+        return dict(re.findall(r'"([^"]+)"\s*:\s*"([^"]*)"', im.group(1))) if im else {}
+    except Exception:
+        return {}
+
+
+def managed_globs():
+    g = []
+    for line in open(os.path.join(RICES, "managed.list"), encoding="utf-8"):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split(None, 1)
+        if len(parts) == 2:
+            g.append(os.path.expanduser(parts[1]))
+    return g
+
+
+def themed_icon_name(name):
+    for pat in managed_globs():
+        for f in glob.glob(pat):
+            if os.path.splitext(os.path.basename(f))[0] == name:
+                return True
+    return False
+
+
+def classify(it, icons):
+    if it["id"] in icons:
+        return "themed (waybar icons -> %s)" % icons[it["id"]]
+    if it["icon"]:
+        if it["icon"].startswith("/"):
+            return "UNTHEMED (icon file %s)" % it["icon"]
+        return ("themed (icon %s is rice-managed)" % it["icon"]) if themed_icon_name(it["icon"]) \
+            else "UNTHEMED (icon name %s from the icon theme)" % it["icon"]
+    return "UNTHEMED (pixmap only; run: rice-tray recolor)"
+
+
+def accent(theme):
+    if not theme:
+        try:
+            theme = os.path.basename(os.path.realpath(os.path.join(RICES, "current")))
+        except Exception:
+            theme = ""
+    try:
+        for line in open(os.path.join(RICES, theme, "map.tsv")):
+            p = line.split()
+            if len(p) == 2 and p[0].lower() == MASTER_ACCENT:
+                return p[1]
+    except OSError:
+        pass
+    return MASTER_ACCENT
+
+
+def png(path, w, h, rgba):
+    raw = b"".join(b"\0" + rgba[y * w * 4:(y + 1) * w * 4] for y in range(h))
+    def chunk(t, d):
+        c = t + d
+        return struct.pack(">I", len(d)) + c + struct.pack(">I", zlib.crc32(c) & 0xffffffff)
+    data = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 6, 0, 0, 0)) \
+        + chunk(b"IDAT", zlib.compress(raw, 9)) + chunk(b"IEND", b"")
+    tmp = path + ".tmp"
+    open(tmp, "wb").write(data); os.replace(tmp, path)
+
+
+def safe(i):
+    return re.sub(r"[^A-Za-z0-9_.-]", "_", i)
+
+
+def recolor(theme, quiet):
+    acc = accent(theme)
+    ar, ag, ab = int(acc[0:2], 16), int(acc[2:4], 16), int(acc[4:6], 16)
+    os.makedirs(ICONDIR, exist_ok=True)
+    done = {}
+    for it in items():
+        if it["icon"] or not it["id"]:
+            continue
+        pm = prop(it["svc"], it["path"], "IconPixmap") or []
+        pm = [p for p in pm if len(p) == 3 and p[0] * p[1] * 4 == len(p[2])]
+        if not pm:
+            continue
+        w, h, b = max(pm, key=lambda p: p[0] * p[1])
+        b = bytes(b)
+        out = bytearray()
+        for i in range(0, len(b), 4):
+            a, r, g, bl = b[i], b[i + 1], b[i + 2], b[i + 3]   # ARGB32, network order
+            l = max(r, g, bl) / 255.0
+            out += bytes((round(ar * l), round(ag * l), round(ab * l), a))
+        name = "rice-tray-" + safe(it["id"])
+        png(os.path.join(ICONDIR, name + ".png"), w, h, bytes(out))
+        done[it["id"]] = name   # icon NAME: GTK icon names beat later pixmap updates
+    if done:
+        set_waybar_icons(done)
+    if not quiet:
+        for k, v in done.items():
+            print("recoloured %s -> %s (#%s)" % (k, v, acc))
+    return done
+
+
+def set_waybar_icons(new):
+    s = open(WAYBAR, encoding="utf-8").read()
+    cur = waybar_icons()
+    if all(cur.get(k) == v for k, v in new.items()):
+        return
+    m = re.search(r'"tray"\s*:\s*\{', s)
+    if not m:
+        return
+    im = re.search(r'"icons"\s*:\s*\{', s[m.end():])
+    if im and s.index("}", m.end()) > m.end() + im.start():
+        # update entries inside the existing icons object
+        start = m.end() + im.end(); end = s.index("}", start)
+        body = s[start:end]
+        for k, v in new.items():
+            line = '"%s": "%s"' % (k, v)
+            if re.search(r'"%s"\s*:' % re.escape(k), body):
+                body = re.sub(r'"%s"\s*:\s*"[^"]*"' % re.escape(k), line.replace("\\", "\\\\"), body)
+            else:
+                body = body.rstrip() + (",\n" if body.strip() else "\n") + "   " + line + "\n  "
+        s = s[:start] + body + s[end:]
+    else:
+        entries = ",\n".join('   "%s": "%s"' % (k, v) for k, v in new.items())
+        ins = '\n  "icons": {   // generated by rice-tray recolor (pixmap-only tray apps)\n%s\n  },' % entries
+        s = s[:m.end()] + ins + s[m.end():]
+    tmp = WAYBAR + ".tmp"
+    open(tmp, "w", encoding="utf-8").write(s); os.replace(tmp, WAYBAR)
+
+
+def main(a):
+    cmd = a[0] if a else "list"
+    if cmd == "list":
+        ic = waybar_icons()
+        for it in items():
+            print("%-28s %s" % (it["id"] or it["svc"], classify(it, ic)))
+    elif cmd == "scan":
+        ic = waybar_icons(); bad = []
+        for it in items():
+            c = classify(it, ic)
+            if c.startswith("UNTHEMED"):
+                bad.append((it["id"] or it["svc"], c)); print("%-28s %s" % bad[-1])
+        if "--notify" in a and bad:
+            seen = set(open(STATE).read().split("\n")) if os.path.exists(STATE) else set()
+            for i, c in bad:
+                if i not in seen:
+                    subprocess.run(["notify-send", "-u", "low", "-a", "rice", "New tray icon not themed",
+                                    "%s: %s\nrice-tray recolor, or add an icon override" % (i, c)],
+                                   env=ENV, capture_output=True)
+                    seen.add(i)
+            open(STATE, "w").write("\n".join(sorted(x for x in seen if x)))
+        sys.exit(1 if bad else 0)
+    elif cmd == "recolor":
+        theme = a[a.index("--theme") + 1] if "--theme" in a else None
+        recolor(theme, "--quiet" in a)
+    else:
+        print(__doc__); sys.exit(2)
+
+
+main(sys.argv[1:])

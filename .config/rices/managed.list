@@ -1,0 +1,70 @@
+# Files whose colours `rice set` rewrites.  Format:  MODES  PATH-or-GLOB
+# MODES (comma list): default = #rrggbb[aa] + rgb()/rgba() + 38;2;r;g;b escapes
+#   argb  = #aarrggbb (Qt)     lua0x = 0xaarrggbb     bare = rrggbb without '#'
+#   jsonrgb = [r, g, b]        loint/lopair = LibreOffice integers
+#   cterm = vifm ctermfg/ctermbg=N   ansi256 = 38;5;N   nnn = NNN_FCOLORS/NNN_COLORS indices
+#   doom16 = Doom tty fallback names ("green")   (these four render from a green master copy)
+#   special = no colour tokens, only per-theme settings (htop color_scheme, remmina grab_color)
+# Only colours known to the themes are changed; everything else stays byte for byte.
+# Add a line here for a new file, then (while green is active) run: rice scan && rice build
+# Never list ~/.config/zed/settings.json or keepassxc.ini (secrets).
+
+# ---- window managers, bars, launchers
+default,bare  ~/.config/bspwm-wl/bspwmrc
+default       ~/.config/bspwm-wl/waybar/style.css
+default       ~/.config/bspwm-wl/waybar/config.jsonc
+default,bare  ~/.config/bspwm-wl/bin/wl-powermenu
+default       ~/.config/bspwm-wl/bin/wl-*
+default,lua0x ~/.config/bspwm-wl/wallselect.lua
+default       ~/.config/niri/config.kdl
+default       ~/.config/niri/waybar/style.css
+default       ~/.config/niri/waybar/config.jsonc
+default       ~/.config/bspwm/theme
+default       ~/.config/bspwm/polybar/config.ini
+default       ~/.local/bin/bspwm-wl-menu
+default       ~/.local/bin/bspwm-wl-apps
+default       ~/.local/bin/bt-menu
+default       ~/.local/bin/pinentry-rofi-themed
+default       ~/.local/bin/polybar-ws
+default       ~/.local/bin/waybar-net
+default       ~/.local/bin/waybar-sys
+default       ~/.local/bin/bsp-group
+default       ~/.local/bin/colortest
+default       ~/.local/bin/rice-menu
+default       ~/.config/dunst/dunstrc
+default       ~/.config/dunst/dunstrc-river
+# ---- terminals / shell
+default       ~/.Xresources
+default       ~/.config/tmux/tmux.conf
+default       ~/.config/bash/completion.sh
+default       ~/.config/bash/prompt.sh
+default,nnn   ~/.bashrc
+default       ~/.config/btop/themes/h4ck3r.theme
+default,cterm ~/.config/vifm/colors/h4ck3r.vifm
+special       ~/.config/htop/htoprc
+default       ~/.config/bat/themes/h4ck3r.tmTheme
+default       ~/.config/carapace/styles.json
+# ---- toolkits
+default       ~/.config/gtk-3.0/gtk.css
+default       ~/.config/gtk-4.0/gtk.css
+argb          ~/.config/qt5ct/colors/h4ck3r.conf
+argb          ~/.config/qt6ct/colors/h4ck3r.conf
+# ---- editors
+default       ~/.config/nvim/colors/h4ck3r.lua
+default       ~/.config/nvim/lua/config/*.lua
+default,doom16 ~/.config/doom/themes/doom-h4ck3r-theme.el
+default       ~/.config/geany/colorschemes/h4ck3r.conf
+default       ~/.config/geany/geany.conf
+default       ~/.config/zed/themes/h4ck3r.json
+# ---- browsers, viewers, office
+default       ~/.config/qutebrowser/config.py
+jsonrgb       ~/.local/share/brave-h4ck3r-theme/manifest.json
+default       ~/.config/zathura/zathurarc
+default       ~/.config/mpv/script-opts/modernz.conf
+loint,lopair  ~/.local/bin/lo-h4ck3r-black
+special       ~/.config/remmina/remmina.pref
+# ---- tray / panel icons (KeePassXC monochrome, Nextcloud state icons, udiskie)
+default       ~/.local/share/icons/hicolor/scalable/apps/keepassxc-monochrome-light*.svg
+default       ~/.local/share/icons/hicolor/*/status/state-*.svg
+default       ~/.local/share/icons/Papirus-Dark/*/panel/state-*.svg
+default       ~/.local/share/icons/hicolor/*/apps/udiskie-media-green.svg
