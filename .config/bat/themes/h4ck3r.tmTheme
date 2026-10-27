@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- h4ck3r for bat: colours follow the active rice (rice set NAME rewrites them;
+     rice rebuilds the bat cache). Same roles as nvim colors/h4ck3r.lua. -->
+<plist version="1.0">
+<dict>
+  <key>name</key><string>h4ck3r</string>
+  <key>settings</key>
+  <array>
+    <dict><key>settings</key><dict>
+      <key>background</key><string>#000000</string>
+      <key>foreground</key><string>#c0ffc0</string>
+      <key>caret</key><string>#00ff41</string>
+      <key>lineHighlight</key><string>#0f1a14</string>
+      <key>selection</key><string>#1f6f2f</string>
+      <key>gutter</key><string>#000000</string>
+      <key>gutterForeground</key><string>#2f5a2f</string>
+      <key>invisibles</key><string>#2f5a2f</string>
+    </dict></dict>
+    <dict><key>name</key><string>Comment</string><key>scope</key><string>comment, punctuation.definition.comment</string>
+      <key>settings</key><dict><key>foreground</key><string>#4f7f5a</string><key>fontStyle</key><string>italic</string></dict></dict>
+    <dict><key>name</key><string>String</string><key>scope</key><string>string, markup.inline.raw</string>
+      <key>settings</key><dict><key>foreground</key><string>#5fbf5f</string></dict></dict>
+    <dict><key>name</key><string>Constant / number / type</string><key>scope</key><string>constant, constant.numeric, storage.type, entity.name.type, support.type, support.class, variable.other.property</string>
+      <key>settings</key><dict><key>foreground</key><string>#8fef8f</string></dict></dict>
+    <dict><key>name</key><string>Keyword</string><key>scope</key><string>keyword, storage, keyword.operator.word</string>
+      <key>settings</key><dict><key>foreground</key><string>#00ff41</string><key>fontStyle</key><string>bold</string></dict></dict>
+    <dict><key>name</key><string>Function</string><key>scope</key><string>entity.name.function, support.function, meta.function-call</string>
+      <key>settings</key><dict><key>foreground</key><string>#00ff41</string></dict></dict>
+    <dict><key>name</key><string>Preprocessor / tag</string><key>scope</key><string>meta.preprocessor, entity.name.tag, keyword.control.import</string>
+      <key>settings</key><dict><key>foreground</key><string>#5fbf5f</string></dict></dict>
+    <dict><key>name</key><string>Attribute / heading</string><key>scope</key><string>entity.other.attribute-name, markup.heading</string>
+      <key>settings</key><dict><key>foreground</key><string>#8fef8f</string><key>fontStyle</key><string>bold</string></dict></dict>
+    <dict><key>name</key><string>Link</string><key>scope</key><string>markup.underline.link</string>
+      <key>settings</key><dict><key>foreground</key><string>#5fbf5f</string><key>fontStyle</key><string>underline</string></dict></dict>
+    <dict><key>name</key><string>Inserted</string><key>scope</key><string>markup.inserted</string>
+      <key>settings</key><dict><key>foreground</key><string>#00ff41</string></dict></dict>
+    <dict><key>name</key><string>Deleted / invalid</string><key>scope</key><string>markup.deleted, invalid</string>
+      <key>settings</key><dict><key>foreground</key><string>#ff5f5f</string></dict></dict>
+    <dict><key>name</key><string>Changed / warning</string><key>scope</key><string>markup.changed</string>
+      <key>settings</key><dict><key>foreground</key><string>#e6db74</string></dict></dict>
+  </array>
+</dict>
+</plist>

@@ -125,3 +125,8 @@ window, window.csd, window.solid-csd, decoration, .titlebar, headerbar, window.c
   border-radius: 0;
 }
 decoration, window.csd decoration { box-shadow: none; margin: 0; }
+
+/* popborder: visible 1px frame on menus, popovers and tooltips (rice-managed colour) */
+popover > contents, popover.menu > contents, .context-menu > contents { border: 1px solid #3d6b46; padding: 3px; }
+popover > arrow { border: 1px solid #3d6b46; }
+tooltip, tooltip.background { border: 1px solid #3d6b46; }

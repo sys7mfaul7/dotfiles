@@ -1,4 +1,4 @@
-// niri config for r2d2 - mirrors bspwm-wl where niri allows.
+// niri config for r2d2 (Shawn) - mirrors bspwm-wl where niri allows.
 // Palette: text #c0ffc0, accent #00ff41, selection #1f6f2f, dim #4f7f5a, bg #000000.
 // Reload: Ctrl+Alt+B (niri also live-reloads on save).  Validate: niri validate
 
@@ -139,6 +139,7 @@ binds {
     Mod+T            hotkey-overlay-title="Terminal: foot" { spawn "foot"; }
     Mod+Return       { spawn "foot"; }
     Mod+Shift+T      { spawn "foot" "--app-id=foot-float"; }
+    Mod+Ctrl+Alt+T   hotkey-overlay-title="Colour theme (rice) picker" { spawn-sh "~/.local/bin/rice-menu"; }
     Mod+Space        hotkey-overlay-title="Apps: bspwm-wl-apps" { spawn-sh "~/.local/bin/bspwm-wl-apps"; }
     Mod+Ctrl+Space   { spawn-sh "bspwm-wl-menu"; }
     Mod+Alt+Space    hotkey-overlay-title="Run: rofi" { spawn-sh "rofi -show run -theme ~/.config/bspwm/rofi/dmenu.rasi"; }

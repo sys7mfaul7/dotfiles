@@ -170,3 +170,8 @@ window, window.csd, window.solid-csd, decoration, .titlebar, headerbar, window.c
   border-radius: 0;
 }
 decoration, window.csd decoration { box-shadow: none; margin: 0; }
+
+/* popborder: visible 1px frame on menus, popovers and tooltips (rice-managed colour) */
+menu, .menu, .context-menu { border: 1px solid #3d6b46; padding: 3px 0; border-radius: 0; }
+popover, popover.background { border: 1px solid #3d6b46; border-radius: 0; }
+tooltip, tooltip.background, .tooltip { border: 1px solid #3d6b46; border-radius: 0; }
