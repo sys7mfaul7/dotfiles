@@ -3,10 +3,10 @@
 Personal settings for my Guix System desktop (a Minisforum AI X1 Pro, AMD iGPU), running:
 
 - **bspwm-wl**: a custom Wayland port of bspwm (wlroots). Main session.
-- **X11 bspwm**: our own sxhkd + polybar session in `.config/bspwm` (see [X11 bspwm](#x11-bspwm)).
-- **Niri**: a scrollable-tiling Wayland session that mirrors the bspwm-wl keys where it can.
+- **X11 bspwm**: (X11-based) sxhkd + polybar session in `.config/bspwm` (see [X11 bspwm](#x11-bspwm)).
+- **Niri**: (optional) a scrollable-tiling Wayland session that mirrors the bspwm-wl keys where it can.
 
-Everything uses one green-on-black theme. No blue anywhere.
+Retro green-on-black theme:
 
 | Role | Colour |
 |---|---|
@@ -17,7 +17,18 @@ Everything uses one green-on-black theme. No blue anywhere.
 | Dim | `#4f7f5a` |
 | Charcoal panels | `#0a0e14` |
 
-Fonts: the X11 session uses **DejaVu Sans Mono** (regular; Bold only for emphasis) with **Symbols Nerd Font** for icons, see [Fonts](#fonts). The Wayland sessions and the apps (GTK, Qt, foot, bemenu, dunst, qutebrowser UI, Emacs, Zed) use the same DejaVu Sans Mono, with Symbols Nerd Font Mono for icons. `.config/fontconfig/fonts.conf` makes it the default for monospace, sans-serif, serif and system-ui; web pages still use their own fonts. Menus are one-line dmenu style on pure black.
+Retro orange-on-black theme:
+
+| Role | Colour |
+|---|---|
+| Background | `#000000` |
+| Text | `#xxxxxx` |
+| Accent | `#xxxxxx` |
+| Selection | `#xxxxxx` |
+| Dim | `#xxxxxx` |
+| Charcoal panels | `#xxxxxx` |
+
+Fonts: the X11 session uses **DejaVu Sans Mono** (regular; Bold only for emphasis) with **Symbols Nerd Font** for icons, see [Fonts](#fonts). The Wayland sessions and the apps (GTK, Qt, foot, bemenu, dunst, qutebrowser UI, Emacs, Zed) use the same DejaVu Sans Mono, with Symbols Nerd Font Mono for icons. `.config/fontconfig/fonts.conf` makes it the default for monospace, sans-serif, serif and system-ui. Menus are one-line "dmenu top position bar" style on pure black.
 
 > The bspwm-wl compositor source lives in a separate private repo. This repo only holds its config (`.config/bspwm-wl`).
 
@@ -78,7 +89,7 @@ guix pull        # uses .config/guix/channels.scm (nonguix)
 sudo guix system reconfigure -L ~/guix-config/my-packages ~/guix-config/config.scm
 ```
 
-Before reconfiguring a new machine, edit `guix-config/config.scm` for its host name (`myhost`), user name (`user`, plus `home-directory`), file systems and bootloader UUIDs. Set your login password with `passwd` after the first boot.
+Before reconfiguring a new machine, edit `guix-config/config.scm` for its hostname (`myhost`), user name (`user`, plus `home-directory`), file systems and bootloader UUIDs. Set your login password with `passwd` after the first boot.
 
 Not included, supply them yourself:
 
@@ -381,9 +392,9 @@ Apps that do **not** follow the session DPI (fixed sizes, change them by hand):
 | bspwm-wl and niri bars | `font-size` in `.config/bspwm-wl/waybar/style.css`, `.config/niri/waybar/style.css` |
 | Wayland notifications | `font` in `.config/dunst/dunstrc` (X11 uses the generated one) |
 
-### Not carried over from the old setup
+### Misc third-party apps and tools
 
-The style chooser, eww widgets, weather and update-count modules, animated wallpapers and the rice selector are gone. Network uses an `nmtui` popup, bluetooth a `bluetui` popup. The icon theme is **Papirus-Dark** (Guix `papirus-icon-theme`) and the cursor **Adwaita** (`adwaita-icon-theme`), set in `theme` (`ICON_THEME`, `CURSOR_THEME`), GTK 2/3/4 settings, qt5ct/qt6ct, `.Xresources`, `.icons/default` and the niri config; GTK is Adwaita-dark with our green `gtk.css`. `scripts/lock` uses `i3lock` if installed and falls back to `slock`. `kbd-layout`, `pass-menu` and `android-mount` need `setxkbmap`, `pass` and `simple-mtpfs`.
+Network uses an `nmtui` popup, bluetooth a `bluetui` popup. The icon theme is **Papirus-Dark** (Guix `papirus-icon-theme`) and the cursor **Adwaita** (`adwaita-icon-theme`), set in `theme` (`ICON_THEME`, `CURSOR_THEME`), GTK 2/3/4 settings, qt5ct/qt6ct, `.Xresources`, `.icons/default` and the niri config; GTK is Adwaita-dark with our green `gtk.css`. `scripts/lock` uses `i3lock` if installed and falls back to `slock`. `kbd-layout`, `pass-menu` and `android-mount` need `setxkbmap`, `pass` and `simple-mtpfs`.
 
 ### X11 keybindings
 
