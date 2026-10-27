@@ -22,6 +22,10 @@ super + ctrl + {_,shift + }t
 super + alt + t
     term --pick
 
+# colour theme (rice) picker
+super + ctrl + alt + t
+    "$HOME/.local/bin/rice-menu"
+
 # app launcher (one-line menu at the top)
 super + space
     launcher drun
@@ -337,8 +341,8 @@ super + u
     ~/.local/bin/bspwm-undo restore
 
 
-# rotate the whole desktop
-super + {_,shift + }r
+# rotate the whole desktop (shift: the other way)
+super + ctrl + {_,shift + }r
     bspc node @/ --rotate {90,-90}
 
 # balance
@@ -382,7 +386,7 @@ super + {_,shift + }apostrophe
     bspc desktop -f last
 
 # rotate the split of this window (shift: the other way)
-super + ctrl + {_,shift + }r
+super + {_,shift + }r
     bspc node @parent -R {90,270}
 
 # rename this desktop

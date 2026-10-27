@@ -111,11 +111,16 @@ command -v udiskie >/dev/null && ! pgrep -f "[u]diskie" >/dev/null &&
 command -v transmission-daemon >/dev/null && ! pgrep -x transmission-da >/dev/null &&
     transmission-daemon -w "$HOME/Downloads/torrents" >/dev/null 2>&1
 # local LLM server for Neovim
-[ -x "$HOME/.local/bin/llm-serve" ] && "$HOME/.local/bin/llm-serve" &
+[ -x "$HOME/.local/bin/llama-local" ] && LLAMA_NOWAIT=1 setsid -f "$HOME/.local/bin/llama-local" start >/dev/null 2>&1 </dev/null
 # clipboard history (Super+V)
 pgrep -x clipmenud >/dev/null || clipmenud &
 # KeePassXC = Secret Service keyring (org.freedesktop.secrets), starts minimized to the tray
 command -v keepassxc >/dev/null && ! pgrep -x .keepassxc-real >/dev/null && ! pgrep -x keepassxc >/dev/null &&
     setsid -f keepassxc --minimized >/dev/null 2>&1 </dev/null
+# jack-autoswitch: front headset jack / iFi / speakers routing (mutes built-in speakers+mic; flock = single instance)
+setsid -f "$HOME/.local/bin/jack-autoswitch" >/dev/null 2>&1 </dev/null
+# Nextcloud desktop sync client, tray only (single instance; profile path survives Guix upgrades)
+command -v nextcloud >/dev/null && ! pgrep -x .nextcloud-real >/dev/null && ! pgrep -x nextcloud >/dev/null && \
+  setsid -f nextcloud --background >/dev/null 2>&1 </dev/null
 # coloured borders for pinned windows
 pgrep -f "[b]sp-pin-borders" >/dev/null || setsid -f "$HOME/.local/bin/bsp-pin-borders" >/dev/null 2>&1

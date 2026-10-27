@@ -5,6 +5,9 @@
 # Safe to run any time; it only touches the generated/ folder.
 B="$HOME/.config/bspwm"
 . "$B/theme"
+# selection highlight of the active rice (theme.conf [ui] select_bg/select_fg -> ui.sh)
+RICE_SELECT_BG=; RICE_SELECT_FG=; . "$HOME/.config/rices/current/ui.sh" 2>/dev/null
+SEL_BG=${RICE_SELECT_BG:-$C_SEL}; SEL_FG=${RICE_SELECT_FG:-$C_FG}
 G="$B/generated"
 mkdir -p "$G"
 
@@ -26,7 +29,7 @@ put theme.rasi <<RASI
 configuration { dpi: $DPI; }
 * {
     bg: $C_BG; bg-alt: $C_BG_ALT; fg: $C_FG; accent: $C_ACCENT;
-    sel-bg: $C_SEL; sel-fg: $C_FG; dim: $C_DIM; urgent: $C_URGENT;
+    sel-bg: $SEL_BG; sel-fg: $SEL_FG; dim: $C_DIM; urgent: $C_URGENT;
     font: "$PF$FONT_SIZE";
     font-emph: "$FONT_FAMILY, $ICON_FONT $FONT_EMPH_STYLE $FONT_SIZE";
 }
@@ -134,7 +137,7 @@ color_menu_bg = $C_BG 100
 color_menu_border = $C_ACCENT 100
 color_norm_bg = $C_BG 0
 color_norm_fg = $C_FG 100
-color_sel_bg = $C_SEL 100
-color_sel_fg = $C_FG 100
+color_sel_bg = $SEL_BG 100
+color_sel_fg = $SEL_FG 100
 color_sep_fg = $C_DIM 100
 JG

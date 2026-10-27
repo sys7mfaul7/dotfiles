@@ -30,7 +30,7 @@ window {
 bar      { orientation: horizontal; children: [ inputbox, listview ]; padding: 0 0.7em; }
 /* prompt + typed text share a fixed box so the item list starts ~20% in */
 inputbox { orientation: horizontal; expand: false; width: calc( 20% - 0.7em ); children: [ prompt, entry ]; }
-prompt   { padding: 0.2em 0.55em 0 0; text-color: @accent; }
+prompt   { padding: 0.2em 0.55em 0 0; text-color: @accent; font: @font-emph; }
 entry    { expand: true; padding: 0.2em 0.7em 0 0.3em; placeholder: ""; cursor: text; }
 listview { layout: horizontal; lines: 100; dynamic: true; scrollbar: false; }
 element  { padding: 0.2em 0.8em 0 0.8em; children: [ element-text ]; }

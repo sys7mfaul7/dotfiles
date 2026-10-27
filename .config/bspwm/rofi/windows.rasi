@@ -16,7 +16,7 @@ window {
 }
 mainbox  { children: [ inputbar, listview ]; spacing: 8px; }
 inputbar { children: [ prompt, entry ]; padding: 4px 6px; background-color: @bg-alt; }
-prompt   { text-color: @accent; padding: 0 8px 0 0; }
+prompt   { text-color: @accent; padding: 0 8px 0 0; font: @font-emph; }
 listview { lines: 8; columns: 1; fixed-height: false; scrollbar: false; spacing: 2px; }
 element  { padding: 4px 8px; spacing: 12px; children: [ element-icon, element-text ]; }
 element-icon { size: 64px; }
