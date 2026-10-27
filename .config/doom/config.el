@@ -94,3 +94,55 @@
       doom-big-font (font-spec :family "DejaVu Sans Mono" :size 15.0))
 ;; Emacs 31 (X11/GTK under Xwayland) supports alpha-background; text stays opaque.
 (add-to-list 'default-frame-alist '(alpha-background . 90))
+
+;;; --- Markdown: rendered look, aligned tables, sane lint (added 2026-10-27) ---
+;; .md files open in gfm-mode (GitHub tables, strikethrough, fenced code).
+(add-to-list 'auto-mode-alist '("\\.\\(?:md\\|markdown\\)\\'" . gfm-mode))
+(setq markdown-header-scaling t                 ; bigger headings (before markdown-mode loads)
+      markdown-header-scaling-values '(1.45 1.3 1.15 1.05 1.0 1.0)
+      markdown-hide-markup t                    ; hide **, `, link URLs; SPC m t m toggles
+      markdown-fontify-code-blocks-natively t
+      markdown-enable-highlighting-syntax t     ; ==highlight==
+      markdown-list-indent-width 2)
+
+(after! markdown-mode
+  (markdown-update-header-faces markdown-header-scaling markdown-header-scaling-values))
+
+;; Display-only table alignment (never edits the file).
+(use-package! valign
+  :hook ((markdown-mode . valign-mode) (org-mode . valign-mode))
+  :config
+  (setq valign-fancy-bar t                     ; draw | and |---| as solid lines
+        valign-max-table-size 0))              ; align tables of any size
+
+(defun +md/toggle-markdownlint ()
+  "Toggle the markdownlint flycheck checker in this buffer."
+  (interactive)
+  (if (memq 'markdown-markdownlint-cli2 flycheck-disabled-checkers)
+      (progn (setq-local flycheck-disabled-checkers
+                         (delq 'markdown-markdownlint-cli2 flycheck-disabled-checkers))
+             (message "markdownlint: on"))
+    (setq-local flycheck-disabled-checkers
+                (cons 'markdown-markdownlint-cli2 flycheck-disabled-checkers))
+    (message "markdownlint: off"))
+  (flycheck-buffer))
+
+(defun +md/toggle-table-view ()
+  "Toggle line wrapping so wide tables stay on one line (horizontal scroll)."
+  (interactive)
+  (if truncate-lines
+      (progn (setq-local truncate-lines nil) (visual-line-mode 1))
+    (visual-line-mode -1) (setq-local truncate-lines t))
+  (when (bound-and-true-p valign-mode) (font-lock-flush)))
+
+(add-hook! (markdown-mode gfm-mode) #'visual-line-mode)
+
+(map! :after markdown-mode
+      (:map (markdown-mode-map gfm-mode-map)
+       :localleader
+       (:prefix ("t" . "toggle")
+        :desc "Markdownlint"         "L" #'+md/toggle-markdownlint
+        :desc "Wide tables (no wrap)" "t" #'+md/toggle-table-view
+        :desc "Live preview (eww)"   "p" #'markdown-live-preview-mode)))
+;; Lint rules: ~/.markdownlint-cli2.jsonc (line length, first-line heading, inline
+;; HTML and table-style rules are off). Preview: SPC m p (browser), SPC m t p (live).

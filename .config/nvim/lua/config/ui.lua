@@ -18,7 +18,7 @@ local function hl()
   s("DiagnosticUnderlineError", { undercurl = true, sp = p.red })
   s("DiagnosticUnderlineWarn", { undercurl = true, sp = p.amber })
   s("LspReferenceText", { bg = p.sel }); s("LspReferenceRead", { bg = p.sel }); s("LspReferenceWrite", { bg = p.sel })
-  s("LspInlayHint", { fg = p.dim, italic = true })
+  s("LspInlayHint", { fg = "#2f5a31", italic = true }) -- readable-dim token (see colors/h4ck3r.lua)
   s("DapBreakpoint", { fg = p.red }); s("DapStopped", { fg = p.acc }); s("DapStoppedLine", { bg = p.sel })
   s("NvimDapVirtualText", { fg = p.mid, italic = true })
   for _, g in ipairs({ "DapUIScope", "DapUIBreakpointsPath", "DapUIDecoration", "DapUIStoppedThread",

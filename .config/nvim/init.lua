@@ -17,6 +17,9 @@ do
   end
 end
 
+-- Neovim 0.12 async tree-sitter parsing + render-markdown's synchronous parse() calls
+-- raise "attempt to yield across C-call boundary" (neovim#33277); parse synchronously.
+vim.g._ts_force_sync_parsing = true
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 vim.g.loaded_perl_provider = 0 -- unused; Guix has no Neovim::Ext
@@ -36,13 +39,18 @@ for _, d in ipairs({ "~/.local/bin", "~/.cargo/bin", "~/go/bin" }) do
   if not vim.env.PATH:find(d, 1, true) then vim.env.PATH = d .. ":" .. vim.env.PATH end
 end
 
--- llama.vim: FIM ghost-text autocomplete via local llama-server
-vim.g.llama_config = { endpoint_fim = "http://127.0.0.1:8081/infill", show_info = 0 }
+-- llama.vim: FIM ghost-text autocomplete via the same local llama-server as
+-- CodeCompanion (~/.local/bin/llama-local, 127.0.0.1:8080). Silent if it is down.
+vim.g.llama_config = {
+  endpoint_fim = "http://127.0.0.1:8080/infill",
+  endpoint_inst = "http://127.0.0.1:8080/v1/chat/completions",
+  show_info = 0,
+}
 
 -- Native package manager (Neovim 0.12)
 vim.pack.add({
   "https://github.com/nvim-lua/plenary.nvim",
-  { src = "https://github.com/nvim-treesitter/nvim-treesitter", version = "master" },
+  { src = "https://github.com/nvim-treesitter/nvim-treesitter", version = "main" }, -- master is incompatible with 0.12
   "https://github.com/olimorris/codecompanion.nvim",
   "https://github.com/ggml-org/llama.vim",
   "https://github.com/neovim/nvim-lspconfig",
@@ -63,6 +71,7 @@ vim.pack.add({
   "https://github.com/sindrets/diffview.nvim",
   "https://github.com/NeogitOrg/neogit",
   "https://github.com/ibhagwan/fzf-lua",
+  { src = "https://github.com/nvim-treesitter/nvim-treesitter-textobjects", version = "main" },
   "https://github.com/pwntester/octo.nvim",
   "https://github.com/folke/which-key.nvim",
   "https://github.com/MunifTanjim/nui.nvim",
@@ -99,11 +108,28 @@ if ok then
 end
 
 local map = vim.keymap.set
-map({ "n", "v" }, "<leader>ac", "<cmd>CodeCompanionChat Toggle<cr>", { desc = "AI chat toggle" })
-map({ "n", "v" }, "<leader>ai", ":CodeCompanion ", { desc = "AI inline prompt" })
-map({ "n", "v" }, "<leader>aa", "<cmd>CodeCompanionActions<cr>", { desc = "AI actions" })
+-- AI keys: check the local llama-server first (1 s) so a dead server gives a
+-- short notice instead of a long timeout + traceback; offer to start it.
+local function llm_up()
+  local r = vim.system({ "curl", "-s", "-m", "1", "http://127.0.0.1:8080/health" }, { text = true }):wait()
+  return r.code == 0 and (r.stdout or ""):find('"ok"') ~= nil
+end
+local function with_llm(cmd)
+  return function()
+    if llm_up() then return vim.cmd(cmd) end
+    vim.notify("llama-server is not running on :8080 — starting it (llama-local start); try again in a few seconds",
+      vim.log.levels.WARN)
+    vim.system({ "sh", "-c", "LLAMA_NOWAIT=1 llama-local start >/dev/null 2>&1" }, { detach = true })
+  end
+end
+map({ "n", "v" }, "<leader>ac", with_llm("CodeCompanionChat Toggle"), { desc = "AI chat toggle" })
+map({ "n", "v" }, "<leader>ai", function()
+  if llm_up() then return vim.api.nvim_feedkeys(":CodeCompanion ", "n", false) end
+  with_llm("")()
+end, { desc = "AI inline prompt" })
+map({ "n", "v" }, "<leader>aa", with_llm("CodeCompanionActions"), { desc = "AI actions" })
 
-for _, m in ipairs({ "ui", "treesitter", "completion", "lsp", "format", "lint", "dap", "extras", "notes", "keys", "tree", "git" }) do
+for _, m in ipairs({ "ui", "treesitter", "completion", "lsp", "format", "lint", "dap", "extras", "notes", "keys", "tree", "git", "finder" }) do
   local okm, err = pcall(require, "config." .. m)
   if not okm then vim.notify(m .. ": " .. tostring(err), vim.log.levels.WARN) end
 end

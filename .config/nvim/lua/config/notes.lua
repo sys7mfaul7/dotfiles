@@ -4,7 +4,13 @@ if okr then
   rm.setup({ file_types = { "markdown", "codecompanion" },
     heading = { backgrounds = { "H4Head1", "H4Head2", "H4Head3", "H4Head4", "H4Head5", "H4Head6" } },
     code = { highlight = "H4Code" },
-    latex = { enabled = false } })
+    latex = { enabled = false },
+    -- rendered in normal/command/terminal AND insert; the raw markdown of the cursor line
+    -- (anti-conceal) is only revealed while typing in insert mode, so moving over a table
+    -- in normal mode no longer collapses the row into raw pipes
+    render_modes = { "n", "c", "t", "i" },
+    anti_conceal = { enabled = true, disabled_modes = { "n", "c", "t" } },
+    pipe_table = { cell = "padded", wrap = true } })
 end
 -- Org mode
 local oko, org = pcall(require, "orgmode")
@@ -44,3 +50,18 @@ local function colors()
 end
 colors()
 vim.api.nvim_create_autocmd("ColorScheme", { callback = colors })
+-- Markdown windows: keep the number column through soft-wrapped lines and through
+-- render-markdown's virtual lines (wrapped table cells) instead of a blank gap
+_G.H4MdStc = function()
+  if vim.v.virtnum ~= 0 then return "%#LineNr#   │ " end
+  local n = (vim.wo.relativenumber and vim.v.relnum > 0) and vim.v.relnum or vim.v.lnum
+  return "%s%=" .. (vim.v.relnum == 0 and "%#CursorLineNr#" or "%#LineNr#") .. n .. " "
+end
+vim.api.nvim_create_autocmd({ "FileType", "BufWinEnter" }, {
+  group = vim.api.nvim_create_augroup("user_md_numbers", { clear = true }),
+  callback = function(ev)
+    local md = vim.bo[ev.buf].filetype == "markdown"
+    if md then vim.wo.statuscolumn = "%!v:lua.H4MdStc()"; vim.w.h4_md_stc = true
+    elseif vim.w.h4_md_stc then vim.wo.statuscolumn = ""; vim.w.h4_md_stc = nil end
+  end,
+})
