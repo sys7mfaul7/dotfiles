@@ -133,3 +133,6 @@ __pycache__/
 .config/rices/*/wallpaper.*
 .config/rices/*/*.jpg
 .config/rices/*/*.png
+
+# file-manager bookmarks are machine-local (may name client folders)
+.config/gtk-3.0/bookmarks
