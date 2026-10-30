@@ -1,5 +1,7 @@
 # sys7mfaul7 dotfiles
 
+> **Requires a customised bspwm-wl.** The main session runs on my own fork of bspwm-wl (the wlroots build of [rotkonetworks/bspwm1](https://github.com/rotkonetworks/bspwm1)). The fork is not public yet. Stock bspwm-wl will start with this config, but the keys and scripts that rely on fork features won't work. These include sticky/PiP and marked windows, compositor key repeat, focus-follows-pointer without raise, popup borders and Xwayland borders. See [Customised bspwm-wl features](#customised-bspwm-wl-features).
+
 Personal settings for my Guix System desktop (a Minisforum AI X1 Pro, AMD iGPU), running:
 
 - **bspwm-wl**: a custom Wayland port of bspwm (wlroots). Main session.
@@ -30,9 +32,65 @@ Retro orange-on-black theme:
 
 **Theme switcher (`rice`).** Green is the master theme; the other themes (Monochrome Orange/Blue, Azure Glow, GitHub Dark, R2-D2) are one-to-one colour maps of it, kept in `.config/rices/<theme>/theme.conf`. `rice set <theme>` rewrites only the colour tokens of the files listed in `.config/rices/managed.list` and reloads what can reload live (waybar, borders, dunst, tray icons via `rice-tray`). `rice-menu` picks one from a menu. After a fresh install run `rice build` once (it generates each theme's `map.tsv`, `palette.sh`, `foot.ini`, `ui.sh` and `waybar.css`, which are not in git). Edit colours only while green is active, then `rice scan && rice build`. Wallpapers are not in the repo; each theme looks for `wallpaper.jpg` in its folder (see `.config/rices/README.md`). The files in this repo are the green versions.
 
+**Theme gallery** (same demo layout, one per rice; the backgrounds are solid colours, not the theme wallpapers):
+
+| | |
+|---|---|
+| ![R2-D2](docs/media/rice-r2d2.png) R2-D2 | ![GitHub Dark](docs/media/rice-github-dark.png) GitHub Dark |
+| ![Azure Glow](docs/media/rice-azure-glow.png) Azure Glow (solid background; its wallpaper isn't redistributable) | ![Monochrome Blue](docs/media/rice-monochrome-blue.png) Monochrome Blue |
+| ![Monochrome Green](docs/media/rice-monochrome-green.png) Monochrome Green | ![Monochrome Orange](docs/media/rice-monochrome-orange.png) Monochrome Orange |
+
 Fonts: the X11 session uses **DejaVu Sans Mono** (regular; Bold only for emphasis) with **Symbols Nerd Font** for icons, see [Fonts](#fonts). The Wayland sessions and the apps (GTK, Qt, foot, bemenu, dunst, qutebrowser UI, Emacs, Zed) use the same DejaVu Sans Mono, with Symbols Nerd Font Mono for icons. `.config/fontconfig/fonts.conf` makes it the default for monospace, sans-serif, serif and system-ui. Menus are one-line "dmenu top position bar" style on pure black.
 
 > The bspwm-wl compositor source lives in a separate private repo. This repo only holds its config (`.config/bspwm-wl`).
+
+## Customised bspwm-wl features
+
+All media below was recorded in a separate headless bspwm-wl instance with demo windows only.
+
+**Fork (compositor) features:**
+- keybinds with key repeat (`bspc keybind`);
+- sticky / picture-in-picture windows that follow the focused desktop, with their own border colours;
+- marked-window border colour;
+- presel and receptacle fixes;
+- focus follows pointer without raising, plus `raise_floating_on_click`;
+- Xwayland borders and Super-drag move/resize;
+- Super + middle-drag floats and drags a tiled window;
+- flicker-free resizes;
+- nested popups kept on screen;
+- optional popup borders (`popup_border_*`);
+- screen capture, clipboard, hotplug and translucency;
+- libinput config.
+
+**This config adds:**
+- window hints overlay (Super + G);
+- rofi hint picker (Super + Alt + G / Super + Shift + G);
+- window switcher (Super + Tab);
+- scratchpad with position memory (Super + S);
+- minimize (Super + M);
+- hide floats (Super + I);
+- opacity toggle (Super + O);
+- raise/lower (Super + Shift + [ / ]);
+- smart move (Super + Shift + H/J/K/L);
+- preselect / edge moves (Super + Alt + H/J/K/L);
+- equal columns (Super + =);
+- undo (Super + U);
+- emoji picker (Super + Shift + `);
+- `rice` themes (Super + Ctrl + Alt + T);
+- waybar network module with right-click IP toggle.
+
+The full key list is in [bspwm-wl keybindings](#bspwm-wl-keybindings).
+
+| | |
+|---|---|
+| ![window hints](docs/media/feat-winhint.png) | ![rofi picker](docs/media/feat-winpick.png) |
+| Super + G: window hints | Super + Alt + G: rofi picker |
+| ![sticky and marked](docs/media/feat-sticky-marked.png) | ![presel](docs/media/feat-presel.png) |
+| sticky (yellow) and marked (pink) borders | preselection feedback |
+
+![tiling ops](docs/media/tiling-ops.gif) ([mp4](docs/media/tiling-ops.mp4)): rotate, swap, presel insert, equal columns, float and sticky.
+
+![sticky pip](docs/media/sticky-pip.gif) ([mp4](docs/media/sticky-pip.mp4)): sticky translucent floating window.
 
 ## Layout
 
