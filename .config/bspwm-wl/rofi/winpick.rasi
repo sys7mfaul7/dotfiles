@@ -1,12 +1,12 @@
 /* wl-winpick (Super+Shift+G current / Super+Alt+Shift+G all) theme. Tweak colours here; last 2 hex digits = alpha (e6 = 90%, same as foot). */
 * {
-  bg:      #010409e6;
-  bg-alt:  #0d1117e6;
-  fg:      #f5f7fc;
-  fg-dim:  #848ea4;
-  sel:     #4a8cff;
-  sel-fg:  #010409;
-  border:  #4a8cff;
+  bg:      #000000e6;
+  bg-alt:  #0a0e14e6;
+  fg:      #00ff42;
+  fg-dim:  #4f7f5a;
+  sel:     #00ff41;
+  sel-fg:  #000000;
+  border:  #00ff41;
   font: "DejaVu Sans Mono 13";
   background-color: transparent;
   text-color: @fg;

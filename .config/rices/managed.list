@@ -69,3 +69,5 @@ default       ~/.local/share/icons/Papirus-Dark/*/panel/keepassxc-monochrome-lig
 default       ~/.local/share/icons/hicolor/*/status/state-*.svg
 default       ~/.local/share/icons/Papirus-Dark/*/panel/state-*.svg
 default       ~/.local/share/icons/hicolor/*/apps/udiskie-media-green.svg
+default       ~/.local/bin/waybar-tips
+default       ~/.config/bspwm-wl/rofi/winpick.rasi

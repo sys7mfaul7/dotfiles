@@ -8,7 +8,7 @@
 #   add --text for the tooltip as plain text (terminal check)
 import json, os, re, select, subprocess, sys, time, socket
 
-ICON = '#5285ee'; DIM = '#848ea4'; TXT = '#c1c3c9'; ACC = '#4a8cff'
+ICON = '#578a29'; DIM = '#4f7f5a'; TXT = '#c0ffc0'; ACC = '#00ff41'
 RISE = "" if '--no-rise' in sys.argv else "rise='1pt' "
 PLAIN = '--text' in sys.argv
 
@@ -257,7 +257,7 @@ def user():
          ('Pull gen', gen(os.path.expanduser('~/.config/guix/current')) and gen('/var/guix/profiles/per-user/%s/current-guix' % os.environ.get('USER', '')))]
     g = [x for x in g if x[1]]
     if g: rows += [(None, 'Guix')] + g
-    emit(' ' + span('#3372f4', '\uf2bd') + ' ', rows)
+    emit(' ' + span('#539e06', '\uf2bd') + ' ', rows)
 
 mode = next((a for a in sys.argv[1:] if not a.startswith('-')), '')
 if mode == 'bt': bt()
