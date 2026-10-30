@@ -90,7 +90,7 @@ The full key list is in [bspwm-wl keybindings](#bspwm-wl-keybindings).
 
 ![tiling ops](docs/media/tiling-ops.gif): rotate, swap, presel insert, equal columns, float and sticky.
 
-![sticky pip](docs/media/sticky-pip.gif): sticky translucent floating window.
+![sticky pip](docs/media/sticky-pip.gif): a sticky floating window (yellow border) stays on screen while switching desktops 1 → 2 → 3 → 1.
 
 ## Layout
 
