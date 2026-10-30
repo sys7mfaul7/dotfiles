@@ -88,9 +88,9 @@ The full key list is in [bspwm-wl keybindings](#bspwm-wl-keybindings).
 | ![sticky and marked](docs/media/feat-sticky-marked.png) | ![presel](docs/media/feat-presel.png) |
 | sticky (yellow) and marked (pink) borders | preselection feedback |
 
-![tiling ops](docs/media/tiling-ops.gif) ([mp4](docs/media/tiling-ops.mp4)): rotate, swap, presel insert, equal columns, float and sticky.
+![tiling ops](docs/media/tiling-ops.gif): rotate, swap, presel insert, equal columns, float and sticky.
 
-![sticky pip](docs/media/sticky-pip.gif) ([mp4](docs/media/sticky-pip.mp4)): sticky translucent floating window.
+![sticky pip](docs/media/sticky-pip.gif): sticky translucent floating window.
 
 ## Layout
 
