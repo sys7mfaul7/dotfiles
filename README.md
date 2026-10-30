@@ -455,7 +455,7 @@ Apps that do **not** follow the session DPI (fixed sizes, change them by hand):
 
 ### Misc third-party apps and tools
 
-Network uses an `nmtui` popup, bluetooth a `bluetui` popup. The icon theme is **Papirus-Dark** (Guix `papirus-icon-theme`) and the cursor **Adwaita** (`adwaita-icon-theme`), set in `theme` (`ICON_THEME`, `CURSOR_THEME`), GTK 2/3/4 settings, qt5ct/qt6ct, `.Xresources`, `.icons/default` and the niri config; GTK is Adwaita-dark with our green `gtk.css`. `scripts/lock` uses `i3lock` if installed and falls back to `slock`. `kbd-layout`, `pass-menu` and `android-mount` need `setxkbmap`, `pass` and `simple-mtpfs`.
+On the Waybar bars (bspwm-wl and niri), clicking the network widget opens the GUI `nm-connection-editor` and clicking bluetooth opens `blueman-manager`; the terminal tools are still there, with `nmtui` on a middle-click of the network widget (right-click toggles the interface and IP) and `bluetui` on a right-click of bluetooth. The X11 polybar keeps `nmtui` and `bluetui` on left-click, with the network GUI on right-click. `super + alt + n` always opens `nmtui`. The icon theme is **Papirus-Dark** (Guix `papirus-icon-theme`) and the cursor **Adwaita** (`adwaita-icon-theme`), set in `theme` (`ICON_THEME`, `CURSOR_THEME`), GTK 2/3/4 settings, qt5ct/qt6ct, `.Xresources`, `.icons/default` and the niri config; GTK is Adwaita-dark with our green `gtk.css`. `scripts/lock` uses `i3lock` if installed and falls back to `slock`. `kbd-layout`, `pass-menu` and `android-mount` need `setxkbmap`, `pass` and `simple-mtpfs`.
 
 ### X11 keybindings
 
