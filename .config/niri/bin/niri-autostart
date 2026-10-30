@@ -32,3 +32,10 @@ swaybg -m fill -i "$W" >"$L/swaybg.log" 2>&1 &
 # KeePassXC = Secret Service keyring (org.freedesktop.secrets), starts minimized to the tray
 command -v keepassxc >/dev/null && ! pgrep -x .keepassxc-real >/dev/null && ! pgrep -x keepassxc >/dev/null && \
   setsid -f keepassxc --minimized >"$L/keepassxc.log" 2>&1 </dev/null
+# jack-autoswitch: front headset jack / iFi / speakers routing (mutes built-in speakers+mic; flock = single instance)
+setsid -f "$HOME/.local/bin/jack-autoswitch" >/dev/null 2>&1 </dev/null
+# Nextcloud desktop sync client, tray only (single instance; profile path survives Guix upgrades)
+command -v nextcloud >/dev/null && ! pgrep -x .nextcloud-real >/dev/null && ! pgrep -x nextcloud >/dev/null && \
+  setsid -f nextcloud --background >/dev/null 2>&1 </dev/null
+# local LLM server for Neovim/agents (llama.cpp, 127.0.0.1:8080; no-op if already running)
+[ -x "$HOME/.local/bin/llama-local" ] && LLAMA_NOWAIT=1 setsid -f "$HOME/.local/bin/llama-local" start >/dev/null 2>&1 </dev/null

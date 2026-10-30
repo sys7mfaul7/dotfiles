@@ -18,10 +18,18 @@ apply() {
     feh --no-fehbg --bg-fill "$1"
   fi
 }
+# login screen (lightdm-gtk-greeter) follows the last picture wallpaper;
+# /var/lib/greeter-bg is created by the Guix system config (greeter-bg service)
+GREETER_BG=/var/lib/greeter-bg
+greeter_bg() {
+  [ -d "$GREETER_BG" ] && [ -w "$GREETER_BG" ] || return 0
+  cp -f "$1" "$GREETER_BG/.login.tmp" 2>/dev/null && chmod 644 "$GREETER_BG/.login.tmp" &&
+    mv -f "$GREETER_BG/.login.tmp" "$GREETER_BG/login.jpg"
+}
 set_wall() {
   [ -f "$1" ] || exit 1
   printf '%s\n' "$1" > "$SAVE"
-  is_solid "$1" || printf '%s\n' "$1" > "$LAST"
+  is_solid "$1" || { printf '%s\n' "$1" > "$LAST"; greeter_bg "$1"; }
   apply "$1"
 }
 case "$1" in

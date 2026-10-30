@@ -1,0 +1,31 @@
+#!/bin/sh
+# wl-winpick: vim-style hint picker for bspwm-wl windows (Super+G).
+# Lines show "[desk]  App: title" (wintitle.jq). Every window gets a home-row letter; press it to jump (focus + unhide, switching
+# desktop if needed). Arrows/Enter also work; Esc cancels. Arg "local" = current desktop only.
+. "$HOME/.config/rices/current/ui.sh" 2>/dev/null
+export PATH="$HOME/.local/opt/bspwm-wl/bin:$PATH"
+HINTS="a s d f g h j k l q w e r t y u i o p"
+map=$(mktemp); trap "rm -f \"$map\"" EXIT
+if [ "$1" = local ]; then DS=$(bspc query -D -d focused); else DS=$(bspc query -D); fi   # IDs: names may contain spaces
+cur=$(bspc query -N -n focused 2>/dev/null)
+set -- $HINTS; i=0
+for d in $DS; do dn=$(bspc query -D -d "$d" --names | cut -c1-24); for n in $(bspc query -N -d "$d" -n .window); do
+  [ $# -gt 0 ] || break 2
+  i=$((i+1)); h=$1; shift
+  # "[desk]  App: title", title cut with an ellipsis so the line fits the 900px window
+  # (DejaVu Sans Mono 13 is about 10.5 px/char: ~80 chars per line; WINPICK_COLS overrides).
+  line=$(bspc query -T -n "$n" | jq -r --arg d "$dn" --argjson cols "${WINPICK_COLS:-80}" \
+    "$(cat "$HOME/.config/bspwm-wl/bin/wintitle.jq")"' ("[\($d)]  ") as $p | (if .client.shown then "" else "  (hidden)" end) as $h | "\($p)\(wintitle($cols - 5 - ($p|length) - 10))\($h)"')
+  [ "$n" = "$cur" ] && line="$line  *"
+  printf "%s\t%s\t%s\n" "$n" "$h" "$line" >> "$map"
+done; done
+[ -s "$map" ] || exit 0
+urg=$(grep -n "(hidden)" "$map" | cut -d: -f1 | awk "{print \$1-1}" | tr "\n" , | sed "s/,$//")   # hidden windows -> dim (urgent style)
+kb=""; k=1; for h in $HINTS; do kb="$kb -kb-custom-$k $h"; k=$((k+1)); done
+A="${RICE_SELECT_BG:-#00ff41}"; T="${RICE_SELECT_FG:-#000000}"
+sel=$(awk -F"\t" "{printf \" %s   %s\n\", toupper(\$2), \$3}" "$map" | \
+  rofi -dmenu -i -no-custom -format i -p "JUMP" -kb-accept-entry Return,KP_Enter $kb ${urg:+-u "$urg"} -theme "$HOME/.config/bspwm-wl/rofi/winpick.rasi" -theme-str "listview{lines:$i;}")
+rc=$?
+if [ $rc -ge 10 ] && [ $rc -le 28 ]; then idx=$((rc-10)); elif [ $rc -eq 0 ] && [ -n "$sel" ]; then idx=$sel; else exit 0; fi
+id=$(awk -F"\t" -v r=$((idx+1)) "NR==r{print \$1}" "$map"); [ -n "$id" ] || exit 0
+bspc node "$id" -g hidden=off 2>/dev/null; bspc node -f "$id"

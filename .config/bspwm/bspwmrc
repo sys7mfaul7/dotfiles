@@ -114,9 +114,9 @@ command -v transmission-daemon >/dev/null && ! pgrep -x transmission-da >/dev/nu
 [ -x "$HOME/.local/bin/llama-local" ] && LLAMA_NOWAIT=1 setsid -f "$HOME/.local/bin/llama-local" start >/dev/null 2>&1 </dev/null
 # clipboard history (Super+V)
 pgrep -x clipmenud >/dev/null || clipmenud &
-# KeePassXC = Secret Service keyring (org.freedesktop.secrets), starts minimized to the tray
+# KeePassXC = Secret Service keyring (org.freedesktop.secrets); opens both databases and asks to unlock at login
 command -v keepassxc >/dev/null && ! pgrep -x .keepassxc-real >/dev/null && ! pgrep -x keepassxc >/dev/null &&
-    setsid -f keepassxc --minimized >/dev/null 2>&1 </dev/null
+    setsid -f sh -c "sleep 3; exec $HOME/.local/bin/keepassxc-r2d2" >/dev/null 2>&1 </dev/null
 # jack-autoswitch: front headset jack / iFi / speakers routing (mutes built-in speakers+mic; flock = single instance)
 setsid -f "$HOME/.local/bin/jack-autoswitch" >/dev/null 2>&1 </dev/null
 # Nextcloud desktop sync client, tray only (single instance; profile path survives Guix upgrades)

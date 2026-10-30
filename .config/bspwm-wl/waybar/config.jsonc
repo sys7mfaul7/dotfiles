@@ -34,7 +34,7 @@
   "custom/mplayer",
   "custom/usercard",
   "custom/bluetooth",
-  "pulseaudio",
+  "custom/volume",
   "custom/updates",
   "battery",
   "tray",
@@ -76,8 +76,10 @@
   "format": "{}",
   "tooltip": true,
   "escape": false,
+  "signal": 11,
   "on-click": "nm-connection-editor",
-  "on-click-right": "~/.config/bspwm-wl/bin/wl-bartui network"
+  "on-click-right": "$HOME/.config/bspwm-wl/bin/wl-netip-toggle",
+  "on-click-middle": "~/.config/bspwm-wl/bin/wl-bartui network"
  },
  "network#vpn": {
   "interface": "tun0",
@@ -91,10 +93,13 @@
   "on-click": "sh -c 'c=$(grim -g \"$(slurp -p)\" -t ppm - | magick - -format \"%[hex:p{0,0}]\" info:-) && printf \"#%s\" \"$c\" | wl-copy && dunstify Colorpicker \"#$c copied\"'"
  },
  "custom/bluetooth": {
-  "exec": "~/.config/bspwm-wl/bin/wl-bt-status",
-  "interval": 3,
+  "exec": "$HOME/.local/bin/waybar-tips bt",
+  "return-type": "json",
+  "interval": 5,
+  "signal": 12,
   "format": "{}",
-  "tooltip": false,
+  "tooltip": true,
+  "escape": false,
   "on-click": "blueman-manager",
   "on-click-middle": "~/.local/bin/bt-menu",
   "on-click-right": "~/.config/bspwm-wl/bin/wl-bartui bluetooth"
@@ -112,18 +117,27 @@
   ]
  },
  "custom/mplayer": {
-  "format": " <span rise='1pt' color='#578a29'></span> ",
-  "tooltip": false,
+  "exec": "$HOME/.local/bin/waybar-tips media",
+  "return-type": "json",
+  "interval": 3,
+  "signal": 13,
+  "format": "{}",
+  "tooltip": true,
+  "escape": false,
   "on-click": "foot -e ncmpcpp"
  },
  "custom/usercard": {
-  "format": " <span rise='1pt' color='#539e06'></span> ",
-  "tooltip": false
+  "exec": "$HOME/.local/bin/waybar-tips user",
+  "return-type": "json",
+  "interval": 60,
+  "format": "{}",
+  "tooltip": true,
+  "escape": false
  },
  "custom/cpu": {
   "exec": "$HOME/.local/bin/waybar-sys cpu --loop",
   "return-type": "json",
-  "format": " <span rise='1pt' color='#578a29'></span> {}%",
+  "format": "<span rise='1pt' color='#578a29'></span> {}%",
   "tooltip": true,
   "escape": false,
   "on-click": "~/.config/bspwm-wl/bin/wl-bartui top"
@@ -131,10 +145,22 @@
  "custom/memory": {
   "exec": "$HOME/.local/bin/waybar-sys mem --loop",
   "return-type": "json",
-  "format": " <span rise='1pt' color='#578a29'></span> {}%",
+  "format": "<span rise='1pt' color='#578a29'></span> {}%",
   "tooltip": true,
   "escape": false,
   "on-click": "~/.config/bspwm-wl/bin/wl-bartui top"
+ },
+ "custom/volume": {
+  "exec": "$HOME/.local/bin/waybar-tips audio --loop",
+  "return-type": "json",
+  "format": "{}",
+  "tooltip": true,
+  "escape": false,
+  "on-click": "pavucontrol",
+  "on-click-right": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
+  "on-click-middle": "~/.config/bspwm-wl/bin/wl-bartui audio",
+  "on-scroll-up": "pactl set-sink-volume @DEFAULT_SINK@ +5%",
+  "on-scroll-down": "pactl set-sink-volume @DEFAULT_SINK@ -5%"
  },
  "pulseaudio": {
   "format": "{icon} {volume}",
@@ -160,7 +186,7 @@
   "return-type": "json",
   "interval": 600,
   "signal": 8,
-  "format": " <span rise='1pt' color='#578a29'></span> {}",
+  "format": "<span rise='1pt' color='#578a29'></span> {}",
   "tooltip": true,
   "on-click": "foot --app-id=foot-float -e $HOME/.local/bin/guix-updates-run"
  },
@@ -168,7 +194,7 @@
   "exec": "$HOME/.local/bin/waybar-sys disk",
   "return-type": "json",
   "interval": 30,
-  "format": " <span rise='1pt' color='#578a29'>󰋊</span> {}%",
+  "format": "<span rise='1pt' color='#578a29'>󰋊</span> {}%",
   "tooltip": true,
   "escape": false,
   "on-click": "~/.config/bspwm-wl/bin/wl-bartui top"

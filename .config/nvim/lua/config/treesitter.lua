@@ -7,7 +7,7 @@ if not ok then return end
 
 local langs = { "c", "cpp", "rust", "python", "lua", "luadoc", "java", "go", "gomod", "gosum",
   "ruby", "commonlisp", "scheme", "json", "jq", "html", "css", "xml", "csv", "tsv",
-  "powershell", "bash", "asm", "nasm", "markdown", "markdown_inline", "yaml", "toml", "vim",
+  "powershell", "bash", "asm", "nasm", "markdown", "markdown_inline", "yaml", "toml", "ron", "vim",
   "vimdoc", "query", "javascript", "typescript", "bicep", "regex", "make", "cmake" }
 
 -- Install only what is missing (no-op otherwise; runs async, no network if all present).

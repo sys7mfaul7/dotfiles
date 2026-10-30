@@ -1,0 +1,267 @@
+#!/usr/bin/env python3
+# waybar-tips : icon + detailed tooltip modules for waybar (bspwm-wl / niri), same look as waybar-net.
+#   waybar-tips bt            bluetooth: adapter, connected devices (battery, codec), paired devices
+#   waybar-tips audio --loop  volume: default sink/source, other devices, playback/recording streams
+#                             (--loop follows `pactl subscribe`, so it only wakes on audio events)
+#   waybar-tips media         MPRIS players via playerctl
+#   waybar-tips user          user, host, uptime, kernel, Guix generations, session, load
+#   add --text for the tooltip as plain text (terminal check)
+import json, os, re, select, subprocess, sys, time, socket
+
+ICON = '#5285ee'; DIM = '#848ea4'; TXT = '#c1c3c9'; ACC = '#4a8cff'
+RISE = "" if '--no-rise' in sys.argv else "rise='1pt' "
+PLAIN = '--text' in sys.argv
+
+def run(*cmd, t=3):
+    try: return subprocess.run(cmd, capture_output=True, text=True, timeout=t).stdout
+    except Exception: return ''
+
+def rd(p, d=''):
+    try:
+        with open(p) as f: return f.read().strip()
+    except Exception: return d
+
+def esc(t): return str(t).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
+def render(rows):
+    """rows: (None, header) | (label, value) | (label, value, 'dim') | ('', '') blank-less note"""
+    labs = [r[0] for r in rows if r[0] is not None]
+    width = (max(len(l) for l in labs) + 2) if labs else 2
+    out = []
+    for r in rows:
+        l, v = r[0], r[1]; dim = len(r) > 2
+        if l is None:
+            if out: out.append('')
+            out.append('== ' + v if PLAIN else "<span color='%s'><b>%s</b></span>" % (ACC, esc(v)))
+        elif PLAIN:
+            out.append(l.ljust(width) + v)
+        else:
+            out.append("<span color='%s'>%s</span><span color='%s'>%s</span>"
+                       % (DIM, esc(l.ljust(width)), DIM if dim else TXT, esc(v)))
+    return '\n'.join(out)
+
+def emit(text, rows, cls=''):
+    if PLAIN: print(render(rows)); sys.stdout.flush(); return
+    print(json.dumps({'text': text, 'tooltip': render(rows), 'class': cls}, ensure_ascii=False), flush=True)
+
+def span(c, s, size=None):
+    return "<span %scolor='%s'%s>%s</span>" % (RISE, c, " size='%s'" % size if size else '', s)
+
+def pj(*what):
+    try: return json.loads(run('pactl', '-f', 'json', *what) or 'null')
+    except Exception: return None
+
+# ---------------------------------------------------------------- bluetooth
+def kv(txt):
+    d = {}
+    for line in txt.splitlines():
+        m = re.match(r'\s+([^:]+):\s*(.*)$', line)
+        if m and m.group(1) not in d: d[m.group(1)] = m.group(2)
+    return d
+
+BT_TYPE = {'audio-headphones': '󰋋 headphones', 'audio-headset': '󰋎 headset', 'audio-card': '󰓃 speaker',
+           'input-keyboard': '󰌌 keyboard', 'input-mouse': '󰍽 mouse', 'input-gaming': '󰊴 gamepad',
+           'phone': '󰏲 phone', 'computer': '󰟀 computer', 'input-tablet': '󰓶 tablet'}
+
+def bt():
+    if not os.path.isdir('/sys/class/bluetooth') or not os.listdir('/sys/class/bluetooth'):
+        emit('', [(None, 'Bluetooth'), ('Adapter', 'none')], 'none'); return
+    show = run('bluetoothctl', 'show', t=2)
+    off = span(DIM, '󰂲')
+    if not show.strip():
+        emit(off, [(None, 'Bluetooth'), ('Service', 'bluetoothd not reachable')], 'off'); return
+    a = kv(show); m = re.search(r'Controller (\S+)', show)
+    rows = [(None, 'Bluetooth adapter'), ('Name', a.get('Alias') or a.get('Name', '?')),
+            ('Address', m.group(1) if m else '?'), ('Powered', a.get('Powered', '?')),
+            ('Discoverable', a.get('Discoverable', '?')), ('Pairable', a.get('Pairable', '?'))]
+    if a.get('Discovering') == 'yes': rows.append(('Scanning', 'yes'))
+    # codec / profile from PipeWire bluez cards
+    prof = {}
+    for c in pj('list', 'cards') or []:
+        p = c.get('properties', {})
+        if p.get('device.api') == 'bluez5' or str(c.get('name', '')).startswith('bluez_card'):
+            mac = (p.get('api.bluez5.address') or p.get('device.string') or '').upper()
+            prof[mac] = c.get('active_profile', '')
+    codec = {}
+    for s in (pj('list', 'sinks') or []) + (pj('list', 'sources') or []):
+        p = s.get('properties', {})
+        mac = (p.get('api.bluez5.address') or '').upper()
+        if mac and p.get('api.bluez5.codec'): codec[mac] = p['api.bluez5.codec']
+    conn = []; paired = []
+    for line in run('bluetoothctl', 'devices', 'Paired', t=2).splitlines():
+        mm = re.match(r'Device (\S+) (.*)', line)
+        if not mm: continue
+        mac, name = mm.group(1), mm.group(2)
+        d = kv(run('bluetoothctl', 'info', mac, t=2))
+        (conn if d.get('Connected') == 'yes' else paired).append((mac, d.get('Alias') or name, d))
+    for mac, name, d in conn:
+        rows.append((None, 'Connected: ' + name))
+        rows.append(('MAC', mac))
+        rows.append(('Type', BT_TYPE.get(d.get('Icon', ''), d.get('Icon', 'unknown'))))
+        bp = re.search(r'\((\d+)\)', d.get('Battery Percentage', ''))
+        if bp: rows.append(('Battery', bp.group(1) + '%'))
+        if mac.upper() in prof: rows.append(('Profile', prof[mac.upper()]))
+        if mac.upper() in codec: rows.append(('Codec', codec[mac.upper()]))
+    if paired:
+        rows.append((None, 'Paired, not connected'))
+        for mac, name, d in paired:
+            rows.append((name, mac + '  ' + BT_TYPE.get(d.get('Icon', ''), '').split(' ')[-1], 'dim'))
+    if not conn and not paired: rows.append(('Devices', 'none paired'))
+    if a.get('Powered') != 'yes': emit(off, rows, 'off')
+    elif conn: emit(span(ACC, '󰂱') + ' %d' % len(conn), rows, 'connected')
+    else: emit(span(ACC, '󰂯'), rows, 'on')
+
+# ---------------------------------------------------------------- audio
+VOL_ICONS = ['󰕿', '󰖀', '󰖀', '󰕾', '󰕾']
+
+def vol(o):
+    try:
+        v = [int(str(c['value_percent']).rstrip('%')) for c in o['volume'].values()]
+        return round(sum(v) / len(v))
+    except Exception: return 0
+
+def desc(o): return o.get('description') or o.get('name', '?')
+
+def spec(o):
+    s = o.get('sample_specification', '')
+    return s
+
+def audio_once():
+    info = pj('info') or {}
+    dsink, dsrc = info.get('default_sink_name'), info.get('default_source_name')
+    sinks = pj('list', 'sinks') or []; srcs = [s for s in (pj('list', 'sources') or [])
+                                               if not s.get('name', '').endswith('.monitor')]
+    sid = {s.get('index'): s for s in sinks}; srcid = {s.get('index'): s for s in srcs}
+    rows = []
+    ds = next((s for s in sinks if s.get('name') == dsink), None)
+    if ds:
+        rows += [(None, 'Output'), ('Device', desc(ds)), ('Volume', '%d%%' % vol(ds)),
+                 ('Muted', 'yes' if ds.get('mute') else 'no')]
+        if ds.get('active_port'):
+            pn = next((p.get('description') for p in ds.get('ports', []) if p.get('name') == ds['active_port']), ds['active_port'])
+            rows.append(('Port', pn))
+        rows.append(('Format', spec(ds)))
+        cdc = ds.get('properties', {}).get('api.bluez5.codec')
+        if cdc: rows.append(('Codec', cdc))
+    else: rows += [(None, 'Output'), ('Device', 'none')]
+    dsr = next((s for s in srcs if s.get('name') == dsrc), None)
+    rows.append((None, 'Input'))
+    if dsr:
+        rows += [('Device', desc(dsr)), ('Volume', '%d%%' % vol(dsr)), ('Muted', 'yes' if dsr.get('mute') else 'no')]
+    else: rows.append(('Device', 'none'))
+    other = [('Sink', desc(s), 'dim') for s in sinks if s.get('name') != dsink] + \
+            [('Source', desc(s), 'dim') for s in srcs if s.get('name') != dsrc]
+    if other: rows += [(None, 'Other devices')] + other
+    play = pj('list', 'sink-inputs') or []
+    if play:
+        rows.append((None, 'Playing'))
+        for i in play:
+            p = i.get('properties', {})
+            app = p.get('application.name') or p.get('application.process.binary') or '?'
+            media = p.get('media.name', '')
+            tgt = desc(sid.get(i.get('sink'), {})) if i.get('sink') in sid else ''
+            rows.append((app, '%s%d%%%s%s' % (media + '  ' if media and media != app else '', vol(i),
+                         ' muted' if i.get('mute') else '', '  → ' + tgt if tgt and len(sinks) > 1 else '')))
+    rec = [o for o in (pj('list', 'source-outputs') or [])
+           if o.get('properties', {}).get('application.id') != 'org.PulseAudio.pavucontrol'
+           and not o.get('properties', {}).get('stream.monitor')]
+    rec = [o for o in rec if o.get('source') in srcid]
+    if rec:
+        rows.append((None, 'Recording (mic in use)'))
+        for o in rec:
+            p = o.get('properties', {})
+            rows.append((p.get('application.name') or p.get('application.process.binary') or '?',
+                         desc(srcid[o['source']])))
+    if not ds: text = span(DIM, '󰝟', '10pt')
+    elif ds.get('mute'):
+        text = span(ICON, '󰝟', '10pt') + ' ' + span(DIM, 'Muted')
+    else:
+        v = vol(ds); text = span(ACC, VOL_ICONS[min(4, v * 5 // 101)], '10pt') + ' %d' % v
+    emit(text, rows, 'muted' if ds and ds.get('mute') else '')
+
+def audio_loop():
+    while True:
+        audio_once()
+        try:
+            p = subprocess.Popen(['pactl', 'subscribe'], stdout=subprocess.PIPE, text=True)
+        except Exception:
+            time.sleep(5); continue
+        last = time.time()
+        while True:
+            r, _, _ = select.select([p.stdout], [], [], 30)
+            if r:
+                line = p.stdout.readline()
+                if not line: break           # pipewire-pulse restarted
+                if not re.search(r"on (sink|source|server|card|sink-input|source-output)", line): continue
+                time.sleep(0.15)             # coalesce bursts
+                while select.select([p.stdout], [], [], 0)[0]:
+                    if not p.stdout.readline(): break
+            audio_once()
+        p.kill(); time.sleep(2)
+
+# ---------------------------------------------------------------- media
+def tm(us):
+    try: s = int(float(us)) // 1000000
+    except Exception: return '?'
+    return '%d:%02d:%02d' % (s // 3600, s // 60 % 60, s % 60) if s >= 3600 else '%d:%02d' % (s // 60, s % 60)
+
+def media():
+    text = ' ' + span(ICON, '\uf001') + ' '
+    players = [p for p in run('playerctl', '-l', t=2).split() if p]
+    if not players: emit(text, [(None, 'Media'), ('Players', 'No players')], 'none'); return
+    rows = []; playing = False
+    fmt = '\x1f'.join(['{{status}}', '{{xesam:title}}', '{{xesam:artist}}', '{{xesam:album}}',
+                       '{{position}}', '{{mpris:length}}', '{{volume}}'])
+    for pl in players:
+        f = run('playerctl', '-p', pl, 'metadata', '--format', fmt, t=2).rstrip('\n').split('\x1f')
+        f += [''] * (7 - len(f))
+        st, title, artist, album, pos, ln, vo = f[:7]
+        if not st: st = run('playerctl', '-p', pl, 'status', t=2).strip() or '?'
+        playing |= st == 'Playing'
+        rows.append((None, pl.split('.')[0] + ('  ▶' if st == 'Playing' else '  ⏸' if st == 'Paused' else '')))
+        rows.append(('Status', st))
+        if title: rows.append(('Title', title))
+        if artist: rows.append(('Artist', artist))
+        if album: rows.append(('Album', album))
+        if pos or ln: rows.append(('Position', '%s / %s' % (tm(pos) if pos else '?', tm(ln) if ln else '?')))
+        try: rows.append(('Volume', '%d%%' % round(float(vo) * 100)))
+        except Exception: pass
+        sh = run('playerctl', '-p', pl, 'shuffle', t=2).strip(); lp = run('playerctl', '-p', pl, 'loop', t=2).strip()
+        if sh or lp: rows.append(('Shuffle/Loop', '%s / %s' % (sh or '-', lp or '-')))
+    emit(text, rows, 'playing' if playing else 'paused')
+
+# ---------------------------------------------------------------- user card
+def gen(link):
+    try:
+        t = os.readlink(link); n = re.search(r'-(\d+)-link$', t)
+        when = time.strftime('%Y-%m-%d %H:%M', time.localtime(os.lstat(os.path.join(os.path.dirname(link), t)).st_mtime))
+        return '%s  (%s)' % (n.group(1) if n else t, when)
+    except Exception: return None
+
+def user():
+    up = float(rd('/proc/uptime', '0').split()[0]); d, r = divmod(int(up), 86400)
+    upt = ('%dd ' % d if d else '') + '%dh %02dm' % (r // 3600, r // 60 % 60)
+    u = os.uname()
+    rows = [(None, 'User'), ('User', os.environ.get('USER') or str(os.getuid())), ('Host', socket.gethostname()),
+            ('Shell', os.path.basename(os.environ.get('SHELL', '?'))),
+            ('Session', '%s / %s' % (os.environ.get('XDG_SESSION_TYPE', '?'), os.environ.get('XDG_CURRENT_DESKTOP', '?')))]
+    who = [l.split()[1] for l in run('who').splitlines() if len(l.split()) > 1]
+    rows.append(('Logins', '%d (%s)' % (len(who), ', '.join(sorted(set(who)))) if who else '0'))
+    rows += [(None, 'System'), ('Uptime', upt), ('Load', ' '.join(rd('/proc/loadavg', '? ? ?').split()[:3])),
+             ('Kernel', u.release), ('Arch', u.machine)]
+    try: rows.append(('Processes', str(len([p for p in os.listdir('/proc') if p.isdigit()]))))
+    except Exception: pass
+    g = [('System gen', gen('/var/guix/profiles/system')),
+         ('Home gen', gen(os.path.expanduser('/var/guix/profiles/per-user/%s/guix-home' % os.environ.get('USER', '')))),
+         ('Profile gen', gen('/var/guix/profiles/per-user/%s/guix-profile' % os.environ.get('USER', ''))),
+         ('Pull gen', gen(os.path.expanduser('~/.config/guix/current')) and gen('/var/guix/profiles/per-user/%s/current-guix' % os.environ.get('USER', '')))]
+    g = [x for x in g if x[1]]
+    if g: rows += [(None, 'Guix')] + g
+    emit(' ' + span('#3372f4', '\uf2bd') + ' ', rows)
+
+mode = next((a for a in sys.argv[1:] if not a.startswith('-')), '')
+if mode == 'bt': bt()
+elif mode == 'audio': audio_loop() if '--loop' in sys.argv and not PLAIN else audio_once()
+elif mode == 'media': media()
+elif mode == 'user': user()
+else: sys.exit('usage: waybar-tips bt|audio [--loop]|media|user [--text] [--no-rise]')

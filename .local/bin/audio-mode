@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# audio-mode: choose what the front 3.5mm jack does on r2d2.
+#   audio-mode headset   headphones + headset mic (duplex profile)   [default]
+#   audio-mode hifi      headphones only, output-only profile (24-bit/48 kHz)
+#   audio-mode toggle    switch between the two
+#   audio-mode status    print mode, jack state and current route
+# The choice is saved in ~/.local/state/audio-jack-mode and applied by
+# jack-autoswitch on every plug-in.  The iFi USB DAC still wins when connected.
+set -u
+export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
+MODEFILE=${XDG_STATE_HOME:-$HOME/.local/state}/audio-jack-mode
+cur() { case $(cat "$MODEFILE" 2>/dev/null) in hifi) echo hifi;; *) echo headset;; esac; }
+label() { case $1 in hifi) echo "Hi-Fi (headphones only)";; *) echo "Headset (headphones + mic)";; esac; }
+set_mode() {
+  mkdir -p "$(dirname "$MODEFILE")"; echo "$1" >"$MODEFILE"
+  "$HOME/.local/bin/jack-autoswitch" --once
+  command -v dunstify >/dev/null && dunstify -a audio -r 47100 -t 2500 "Audio jack mode" "$(label "$1")" >/dev/null 2>&1
+  echo "jack mode: $(label "$1")"
+}
+case ${1:-status} in
+  headset|hifi) set_mode "$1" ;;
+  toggle) [ "$(cur)" = hifi ] && set_mode headset || set_mode hifi ;;
+  status)
+    echo "jack mode: $(label "$(cur)")"
+    echo "route:     $(cat "$XDG_RUNTIME_DIR/jack-autoswitch.route" 2>/dev/null || echo '?') (output/mic/mode)"
+    pactl list cards | awk '/Name: alsa_card.pci-0000_c6_00.6/{f=1} f&&/Active Profile/{print "profile:  "$0} f&&/analog-output-headphones:/{print "jack:     "($0~/, available\)/?"plugged":"empty")}' | sed 's/\t*Active Profile: //'
+    echo "sink:      $(pactl get-default-sink)  $(pactl get-sink-volume @DEFAULT_SINK@ | grep -o '[0-9]*%' | head -1)  mute=$(pactl get-sink-mute @DEFAULT_SINK@ | cut -d' ' -f2)"
+    echo "source:    $(pactl get-default-source)  mute=$(pactl get-source-mute @DEFAULT_SOURCE@ | cut -d' ' -f2)"
+    pactl list sinks | awk '/^\tName: /{n=$2} /^\tSample Specification:/{sub(/^\tSample Specification: /,""); print "format:    " n ": " $0}' | grep -v monitor ;;
+  *) echo "usage: audio-mode {headset|hifi|toggle|status}" >&2; exit 2 ;;
+esac

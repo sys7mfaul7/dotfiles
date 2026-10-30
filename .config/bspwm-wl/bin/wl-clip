@@ -2,5 +2,5 @@
 . "$HOME/.config/rices/current/ui.sh" 2>/dev/null   # RICE_SELECT_BG/FG: menu highlight of the active rice
 # wl-clip : clipboard history picker (cliphist + bemenu); history fed by wl-paste --watch in autostart
 sel=$(cliphist list | BEMENU_BACKEND=wayland bemenu -l 15 -p 'CLIP' -H 22 --fn 'DejaVu Sans Mono, Symbols Nerd Font Mono 11' --tb '#000000' --tf "${RICE_MENU_TITLE:-#00ff41}" \
-  --fb '#000000' --ff '#c0ffc0' --nb '#000000' --nf '#c0ffc0' --hb "${RICE_SELECT_BG:-#1f6f2f}" --hf "${RICE_SELECT_FG:-#c0ffc0}" --ab '#000000' --af '#c0ffc0' -B 0) || exit 0
+  --fb '#000000' --ff '#c0ffc0' --nb '#000000' --nf '#c0ffc0' --hb "${RICE_SELECT_BG:-#1f6f2f}" --hf "${RICE_SELECT_FG:-#c0ffc0}" --ab '#000000' --af '#c0ffc0' -B 0 --hp 8) || exit 0
 printf '%s' "$sel" | cliphist decode | wl-copy

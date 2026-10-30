@@ -19,7 +19,7 @@ vim.lsp.config("asm_lsp", { filetypes = { "asm", "nasm", "vmasm" } })
 
 -- server name -> executable that must exist for it to be enabled
 local servers = {
-  clangd = "clangd", rust_analyzer = "rust-analyzer", basedpyright = "basedpyright-langserver",
+  clangd = "clangd", basedpyright = "basedpyright-langserver",
   ruff = "ruff", mojo = "mojo-lsp-server", lua_ls = "lua-language-server", jdtls = "jdtls",
   gopls = "gopls", ruby_lsp = "ruby-lsp", solargraph = "solargraph",
   jsonls = "vscode-json-language-server", jqls = "jq-lsp", html = "vscode-html-language-server",

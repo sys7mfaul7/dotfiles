@@ -1,12 +1,16 @@
 {
   "plugins": {
+    "backend-tmux": {
+      "rev": "9e9e6aa9b3eb7a8d3896a993611622ac97abff52",
+      "src": "https://github.com/smart-splits-nvim/backend-tmux"
+    },
     "blink.cmp": {
       "rev": "78336bc89ee5365633bcf754d93df01678b5c08f",
       "src": "https://github.com/saghen/blink.cmp",
       "version": "1.0.0 - 2.0.0"
     },
     "codecompanion.nvim": {
-      "rev": "3dd1ef7fa8d6aeb27020023e40293bac588de714",
+      "rev": "052ad5ade662ea3e3a6b99bc39a6bf3ce1c42892",
       "src": "https://github.com/olimorris/codecompanion.nvim"
     },
     "conform.nvim": {
@@ -17,6 +21,10 @@
       "rev": "b23c76a8c874fe7ac5ad95255efc66173b049088",
       "src": "https://github.com/Olical/conjure"
     },
+    "crates.nvim": {
+      "rev": "7039bc1d130e424232a7aa64ceddb170a154ff5b",
+      "src": "https://github.com/saecki/crates.nvim"
+    },
     "csvview.nvim": {
       "rev": "f190de76d2eca0380ddcb2425cd582d740699b55",
       "src": "https://github.com/hat0uma/csvview.nvim"
@@ -26,7 +34,7 @@
       "src": "https://github.com/sindrets/diffview.nvim"
     },
     "fzf-lua": {
-      "rev": "507dfc85551ff2d9293ec215f10f19395252aada",
+      "rev": "5b88d6f0af7fcb41d4a8bb340bf70d7e3824ee9d",
       "src": "https://github.com/ibhagwan/fzf-lua"
     },
     "gitsigns.nvim": {
@@ -47,7 +55,7 @@
       "version": "'v3.x'"
     },
     "neogit": {
-      "rev": "832a2db084ac25c2801fd73a3fab58f3c82ed2ec",
+      "rev": "697ad3ee86a73cf6b6758b838d7a7d76cf3b9f86",
       "src": "https://github.com/NeogitOrg/neogit"
     },
     "nui.nvim": {
@@ -75,7 +83,7 @@
       "src": "https://github.com/mfussenegger/nvim-lint"
     },
     "nvim-lspconfig": {
-      "rev": "6d27c288ff951e1e94cb5f91c800adeddf0dc0c2",
+      "rev": "4feaba4d3980032b3f62f3ba5df4de27fdf59cfd",
       "src": "https://github.com/neovim/nvim-lspconfig"
     },
     "nvim-nio": {
@@ -96,12 +104,17 @@
       "rev": "ec309a0eaff6ea967e58c275996155ab5c16938d",
       "src": "https://github.com/nvim-tree/nvim-web-devicons"
     },
+    "nvim-window-picker": {
+      "rev": "6382540b2ae5de6c793d4aa2e3fe6dbb518505ec",
+      "src": "https://github.com/s1n7ax/nvim-window-picker",
+      "version": "2.0.0 - 3.0.0"
+    },
     "octo.nvim": {
       "rev": "8461d99d13cca243f89848bf4d9fadee096f0a48",
       "src": "https://github.com/pwntester/octo.nvim"
     },
     "orgmode": {
-      "rev": "fed51bcfd2b5f12c135f9660b6ea01426d330afa",
+      "rev": "61274cfda2cb5878f5587d4fab0429ec356d4ec8",
       "src": "https://github.com/nvim-orgmode/orgmode"
     },
     "plenary.nvim": {
@@ -111,6 +124,15 @@
     "render-markdown.nvim": {
       "rev": "8e8795368391036643b622875a6da6a51bcd33f4",
       "src": "https://github.com/MeanderingProgrammer/render-markdown.nvim"
+    },
+    "rustaceanvim": {
+      "rev": "88575b98bb9937fb9983ddec5e532b67e75ce677",
+      "src": "https://github.com/mrcjkb/rustaceanvim",
+      "version": "6.0.0 - 7.0.0"
+    },
+    "smart-splits.nvim": {
+      "rev": "dd40c3a03ef71bcdf77fb4b14668cc1320293f48",
+      "src": "https://github.com/mrjones2014/smart-splits.nvim"
     },
     "which-key.nvim": {
       "rev": "3aab2147e74890957785941f0c1ad87d0a44c15a",

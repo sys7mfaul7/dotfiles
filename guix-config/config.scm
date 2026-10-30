@@ -72,7 +72,7 @@
      "fontconfig" "font-jetbrains-mono" "font-inconsolata" "font-terminus"
      "font-google-noto" "font-awesome"
      ;; --- editors / Doom Emacs deps ---
-     "neovim" "emacs" "geany" "git" "cmake" "libtool" "gcc-toolchain"
+     "neovim" "emacs-pgtk" "geany" "git" "cmake" "libtool" "gcc-toolchain"
      "make" "shellcheck" "node"
      ;; --- apps ---
      "libreoffice" "qutebrowser" "icecat" "ungoogled-chromium" "w3m" "curl" "wget" "dmenu"
@@ -92,6 +92,17 @@
      ;; --- YubiKey tools (pamu2fcfg, fido2-token, ykman) + X11 PAM locker ---
      "pam-u2f" "libfido2" "python-yubikey-manager" "i3lock")))
 
+;; --- Front headset jack: ALC245 jack-detection fix (Minisforum AI X1 Pro) ---
+;; The BIOS leaves bit 15 ("Reset HP JD") of Realtek COEF 0x4a set, so pin 0x21
+;; never senses a plug and PulseAudio never switches to Headphones.  Kernel
+;; 7.2.11 lacks the upstream quirk (subsystem 0x1f4c:0xb020), so load an HDA
+;; patch file that rewrites COEF 0x4a with bit 15 cleared at codec init.
+;; Applied to the 2nd snd_hda_intel device (card 1, analog) via kernel-arguments.
+(define %alc245-jd-fix-firmware
+  (file-union "alc245-jd-fix-firmware"
+              `(("lib/firmware/alc245-jd-fix.fw"
+                 ,(local-file "files/alc245-jd-fix.fw")))))
+
 (operating-system
   (locale "en_US.utf8")
   (timezone "America/Chicago")
@@ -99,7 +110,7 @@
   (host-name "r2d2")
   (kernel linux)
   (initrd microcode-initrd)
-  (firmware (list linux-firmware))
+  (firmware (list linux-firmware %alc245-jd-fix-firmware))
 
   (bootloader
    (bootloader-configuration
@@ -111,7 +122,9 @@
    (append '("thunderbolt.security=none"
              "amd_iommu=on" "iommu=pt"
              ;; let the iGPU borrow system RAM (GTT) beyond the 1G carve-out
-             "amdgpu.gttsize=65536" "ttm.pages_limit=16777216")
+             "amdgpu.gttsize=65536" "ttm.pages_limit=16777216"
+             ;; headset jack detection fix (see %alc245-jd-fix-firmware)
+             "snd_hda_intel.patch=,alc245-jd-fix.fw")
            %default-kernel-arguments))
 
   (mapped-devices
@@ -188,6 +201,12 @@
      ;; node "uaccess" so the logged-in user (swaylock, i3lock, ykman,
      ;; pamu2fcfg) can talk to the key without root.
      (udev-rules-service (quote fido2) libfido2)
+     ;; Sonnet Solo 10G SFP+ (Thunderbolt 3): the USB4 domains run in "user"
+     ;; security mode, so auto-authorize this one device (by its unique_id) at
+     ;; plug-in/boot. IOMMU DMA protection stays on.
+     (udev-rules-service (quote sonnet-10g)
+                         (udev-rule "90-sonnet-10g-authorize.rules"
+                                    "ACTION==\"add\", SUBSYSTEM==\"thunderbolt\", ATTR{unique_id}==\"da010000-0060-5508-a3e1-8086a2150002\", ATTR{authorized}==\"0\", ATTR{authorized}=\"1\"\n"))
      ;; Fingerprint daemon (D-Bus activated), built on libfprint 1.94.10 for
      ;; the Realtek 2541:fa03 sensor.
      (service fprintd-service-type
@@ -218,7 +237,24 @@
                (greeters
                 (list (lightdm-gtk-greeter-configuration
                        (theme-name "Adwaita-dark")
-                       (background (local-file "login.jpg")))))))
+                       ;; fallback image; the line below overrides it with
+                       ;; the live wallpaper that wl-wallpaper copies to
+                       ;; /var/lib/greeter-bg (last background= key wins)
+                       (background (local-file "login.jpg"))
+                       (extra-config
+                        (list "background=/var/lib/greeter-bg/login.jpg")))))))
+     ;; /var/lib/greeter-bg: owned by smt, world-readable, so wl-wallpaper
+     ;; can copy the current wallpaper there for the login screen.
+     (simple-service 'greeter-bg activation-service-type
+                     #~(let ((dir "/var/lib/greeter-bg")
+                             (pw (getpwnam "smt")))
+                         (mkdir-p dir)
+                         (chown dir (passwd:uid pw) (passwd:gid pw))
+                         (chmod dir #o755)
+                         (unless (file-exists? (string-append dir "/login.jpg"))
+                           (copy-file #$(local-file "login.jpg")
+                                      (string-append dir "/login.jpg"))
+                           (chmod (string-append dir "/login.jpg") #o644))))
      (set-xorg-configuration
       (xorg-configuration (keyboard-layout %keyboard) (extra-config (list "Section \"Device\"
   Identifier \"AMD\"

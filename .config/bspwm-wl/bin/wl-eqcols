@@ -4,8 +4,9 @@
 #   -r  also give every row inside each column equal height
 #   -n  dry run: print "node ratio" lines, change nothing
 #   -d DESK  act on another desktop (default: focused)
-# cols(leaf)=1, cols(vertical split)=sum, cols(horizontal split)=max;
-# rows mirrors it. Floating/hidden windows (vacant) count 0.
+# cols(leaf)=1, cols(vertical split)=sum, cols(horizontal split)=1: a stack is ONE
+# column; vertical splits nested inside a stack are equalized within it.
+# rows(horizontal split)=sum, rows(vertical split)=1 (mirror). Floating/hidden (vacant) count 0.
 # Works with bspwm-wl and X11 bspwm (only needs bspc + jq).
 rows=0; dry=0; desk=focused
 while [ $# -gt 0 ]; do case "$1" in -r) rows=1;; -n) dry=1;; -d) desk=$2; shift;; esac; shift; done
@@ -14,11 +15,11 @@ bspc query -T -d "$desk" | jq -r --argjson rows "$rows" '
   def cols: if live | not then 0
     elif .firstChild == null then 1
     elif .splitType == "vertical" then (.firstChild|cols) + (.secondChild|cols)
-    else [(.firstChild|cols), (.secondChild|cols)] | max end;
+    else 1 end;
   def rws: if live | not then 0
     elif .firstChild == null then 1
     elif .splitType == "horizontal" then (.firstChild|rws) + (.secondChild|rws)
-    else [(.firstChild|rws), (.secondChild|rws)] | max end;
+    else 1 end;
   .root | recurse(.firstChild, .secondChild; . != null)
   | select(.firstChild != null and live)
   | if .splitType == "vertical" then

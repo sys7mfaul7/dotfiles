@@ -20,6 +20,7 @@ __ps_ui() {
   . "$HOME/.config/rices/current/ui.sh" 2>/dev/null
 }
 __ps_mode() {
+  __ps_title "bash ${PWD/#$HOME/\~}"
   __ps_ui
   local m="3${RICE_PS_META:+;$RICE_PS_META}"
   PS0='\n\[\e['"$m"'m\] - cmd start: $(TZ=America/Chicago date "+%a %b %-d %Y %-I:%M:%S %p %Z")\[\e[0m\]\n\n'
@@ -43,6 +44,15 @@ __ps_mode() {
   fi
 }
 
+# Window title (OSC 2): the running command while it runs, "bash ~/dir" at the prompt.
+# Lets the bar / window picker show e.g. "foot: btop". Programs that set their own
+# title (nvim, btop, ssh to a host that sets one) override it while they run.
+# Only for terminals that understand OSC 2; tmux/screen turn it into the pane title.
+__ps_title() {
+  case "$TERM" in foot*|xterm*|tmux*|screen*|alacritty*|kitty*|wezterm*|st-*|rxvt*) ;; *) return 0 ;; esac
+  local t="${1//[[:cntrl:]]/ }"; printf '\e]2;%s\a' "${t:0:200}" > /dev/tty 2>/dev/null
+}
+
 # finished stamp + duration + audit log
 __cmd_log="${XDG_STATE_HOME:-$HOME/.local/state}/bash/cmd-audit.log"
 __cmd_fmt() { TZ=America/Chicago date -d "@$1" '+%a %b %-d %Y %-I:%M:%S %p %Z'; }
@@ -62,6 +72,6 @@ __cmd_finished() {
 }
 # readline widgets (fzf Ctrl-T/Ctrl-R, bind -x) and Tab-completion functions
 # also fire DEBUG; skip them so they do not count as a command run.
-trap '[ -z "${READLINE_LINE+x}" ] && [ -z "${COMP_LINE+x}" ] && [ "$BASH_COMMAND" != "__cmd_finished" ] && [ "$BASH_COMMAND" != "__ps_mode" ] && [ -z "$_cmd_ran" ] && { _cmd_ran=1; _cmd_start=$EPOCHSECONDS; }' DEBUG
+trap '[ -z "${READLINE_LINE+x}" ] && [ -z "${COMP_LINE+x}" ] && [ "$BASH_COMMAND" != "__cmd_finished" ] && [ "$BASH_COMMAND" != "__ps_mode" ] && [ -z "$_cmd_ran" ] && { _cmd_ran=1; _cmd_start=$EPOCHSECONDS; __ps_title "$BASH_COMMAND"; }' DEBUG
 PROMPT_COMMAND='__cmd_finished; __ps_mode'
 alias cmdlog='column -t -s $'"'"'\t'"'"' "$__cmd_log" | less -S +G'

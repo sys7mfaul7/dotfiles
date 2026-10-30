@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# calsync: pull read-only ICS feeds into ~/org/cal/<name>.org for org-agenda.
+# Feed names (no secrets) live in ~/.config/calsync/feeds, one per line:  name  [# comment]
+# Each feed URL is read, never printed, from (first match wins):
+#   1. KeePassXC Secret Service entry titled  Cal_ICS_<name>  (URL in the Password field)
+#   2. ~/.config/calsync/urls/<name>   (one line, chmod 600; directory is outside any repo)
+# Usage: calsync [name ...]     (no args = all feeds)
+set -u
+CONF=${XDG_CONFIG_HOME:-$HOME/.config}/calsync
+OUT=${CALSYNC_OUT:-$HOME/org/cal}
+LIB=$(dirname "$(readlink -f "$0")")
+PY=python3; command -v python3 >/dev/null || PY=$HOME/.guix-extra-profiles/winhint/winhint/bin/python3
+export TZ=${TZ:-America/Chicago}
+mkdir -p "$OUT" "$CONF/urls"; chmod 700 "$CONF/urls"
+[ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ] || export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus
+[ -S "${DBUS_SESSION_BUS_ADDRESS#unix:path=}" ] || {
+  b=$(ls -d /tmp/dbus-* 2>/dev/null | head -1); [ -n "$b" ] && export DBUS_SESSION_BUS_ADDRESS=unix:path=$b; }
+ST=$(command -v secret-tool || ls /gnu/store/*-libsecret-*/bin/secret-tool 2>/dev/null | head -1)
+
+url_for() {
+  local n=$1 u=""
+  [ -n "$ST" ] && u=$(timeout 10 "$ST" lookup Title "Cal_ICS_$n" 2>/dev/null)
+  [ -z "$u" ] && [ -f "$CONF/urls/$n" ] && u=$(head -1 "$CONF/urls/$n")
+  u=${u//$'\r'/}; u=${u/#webcal:/https:}
+  printf '%s' "$u"
+}
+
+names=("$@")
+[ ${#names[@]} -eq 0 ] && [ -f "$CONF/feeds" ] &&
+  mapfile -t names < <(sed 's/#.*//; s/[[:space:]]//g; /^$/d' "$CONF/feeds")
+[ ${#names[@]} -eq 0 ] && { echo "calsync: no feeds listed in $CONF/feeds"; exit 0; }
+
+rc=0
+for n in "${names[@]}"; do
+  [[ $n =~ ^[A-Za-z0-9_-]+$ ]] || { echo "calsync: bad name '$n'"; rc=1; continue; }
+  u=$(url_for "$n")
+  if [ -z "$u" ]; then echo "calsync: $n: no URL (add KeePassXC entry Cal_ICS_$n)"; rc=1; continue; fi
+  tmp=$(mktemp); trap 'rm -f "$tmp" "$tmp.org"' EXIT
+  # URL goes to curl on stdin (config), never on the command line or in logs.
+  if printf 'url = "%s"\n' "$u" | curl -sSfL --max-time 60 -o "$tmp" -K - 2>/dev/null &&
+     grep -q BEGIN:VCALENDAR "$tmp" &&
+     "$PY" "$LIB/ics2org.py" "$n" "$tmp" > "$tmp.org"; then
+    mv "$tmp.org" "$OUT/$n.org"
+    echo "calsync: $n: $(grep -c '^\* ' "$OUT/$n.org") events"
+  else
+    echo "calsync: $n: download or convert failed (kept previous file)"; rc=1
+  fi
+  rm -f "$tmp" "$tmp.org"; unset u
+done
+exit $rc

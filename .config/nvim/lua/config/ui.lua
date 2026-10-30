@@ -46,3 +46,19 @@ vim.filetype.add({
     bicep = "bicep", bicepparam = "bicep", ps1 = "ps1", psm1 = "ps1", psd1 = "ps1",
     csh = "csh", tcsh = "tcsh", scm = "scheme", sld = "scheme" },
 })
+
+-- Active-window cursorline: only the focused window shows it. Windows where it was
+-- deliberately off (terminals, dashboards, set by a plugin) are left alone.
+do
+  local g = vim.api.nvim_create_augroup("ActiveWinCursorline", { clear = true })
+  local skip = function() return vim.bo.buftype == "terminal" or vim.bo.buftype == "prompt" end
+  local on = function()
+    if vim.w.auto_cl and not skip() then vim.wo.cursorline = true end
+    vim.w.auto_cl = nil
+  end
+  local off = function()
+    if vim.wo.cursorline and not skip() then vim.w.auto_cl = true; vim.wo.cursorline = false end
+  end
+  vim.api.nvim_create_autocmd({ "WinEnter", "BufEnter", "FocusGained" }, { group = g, callback = on })
+  vim.api.nvim_create_autocmd({ "WinLeave", "FocusLost" }, { group = g, callback = off })
+end

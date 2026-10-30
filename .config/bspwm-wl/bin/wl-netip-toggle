@@ -1,0 +1,6 @@
+#!/bin/sh
+# wl-netip-toggle: waybar custom/net right-click -> show/hide IPv4/CIDR + interface next to the icon
+f="$HOME/.local/state/waybar-net.showip"   # persists across logins
+mkdir -p "${f%/*}"
+if [ -e "$f" ]; then rm -f "$f"; else touch "$f"; fi
+pkill -RTMIN+11 -x .waybar-real 2>/dev/null || pkill -RTMIN+11 -x waybar

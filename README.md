@@ -8,27 +8,18 @@ Personal settings for my Guix System desktop (a Minisforum AI X1 Pro, AMD iGPU),
 - **X11 bspwm**: (X11-based) sxhkd + polybar session in `.config/bspwm` (see [X11 bspwm](#x11-bspwm)).
 - **Niri**: (optional) a scrollable-tiling Wayland session that mirrors the bspwm-wl keys where it can.
 
-Retro green-on-black theme:
+Retro green-on-black is the master theme. The other rices are colour maps of it; these are their main role colours (from each theme's generated `map.tsv`, Selection from its `select_bg`):
 
-| Role | Colour |
-|---|---|
-| Background | `#000000` |
-| Text | `#c0ffc0` |
-| Accent | `#00ff41` |
-| Selection | `#1f6f2f` |
-| Dim | `#4f7f5a` |
-| Charcoal panels | `#0a0e14` |
+| Role | Monochrome Green | Monochrome Orange | Monochrome Blue | Azure Glow | GitHub Dark | R2-D2 |
+|---|---|---|---|---|---|---|
+| Background | `#000000` | `#000000` | `#000000` | `#0a0e14` | `#010409` | `#010409` |
+| Text | `#c0ffc0` | `#ffe0b0` | `#c0ecff` | `#a9dfff` | `#e6edf3` | `#c1c3c9` |
+| Accent | `#00ff41` | `#ffb000` | `#00b4ff` | `#00bfff` | `#4493f8` | `#4a8cff` |
+| Selection | `#1f6f2f` | `#6f561f` | `#1f566f` | `#00bfff` | `#29558c` | `#00aaff` |
+| Dim | `#4f7f5a` | `#847452` | `#577b8c` | `#355a66` | `#9198a1` | `#848ea4` |
+| Charcoal panels | `#0a0e14` | `#14110a` | `#0a1114` | `#101820` | `#0d1117` | `#0d1117` |
 
-Retro orange-on-black theme:
-
-| Role | Colour |
-|---|---|
-| Background | `#000000` |
-| Text | `#xxxxxx` |
-| Accent | `#xxxxxx` |
-| Selection | `#xxxxxx` |
-| Dim | `#xxxxxx` |
-| Charcoal panels | `#xxxxxx` |
+Rule per theme (`theme.conf`): Monochrome Orange hue 41, Monochrome Blue hue 199, Azure Glow hue 195 (azure rule), GitHub Dark hue 213, R2-D2 hue 221. R2-D2 also sets `ws_fg = c1c3c9`: the active waybar workspace is bold text with no highlight, while the taskbar and menus keep the blue selection.
 
 **Theme switcher (`rice`).** Green is the master theme; the other themes (Monochrome Orange/Blue, Azure Glow, GitHub Dark, R2-D2) are one-to-one colour maps of it, kept in `.config/rices/<theme>/theme.conf`. `rice set <theme>` rewrites only the colour tokens of the files listed in `.config/rices/managed.list` and reloads what can reload live (waybar, borders, dunst, tray icons via `rice-tray`). `rice-menu` picks one from a menu. After a fresh install run `rice build` once (it generates each theme's `map.tsv`, `palette.sh`, `foot.ini`, `ui.sh` and `waybar.css`, which are not in git). Edit colours only while green is active, then `rice scan && rice build`. Wallpapers are not in the repo; each theme looks for `wallpaper.jpg` in its folder (see `.config/rices/README.md`). The files in this repo are the green versions.
 
@@ -64,7 +55,7 @@ All media below was recorded in a separate headless bspwm-wl instance with demo 
 
 **This config adds:**
 - window hints overlay (Super + G);
-- rofi hint picker (Super + Alt + G / Super + Shift + G);
+- rofi window picker (Super + Shift + G: current desktop, Super + Alt + Shift + G: all desktops);
 - window switcher (Super + Tab);
 - scratchpad with position memory (Super + S);
 - minimize (Super + M);
@@ -73,18 +64,21 @@ All media below was recorded in a separate headless bspwm-wl instance with demo 
 - raise/lower (Super + Shift + [ / ]);
 - smart move (Super + Shift + H/J/K/L);
 - preselect / edge moves (Super + Alt + H/J/K/L);
-- equal columns (Super + =);
+- equal columns (Super + =; a horizontal stack counts as one column);
 - undo (Super + U);
 - emoji picker (Super + Shift + `);
 - `rice` themes (Super + Ctrl + Alt + T);
-- waybar network module with right-click IP toggle.
+- waybar network module with right-click IP toggle: shows `<iface> <ip/cidr>` for every up interface with IPv4 (primary first, docker/bridge/veth/loopback skipped); the toggle is kept in `~/.local/state` so it survives logins;
+- waybar tooltips (`.local/bin/waybar-tips`): bluetooth (adapter, connected devices with battery/codec), volume (default output/input, other devices, playback and recording apps), media players and a user card (host, uptime, kernel, Guix generations, session, load);
+- window titles as "App: title" (e.g. `Brave: page`, `foot: btop`) in the bar and the pickers, cut to fit the monitor width (`wl-wintitle`, `wintitle.jq`; bash sets the terminal title in `prompt.sh`);
+- login screen follows the wallpaper: `wl-wallpaper` copies the current wallpaper to `/var/lib/greeter-bg`, which the LightDM greeter uses (`guix-config/config.scm`, `greeter-bg` service).
 
 The full key list is in [bspwm-wl keybindings](#bspwm-wl-keybindings).
 
 | | |
 |---|---|
 | ![window hints](docs/media/feat-winhint.png) | ![rofi picker](docs/media/feat-winpick.png) |
-| Super + G: window hints | Super + Alt + G: rofi picker |
+| Super + G: window hints | Super + Shift + G: rofi picker |
 | ![sticky and marked](docs/media/feat-sticky-marked.png) | ![presel](docs/media/feat-presel.png) |
 | sticky (yellow) and marked (pink) borders | preselection feedback |
 
@@ -109,7 +103,7 @@ The repo mirrors `$HOME`, so every path here is the path it installs to.
   xdg-desktop-portal(-wlr)/   screen-sharing portal config
   foot/ nvim/ doom/ zed/ qutebrowser/ vifm/ nnn/plugins/ mpv/ dunst/ gtk-3.0/ gtk-4.0/ qt5ct/ qt6ct/ ...
 .local/bin/      launchers and helpers (rice, rice-menu, rice-tray, bemenu wrappers, chromium-profile, bsp-pip, bsp-pin, bspwm-sel, chromium-wl, floorp, slack, ...)
-.local/share/    applications/*.desktop, wayland-sessions, wallpapers (two), icons/hicolor, emoji
+.local/share/    applications/*.desktop, wayland-sessions, wallpapers (two), icons/hicolor + Papirus-Dark tray overrides, emoji
 guix-config/       config.scm (system), my-packages/ (local Guix channel: fonts, niri-session...), NOTES.md
 ```
 
@@ -299,6 +293,9 @@ _In the loop below, `$i` is 1-9 or 0, and `$n` is desktop 1-10._
 | `alt + shift + Tab` | `bspc node -f next.local.!hidden.window` |
 | `super + Tab` | `$WB/wl-winswitch` |
 | `super + shift + Tab` | `$WB/wl-winswitch` |
+| `super + g` | `$WB/wl-winhint` - on-screen hints: letter = focus, Shift+letter = swap (focused desktops) |
+| `super + alt + shift + g` | `$WB/wl-winpick` - rofi hint list, all desktops |
+| `super + shift + g` | `$WB/wl-winpick local` - same, current desktop only |
 | `super + ctrl + Tab` | `bspc node -f next.local.!hidden.window` |
 | `super + ctrl + shift + Tab` | `bspc node -f prev.local.!hidden.window` |
 
@@ -455,7 +452,7 @@ Apps that do **not** follow the session DPI (fixed sizes, change them by hand):
 
 ### Misc third-party apps and tools
 
-On the Waybar bars (bspwm-wl and niri), clicking the network widget opens the GUI `nm-connection-editor` and clicking bluetooth opens `blueman-manager`; the terminal tools are still there, with `nmtui` on a middle-click of the network widget (right-click toggles the interface and IP) and `bluetui` on a right-click of bluetooth. The X11 polybar keeps `nmtui` and `bluetui` on left-click, with the network GUI on right-click. `super + alt + n` always opens `nmtui`. The icon theme is **Papirus-Dark** (Guix `papirus-icon-theme`) and the cursor **Adwaita** (`adwaita-icon-theme`), set in `theme` (`ICON_THEME`, `CURSOR_THEME`), GTK 2/3/4 settings, qt5ct/qt6ct, `.Xresources`, `.icons/default` and the niri config; GTK is Adwaita-dark with our green `gtk.css`. `scripts/lock` uses `i3lock` if installed and falls back to `slock`. `kbd-layout`, `pass-menu` and `android-mount` need `setxkbmap`, `pass` and `simple-mtpfs`.
+On the Waybar bars (bspwm-wl and niri), clicking the network widget opens the GUI `nm-connection-editor` and clicking bluetooth opens `blueman-manager`; the terminal tools are still there, with `nmtui` on a middle-click of the network widget (right-click toggles the interface and IP) and `bluetui` on a right-click of bluetooth. The X11 polybar keeps `nmtui` and `bluetui` on left-click, with the network GUI on right-click. `super + alt + n` always opens `nmtui`. The icon theme is **Papirus-Dark** (Guix `papirus-icon-theme`) and the cursor **Adwaita** (`adwaita-icon-theme`), set in `theme` (`ICON_THEME`, `CURSOR_THEME`), GTK 2/3/4 settings, qt5ct/qt6ct, `.Xresources`, `.icons/default` and the niri config; GTK is Adwaita-dark with our green `gtk.css`. `scripts/lock` uses `i3lock` if installed and falls back to `slock`. **KeePassXC** (also the Secret Service keyring) starts from `.local/bin/keepassxc-r2d2`, which both the login autostart (bspwm-wl and X11) and the app launcher entry (`.local/share/applications/org.keepassxc.KeePassXC.desktop`) use. It sets `QT_QPA_PLATFORMTHEME=qt5ct` so KeePassXC (a Qt5 app, Classic theme) gets the rice colours, and opens both databases (`~/.keepassxc/Personal-Passwords.kdbx` and `Work-Passwords.kdbx`) so each asks to unlock; it is single instance, so the launcher just raises a running window. At login it starts 3 s after the bar so its tray icon appears. Set **Tray icon type** to *Monochrome (light)*: the rice-coloured tray keys in `.local/share/icons/Papirus-Dark/*/panel/keepassxc-monochrome-light*.svg` override Papirus-Dark's white ones. `kbd-layout`, `pass-menu` and `android-mount` need `setxkbmap`, `pass` and `simple-mtpfs`.
 
 ### X11 keybindings
 

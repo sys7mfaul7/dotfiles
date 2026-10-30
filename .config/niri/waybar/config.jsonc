@@ -22,7 +22,7 @@
   "custom/usercard",
   "cpu",
   "memory",
-  "pulseaudio",
+  "custom/volume",
   "custom/updates",
   "custom/clock",
   "tray",
@@ -78,10 +78,13 @@
   "on-click": "sh -c 'c=$(grim -g \"$(slurp -p)\" -t ppm - | magick - -format \"%[hex:p{0,0}]\" info:-) && printf \"#%s\" \"$c\" | wl-copy && dunstify Colorpicker \"#$c copied\"'"
  },
  "custom/bluetooth": {
-  "exec": "~/.config/bspwm-wl/bin/wl-bt-status",
-  "interval": 3,
+  "exec": "$HOME/.local/bin/waybar-tips bt --no-rise",
+  "return-type": "json",
+  "interval": 5,
+  "signal": 12,
   "format": "{}",
-  "tooltip": false,
+  "tooltip": true,
+  "escape": false,
   "on-click": "blueman-manager",
   "on-click-middle": "~/.local/bin/bt-menu",
   "on-click-right": "~/.config/bspwm-wl/bin/wl-bartui bluetooth"
@@ -99,13 +102,22 @@
   ]
  },
  "custom/mplayer": {
-  "format": " <span color='#578a29'></span> ",
-  "tooltip": false,
+  "exec": "$HOME/.local/bin/waybar-tips media --no-rise",
+  "return-type": "json",
+  "interval": 3,
+  "signal": 13,
+  "format": "{}",
+  "tooltip": true,
+  "escape": false,
   "on-click": "foot -e ncmpcpp"
  },
  "custom/usercard": {
-  "format": " <span color='#539e06'></span> ",
-  "tooltip": false
+  "exec": "$HOME/.local/bin/waybar-tips user --no-rise",
+  "return-type": "json",
+  "interval": 60,
+  "format": "{}",
+  "tooltip": true,
+  "escape": false
  },
  "cpu": {
   "interval": 1,
@@ -116,6 +128,18 @@
   "interval": 3,
   "format": " <span color='#578a29'></span> {used:0.1f}G",
   "on-click": "~/.config/bspwm-wl/bin/wl-bartui top"
+ },
+ "custom/volume": {
+  "exec": "$HOME/.local/bin/waybar-tips audio --loop --no-rise",
+  "return-type": "json",
+  "format": "{}",
+  "tooltip": true,
+  "escape": false,
+  "on-click": "pavucontrol",
+  "on-click-right": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
+  "on-click-middle": "~/.config/bspwm-wl/bin/wl-bartui audio",
+  "on-scroll-up": "pactl set-sink-volume @DEFAULT_SINK@ +5%",
+  "on-scroll-down": "pactl set-sink-volume @DEFAULT_SINK@ -5%"
  },
  "pulseaudio": {
   "format": "{icon} {volume}",

@@ -1,0 +1,10 @@
+#!/bin/sh
+# wl-winhint: launcher for wl-winhint.py (on-screen window hints, Super+G)
+# Runs inside the winhint Guix profile; gtk-layer-shell 0.9 must be preloaded before Gtk.
+P="$HOME/.guix-extra-profiles/winhint/winhint"
+export PATH="$HOME/.local/opt/bspwm-wl/bin:$PATH"
+. "$P/etc/profile"
+export LD_PRELOAD="$P/lib/libgtk-layer-shell.so.0${LD_PRELOAD:+:$LD_PRELOAD}" GDK_BACKEND=wayland
+L="${XDG_RUNTIME_DIR:-/tmp}/wl-winhint.lock"
+# single instance; hard kill after 15 s as a last resort (the script's own limit is 10 s)
+exec flock -n "$L" timeout -s KILL 15 "$P/bin/python3" "$HOME/.config/bspwm-wl/bin/wl-winhint.py" "$@"

@@ -36,7 +36,7 @@ fileviewer <image/*>
         \ ~/.config/vifm/scripts/vifm-img clear
 fileviewer <video/*>,<audio/*> mediainfo %c
 fileviewer *.md,*.sh,*.py,*.c,*.h,*.cpp,*.rs,*.go,*.js,*.ts,*.lua,*.scm,*.el,*.conf,*.ini,*.toml,*.yaml,*.yml,*.html,*.css,*.vim,*.vifm,*rc,*
-        \ bat --color=always --style=plain --paging=never --theme=ansi %c 2>/dev/null || highlight -O ansi --force %c
+        \ bat --color=always --style=plain --paging=never --theme=h4ck3r %c 2>/dev/null || highlight -O ansi --force %c
 fileviewer <application/octet-stream> file -b %c
 
 " ---- openers ----

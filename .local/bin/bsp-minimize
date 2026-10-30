@@ -1,4 +1,15 @@
 #!/bin/sh
+# --- keep floating geometry across hide/show (no auto-centering) ---
+G="${XDG_RUNTIME_DIR:-/tmp}/scratch-geo"; mkdir -p "$G"
+geo_get() { bspc query -T -n "$1" 2>/dev/null | jq -r ".client.floatingRectangle | \"\(.x) \(.y) \(.width) \(.height)\""; }
+geo_save() { r=$(geo_get "$1") && [ -n "$r" ] && echo "$r" >"$G/$1"; return 0; }
+geo_restore() {
+  [ -s "$G/$1" ] || return 0
+  set -- "$1" $(cat "$G/$1") $(geo_get "$1")
+  [ $# -eq 9 ] || return 0
+  bspc node "$1" -v $(($2-$6)) $(($3-$7)) 2>/dev/null
+  bspc node "$1" -z bottom_right $(($4-$8)) $(($5-$9)) 2>/dev/null; return 0
+}
 # Minimize tray on desktop M (X11 bspwm). Same semantics as wl-minimize.
 L="${XDG_RUNTIME_DIR:-/tmp}/bsp-minimize"
 touch "$L"
@@ -16,7 +27,7 @@ done <"$L"
 
 hide_all() {
   while read -r id; do
-    bspc node "$id" -d M
+    geo_save "$id"; bspc node "$id" -d M
     bspc node "$id" -t floating
     bspc node "$id" -g hidden=on
   done <"$L"
@@ -28,14 +39,14 @@ show_all() {
     bspc node "$id" -g hidden=off
     bspc node "$id" -t floating
     bspc node -f "$id"
-    ~/.local/bin/bsp-center >/dev/null 2>&1 || true
+    geo_restore "$id"
   done <"$L"
 }
 minimize_focused() {
   id=$(bspc query -N -n focused.window) || return 1
   grep -qx "$id" "$L" || echo "$id" >>"$L"
   bspc node "$id" -t floating
-  bspc node "$id" -d M
+  geo_save "$id"; bspc node "$id" -d M
   bspc node "$id" -g hidden=on
 }
 

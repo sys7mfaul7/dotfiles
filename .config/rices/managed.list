@@ -65,6 +65,7 @@ loint,lopair  ~/.local/bin/lo-h4ck3r-black
 special       ~/.config/remmina/remmina.pref
 # ---- tray / panel icons (KeePassXC monochrome, Nextcloud state icons, udiskie)
 default       ~/.local/share/icons/hicolor/scalable/apps/keepassxc-monochrome-light*.svg
+default       ~/.local/share/icons/Papirus-Dark/*/panel/keepassxc-monochrome-light*.svg
 default       ~/.local/share/icons/hicolor/*/status/state-*.svg
 default       ~/.local/share/icons/Papirus-Dark/*/panel/state-*.svg
 default       ~/.local/share/icons/hicolor/*/apps/udiskie-media-green.svg

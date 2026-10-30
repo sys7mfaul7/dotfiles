@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+# jack-autoswitch: route audio between the front 3.5mm jack, the iFi USB DAC
+# and the built-in speakers/mic on r2d2 (Minisforum AI X1 Pro, ALC245).
+#   output: iFi (if connected) > front jack (if plugged) > speakers
+#   jack mode (~/.local/state/audio-jack-mode, set with `audio-mode`):
+#     headset = duplex profile, Headphones port + headset mic as default source
+#     hifi    = output-only profile (no capture on the analog card)
+# Built-in speakers and internal mic are MUTED whenever we move to them and at
+# startup; unmute them by hand and they stay unmuted until the next route
+# change.  Session-independent (bspwm-wl/bspwm/niri autostart); single
+# instance via flock.  Log: $XDG_RUNTIME_DIR/jack-autoswitch.log
+#   jack-autoswitch          run the watcher
+#   jack-autoswitch --once   apply the current route now if it changed
+set -u
+export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
+if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then   # for notifications
+  p=$(pgrep -u "$(id -u)" -x dunst | head -1)
+  [ -n "$p" ] && export "$(tr '\0' '\n' </proc/$p/environ | grep '^DBUS_SESSION_BUS_ADDRESS=')" 2>/dev/null
+fi
+CARD=alsa_card.pci-0000_c6_00.6
+SINK=alsa_output.pci-0000_c6_00.6.analog-stereo
+SRC=alsa_input.pci-0000_c6_00.6.analog-stereo
+PROF_DUPLEX=output:analog-stereo+input:analog-stereo
+PROF_OUT=output:analog-stereo
+HP_PORT=analog-output-headphones   SPK_PORT=analog-output-speaker
+JMIC_PORT=analog-input-mic         IMIC_PORT=analog-input-internal-mic
+IFI_MATCH='usb-iFi'
+VOL_CAP=50    # % — if a newly active jack/iFi sink is above this ...
+VOL_SET=45    # ... set it to this (HD 630VB is efficient, 23 ohm)
+MODEFILE=${XDG_STATE_HOME:-$HOME/.local/state}/audio-jack-mode
+ROUTEFILE=$XDG_RUNTIME_DIR/jack-autoswitch.route
+LOG=$XDG_RUNTIME_DIR/jack-autoswitch.log
+
+log() { printf '%s %s\n' "$(date -u +%FT%TZ)" "$*" >>"$LOG"; }
+note() { command -v dunstify >/dev/null && dunstify -a audio -r 47101 -t 2500 "Audio" "$1" >/dev/null 2>&1 & }
+mode() { local m; m=$(cat "$MODEFILE" 2>/dev/null); case $m in hifi) echo hifi;; *) echo headset;; esac; }
+
+hp_plugged() {   # Headphones port "available" on the analog card
+  pactl list cards 2>/dev/null | awk -v c="$CARD" -v p="$HP_PORT" '
+    /^Card #/ {inc=0} $0 ~ "Name: "c"$" {inc=1}
+    inc && index($0, p": ") && /, available\)/ {f=1} END {exit !f}'
+}
+ifi_sink() { pactl list short sinks 2>/dev/null | awk -v m="$IFI_MATCH" 'index($2,m){print $2; exit}'; }
+profile() { pactl list cards 2>/dev/null | awk -v c="$CARD" '/^Card #/ {inc=0} $0 ~ "Name: "c"$" {inc=1}
+            inc && /Active Profile:/ {sub(/.*Active Profile: /,""); print; exit}'; }
+set_profile() { [ "$(profile)" = "$1" ] || { pactl set-card-profile "$CARD" "$1"; sleep 0.4; }; }
+
+cap_volume() {   # $1 sink: unmute and bring above-cap volume down to VOL_SET
+  local v
+  v=$(pactl get-sink-volume "$1" 2>/dev/null | grep -o '[0-9]*%' | head -1 | tr -d %)
+  [ -n "$v" ] && [ "$v" -gt "$VOL_CAP" ] && pactl set-sink-volume "$1" "${VOL_SET}%"
+  pactl set-sink-mute "$1" 0
+}
+
+apply() {   # $1 = force (startup)
+  exec 8>"$XDG_RUNTIME_DIR/jack-autoswitch.apply.lock"; flock 8
+  local ifi hp out mic route last md
+  ifi=$(ifi_sink); hp_plugged && hp=1 || hp=0; md=$(mode)
+  if [ -n "$ifi" ]; then out=ifi; elif [ $hp = 1 ]; then out=jack; else out=speakers; fi
+  if [ $hp = 1 ] && [ "$md" = headset ]; then mic=jack; elif [ $hp = 1 ]; then mic=none; else mic=internal; fi
+  route="$out/$mic/$md"
+  last=$(cat "$ROUTEFILE" 2>/dev/null)
+  if [ "$route" = "$last" ] && [ "${1:-}" != force ]; then flock -u 8; return; fi
+  echo "$route" >"$ROUTEFILE"
+  log "route ${last:-none} -> $route"
+  # analog card profile: output-only only for Hi-Fi with the jack plugged in
+  if [ $hp = 1 ] && [ "$md" = hifi ]; then set_profile "$PROF_OUT"; else set_profile "$PROF_DUPLEX"; fi
+  # analog sink port follows the jack; mute it whenever it lands on speakers
+  if [ $hp = 1 ]; then
+    pactl set-sink-port "$SINK" "$HP_PORT" 2>/dev/null
+  else
+    pactl set-sink-port "$SINK" "$SPK_PORT" 2>/dev/null
+    pactl set-sink-mute "$SINK" 1
+  fi
+  case $out in
+    ifi)  pactl set-default-sink "$ifi"; cap_volume "$ifi" ;;
+    jack) pactl set-default-sink "$SINK"; cap_volume "$SINK" ;;
+    speakers) : ;;   # muted above; PA picks the fallback default itself
+  esac
+  case $mic in
+    jack) pactl set-source-port "$SRC" "$JMIC_PORT" 2>/dev/null
+          pactl set-default-source "$SRC"; pactl set-source-mute "$SRC" 0 ;;
+    internal) pactl set-source-port "$SRC" "$IMIC_PORT" 2>/dev/null
+          pactl set-source-mute "$SRC" 1 ;;
+    none) : ;;   # Hi-Fi: analog card has no capture in output-only profile
+  esac
+  if [ "${1:-}" != force ] && [ -n "$last" ]; then
+    case $out/$mic in
+      ifi/*) note "iFi DAC" ;;
+      jack/jack) note "Headset: headphones + headset mic" ;;
+      jack/none) note "Hi-Fi: headphones, output only" ;;
+      speakers/*) note "Speakers + internal mic (muted)" ;;
+    esac
+  fi
+  flock -u 8
+}
+
+# Guix's pulseaudio-service exports PULSE_CONFIG=/etc/pulse/daemon.conf, so a
+# user ~/.config/pulse/daemon.conf is ignored.  Instead, reload the analog
+# card's module-alsa-card (loaded by udev-detect at 16-bit/44.1k) with
+# 24-bit-in-32 / 48 kHz (the ALC245 DACs are 48 kHz only) and
+# avoid_resampling=yes.  Runs once per PulseAudio start, before any routing.
+CARD_FMT_ARGS='avoid_resampling=yes format=s32le rate=48000'
+ensure_card_format() {
+  local line idx args
+  line=$(pactl list short modules 2>/dev/null | awk -F'\t' '$2=="module-alsa-card" && $3 ~ /name="?pci-0000_c6_00\.6"? /')
+  [ -n "$line" ] || return 0
+  case $line in *format=s32le*) return 0;; esac
+  idx=${line%%$'\t'*}
+  args=$(printf '%s\n' "$line" | awk -F'\t' '{print $3}' | sed -e 's/avoid_resampling=no//' -e 's/"//g')
+  pactl unload-module "$idx" || return 0
+  if pactl load-module module-alsa-card $args $CARD_FMT_ARGS >/dev/null; then
+    log "analog card reloaded: $CARD_FMT_ARGS"
+  else
+    log "card reload with $CARD_FMT_ARGS FAILED; restoring defaults"
+    pactl load-module module-alsa-card $args >/dev/null
+  fi
+  sleep 1
+}
+
+if [ "${1:-}" = --once ]; then apply; exit 0; fi
+
+exec 9>"$XDG_RUNTIME_DIR/jack-autoswitch.lock"
+flock -n 9 || exit 0
+log "start pid $$ (mode $(mode))"
+while :; do
+  until pactl info >/dev/null 2>&1; do sleep 2; done
+  ensure_card_format
+  apply force
+  # react to card (jack/port availability) and sink add/remove events
+  pactl subscribe 2>/dev/null | while read -r line; do
+    case $line in
+      *"on card"*|*"'new' on sink"*|*"'remove' on sink"*|*"on server"*)
+        sleep 0.3; apply ;;
+    esac
+  done
+  log "pactl subscribe ended; reconnecting"; sleep 2
+done

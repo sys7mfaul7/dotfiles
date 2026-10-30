@@ -146,3 +146,170 @@
         :desc "Live preview (eww)"   "p" #'markdown-live-preview-mode)))
 ;; Lint rules: ~/.markdownlint-cli2.jsonc (line length, first-line heading, inline
 ;; HTML and table-style rules are off). Preview: SPC m p (browser), SPC m t p (live).
+
+;;; --- Active-window highlight (matches nvim): tinted active bg, dimmed others ---
+;; Colours live in themes/doom-h4ck3r-theme.el (win-act / win-nc / win-cl / ml-*), rice-managed.
+(setq hl-line-sticky-flag nil)  ; Doom sets global-hl-line-sticky-flag to window: selected window only
+(use-package! auto-dim-other-buffers
+  :hook (doom-after-init . auto-dim-other-buffers-mode)
+  :config
+  (setq auto-dim-other-buffers-dim-on-focus-out t
+        auto-dim-other-buffers-dim-on-switch-to-minibuffer nil
+        auto-dim-other-buffers-affected-faces
+        '((default . auto-dim-other-buffers)
+          (fringe . auto-dim-other-buffers)
+          (line-number . auto-dim-other-buffers)
+          (line-number-current-line . auto-dim-other-buffers)
+          (hl-line . auto-dim-other-buffers)
+          (org-block . auto-dim-other-buffers)
+          (org-hide . auto-dim-other-buffers-hide))))
+;; re-apply after a theme (re)load so rice switches keep the dimming
+(add-hook! 'doom-load-theme-hook
+  (when (bound-and-true-p auto-dim-other-buffers-mode)
+    (auto-dim-other-buffers-mode -1) (auto-dim-other-buffers-mode 1)))
+
+;;; --- Agenda, calendar grid & ICS calendar feeds (added 2026-10-30, *.bak-agenda) ---
+;; Feeds: ~/.local/bin/calsync pulls each name in ~/.config/calsync/feeds into
+;; ~/org/cal/<name>.org (URL from KeePassXC entry "Cal_ICS_<name>"). Read-only files.
+(defvar +cal/dir (expand-file-name "cal/" org-directory))
+(make-directory +cal/dir t)
+(setq org-agenda-files (list org-directory +cal/dir))
+
+(after! org
+  ;; keep Doom's keyword set (TODO PROJ LOOP STRT WAIT HOLD IDEA | DONE KILL)
+  (setq org-log-done 'time
+        org-log-into-drawer t
+        org-agenda-span 'week
+        org-agenda-start-on-weekday 1
+        org-agenda-start-day nil
+        org-agenda-skip-deadline-if-done t
+        org-agenda-skip-scheduled-if-done t
+        org-deadline-warning-days 7
+        org-agenda-include-diary nil
+        org-agenda-block-separator ?─
+        org-agenda-time-grid '((daily today require-timed) (800 1000 1200 1400 1600 1800)
+                               " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
+        org-agenda-current-time-string "◀── now ─────────"))
+
+(defun +cal/feed-names ()
+  (mapcar #'file-name-base (directory-files +cal/dir nil "\\.org\\'")))
+
+;; one colour per calendar account, taken from the active (rice) theme palette
+(defvar +cal/palette '(cyan green magenta orange yellow violet teal red))
+(defun +cal/color (name)
+  (let* ((i (or (cl-position name (+cal/feed-names) :test #'equal) 0))
+         (c (nth (mod i (length +cal/palette)) +cal/palette)))
+    (or (ignore-errors (doom-color c)) "#4a8cff")))
+
+(defun +cal/colorize-agenda-h ()
+  "Colour agenda lines coming from a calendar feed by account."
+  (save-excursion
+    (goto-char (point-min))
+    (while (not (eobp))
+      (when-let* ((m (get-text-property (point) 'org-hd-marker))
+                  (f (buffer-file-name (marker-buffer m)))
+                  ((string-prefix-p (file-truename +cal/dir) (file-truename f))))
+        (add-face-text-property (line-beginning-position) (line-end-position)
+                                `(:foreground ,(+cal/color (file-name-base f)))))
+      (forward-line 1))))
+(add-hook 'org-agenda-finalize-hook #'+cal/colorize-agenda-h)
+
+(use-package! org-super-agenda
+  :after org-agenda
+  :config
+  (setq org-super-agenda-header-map (make-sparse-keymap)) ; keep evil keys on headers
+  (org-super-agenda-mode 1))
+
+(defvar +agenda/groups
+  `((:name "Overdue" :deadline past :scheduled past :order 1)
+    (:name "Today" :time-grid t :date today :scheduled today :deadline today :order 2)
+    (:name "Due soon" :deadline future :order 3)
+    (:name "Calendar events" :pred (lambda (it) (let ((m (get-text-property 0 'org-hd-marker it)))
+                                                  (and m (buffer-file-name (marker-buffer m))
+                                                       (string-prefix-p (file-truename +cal/dir)
+                                                                        (file-truename (buffer-file-name (marker-buffer m)))))))
+     :order 4)
+    (:name "Scheduled" :scheduled future :order 5)
+    (:name "Next / in progress" :todo ("STRT" "NEXT") :order 6)
+    (:name "Waiting / on hold" :todo ("WAIT" "HOLD") :order 8)
+    (:name "Priority A" :priority "A" :order 7)
+    (:name "Priority B" :priority "B" :order 9)
+    (:name "Projects" :todo "PROJ" :order 10)
+    (:name "Ideas" :todo "IDEA" :order 12)
+    (:name "Other TODO" :anything t :order 11)))
+
+(after! org-agenda
+  (setq org-agenda-custom-commands
+        `(("d" "Dashboard: today + week + TODOs"
+           ((agenda "" ((org-agenda-span 1) (org-agenda-start-day nil)
+                        (org-agenda-overriding-header "  Today")
+                        (org-super-agenda-groups +agenda/groups)))
+            (agenda "" ((org-agenda-span 7) (org-agenda-start-day "+1d") (org-agenda-start-on-weekday nil)
+                        (org-agenda-overriding-header "  Next 7 days")
+                        (org-agenda-time-grid nil)
+                        (org-super-agenda-groups '((:auto-category t)))))
+            (alltodo "" ((org-agenda-overriding-header "  TODO list")
+                         (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled 'deadline))
+                         (org-super-agenda-groups +agenda/groups)))))
+          ("w" "Week view"
+           ((agenda "" ((org-agenda-span 'week) (org-agenda-start-on-weekday 1)
+                        (org-super-agenda-groups nil)))))
+          ("t" "TODO list (by status/priority)"
+           ((alltodo "" ((org-agenda-overriding-header "  TODO list")
+                         (org-super-agenda-groups +agenda/groups))))))))
+
+;; calfw month/week/day grid (Doom :app calendar). Org items + one coloured source per feed.
+(defun +cal/sources ()
+  (require 'calfw-org)
+  (let ((own (cl-remove-if (lambda (f) (string-prefix-p (file-truename +cal/dir) (file-truename f)))
+                           (org-agenda-files))))
+    (append
+          (mapcar (lambda (f) (calfw-org-create-file-source (file-name-base f) f (doom-color 'blue))) own)
+          (mapcar (lambda (n) (calfw-org-create-file-source
+                               n (expand-file-name (concat n ".org") +cal/dir) (+cal/color n)))
+                  (+cal/feed-names)))))
+(defun +cal/open (&optional view)
+  "Open the calendar grid. VIEW is month (default), week, two-weeks or day."
+  (interactive)
+  (require 'calfw) (require 'calfw-org)
+  (calfw-open-calendar-buffer :contents-sources (+cal/sources) :view (or view 'month)))
+(defun +cal/open-week () (interactive) (+cal/open 'week))
+(defun +cal/open-day () (interactive) (+cal/open 'day))
+(setq +calendar-open-function #'+cal/open)
+(after! calfw (setq calfw-display-calendar-holidays nil calfw-week-start 1))
+
+(defun +cal/sync ()
+  "Run calsync asynchronously, then refresh agenda/calendar buffers."
+  (interactive)
+  (let ((buf (get-buffer-create " *calsync*")))
+    (with-current-buffer buf (erase-buffer))
+    (make-process
+     :name "calsync" :buffer buf :noquery t
+     :command (list (expand-file-name "~/.local/bin/calsync"))
+     :sentinel (lambda (p _e)
+                 (when (memq (process-status p) '(exit signal))
+                   (dolist (f (directory-files +cal/dir t "\\.org\\'"))
+                     (when-let* ((b (get-file-buffer f)))
+                       (with-current-buffer b (revert-buffer t t t))))
+                   (dolist (b (buffer-list))
+                     (with-current-buffer b
+                       (cond ((derived-mode-p 'org-agenda-mode) (ignore-errors (org-agenda-redo t)))
+                             ((derived-mode-p 'calfw-calendar-mode) (ignore-errors (calfw-refresh-calendar-buffer nil))))))
+                   (message "calsync: %s"
+                            (string-trim (with-current-buffer (process-buffer p)
+                                           (replace-regexp-in-string "\n" " | " (buffer-string))))))))))
+(defvar +cal/sync-timer nil)
+(when +cal/sync-timer (cancel-timer +cal/sync-timer))
+(setq +cal/sync-timer (run-with-timer 60 1800 #'+cal/sync))  ; 1 min after start, then every 30 min
+
+(map! :leader
+      (:prefix "o"
+       :desc "Calendar (month)"   "c" #'+cal/open
+       (:prefix ("a" . "org agenda")
+        :desc "Dashboard"         "d" (cmd! (org-agenda nil "d"))
+        :desc "Week view"         "w" (cmd! (org-agenda nil "w"))
+        :desc "TODO by priority"  "T" (cmd! (org-agenda nil "t"))
+        :desc "Calendar month"    "c" #'+cal/open
+        :desc "Calendar week"     "W" #'+cal/open-week
+        :desc "Calendar day"      "D" #'+cal/open-day
+        :desc "Sync calendars"    "s" #'+cal/sync)))

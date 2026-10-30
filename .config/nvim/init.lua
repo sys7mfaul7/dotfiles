@@ -54,6 +54,8 @@ vim.pack.add({
   "https://github.com/olimorris/codecompanion.nvim",
   "https://github.com/ggml-org/llama.vim",
   "https://github.com/neovim/nvim-lspconfig",
+  { src = "https://github.com/mrcjkb/rustaceanvim", version = vim.version.range("^6") }, -- owns rust-analyzer
+  "https://github.com/saecki/crates.nvim",
   "https://github.com/stevearc/conform.nvim",
   "https://github.com/mfussenegger/nvim-lint",
   "https://github.com/mfussenegger/nvim-dap",
@@ -76,6 +78,9 @@ vim.pack.add({
   "https://github.com/folke/which-key.nvim",
   "https://github.com/MunifTanjim/nui.nvim",
   { src = "https://github.com/nvim-neo-tree/neo-tree.nvim", version = "v3.x" },
+  "https://github.com/smart-splits-nvim/smart-splits.nvim", -- Alt+hjkl move / Alt+Shift+HJKL resize, tmux-aware
+  "https://github.com/smart-splits-nvim/backend-tmux", -- v3 tmux backend (@pane-is-vim)
+  { src = "https://github.com/s1n7ax/nvim-window-picker", version = vim.version.range("2") }, -- Alt+w visual picker
 }, { confirm = false })
 -- headlines.nvim is only used for org: keep it off the runtimepath until an
 -- org buffer opens, so it never touches markdown (render-markdown owns that)
@@ -129,7 +134,7 @@ map({ "n", "v" }, "<leader>ai", function()
 end, { desc = "AI inline prompt" })
 map({ "n", "v" }, "<leader>aa", with_llm("CodeCompanionActions"), { desc = "AI actions" })
 
-for _, m in ipairs({ "ui", "treesitter", "completion", "lsp", "format", "lint", "dap", "extras", "notes", "keys", "tree", "git", "finder" }) do
+for _, m in ipairs({ "ui", "treesitter", "completion", "lsp", "rust", "format", "lint", "dap", "extras", "notes", "keys", "tree", "git", "finder", "winnav" }) do
   local okm, err = pcall(require, "config." .. m)
   if not okm then vim.notify(m .. ": " .. tostring(err), vim.log.levels.WARN) end
 end

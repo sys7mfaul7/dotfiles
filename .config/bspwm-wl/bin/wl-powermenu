@@ -6,7 +6,7 @@
 LOCK='swaylock -f -c 000000 --indicator-idle-visible --inside-color 000000 --ring-color 1f6f2f --key-hl-color 00ff41 --text-color c0ffc0'
 c=$(printf 'Cancel\nLock\nLogout\nSuspend\nReboot\nShutdown\n' | BEMENU_BACKEND=wayland bemenu -p 'POWER' -H 22 --fn 'DejaVu Sans Mono, Symbols Nerd Font Mono 11' \
   --tb '#000000' --tf "${RICE_MENU_TITLE:-#00ff41}" --fb '#000000' --ff '#c0ffc0' --nb '#000000' --nf '#c0ffc0' \
-  --hb "${RICE_SELECT_BG:-#1f6f2f}" --hf "${RICE_SELECT_FG:-#c0ffc0}" --ab '#000000' --af '#c0ffc0' -B 0) || exit 0
+  --hb "${RICE_SELECT_BG:-#1f6f2f}" --hf "${RICE_SELECT_FG:-#c0ffc0}" --ab '#000000' --af '#c0ffc0' -B 0 --hp 8) || exit 0
 case "$c" in
   Lock)     command -v swaylock >/dev/null && exec $LOCK ;;
   Logout)   [ "$XDG_CURRENT_DESKTOP" = niri ] && exec niri msg action quit --skip-confirmation; exec bspc quit ;;

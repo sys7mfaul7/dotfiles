@@ -147,6 +147,9 @@ K 'alt + Tab'                'bspc node -f prev.local.!hidden.window'
 K 'alt + shift + Tab'        'bspc node -f next.local.!hidden.window'
 K 'super + Tab'              "$WB/wl-winswitch"
 K 'super + shift + Tab'      "$WB/wl-winswitch"
+K 'super + g'                "$WB/wl-winhint"         # on-screen hints: letter = focus, Shift+letter = swap (focused desktops)
+K 'super + alt + shift + g'  "$WB/wl-winpick"         # rofi hint list, all desktops
+K 'super + shift + g'        "$WB/wl-winpick local"   # same, current desktop only
 K 'super + ctrl + Tab'       'bspc node -f next.local.!hidden.window'
 K 'super + ctrl + shift + Tab' 'bspc node -f prev.local.!hidden.window'
 for d in h:west j:south k:north l:east Left:west Down:south Up:north Right:east; do
@@ -271,9 +274,9 @@ if [ -z "$BSPWM_WL_STARTED" ]; then
     done ) 9>"${XDG_RUNTIME_DIR:-/tmp}/bspwm-wl-waybar.lock" &
   command -v cliphist >/dev/null && wl-paste --watch cliphist store >/dev/null 2>&1 &
   command -v dunst >/dev/null && dunst >"$L/dunst.log" 2>&1 &
-  # KeePassXC = Secret Service keyring (org.freedesktop.secrets), starts minimized to the tray
+  # KeePassXC = Secret Service keyring (org.freedesktop.secrets); opens both databases and asks to unlock at login
   command -v keepassxc >/dev/null && ! pgrep -x .keepassxc-real >/dev/null && ! pgrep -x keepassxc >/dev/null && \
-    setsid -f keepassxc --minimized >"$L/keepassxc.log" 2>&1 </dev/null
+    setsid -f sh -c "sleep 3; exec $HOME/.local/bin/keepassxc-r2d2" >"$L/keepassxc.log" 2>&1 </dev/null
   # jack-autoswitch: front headset jack / iFi / speakers routing (mutes built-in speakers+mic; flock = single instance)
   setsid -f "$HOME/.local/bin/jack-autoswitch" >/dev/null 2>&1 </dev/null
   # Nextcloud desktop sync client, tray only (single instance; profile path survives Guix upgrades)

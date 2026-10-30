@@ -402,9 +402,10 @@ def ui_of(slug, m=None):
     out.update(own)
     return out
 
-WAYBAR_FOCUS = ", ".join(["window#waybar #custom-ws%d.focused%s" % (i, h) for h in ("", ":hover") for i in range(1, 11)] +
-                         ["window#waybar #workspaces button.%s%s" % (c, h) for h in ("", ":hover") for c in ("active", "focused")] +
-                         ["window#waybar #taskbar button.active", "window#waybar #taskbar button.active:hover"])
+WAYBAR_WS = ", ".join(["window#waybar #custom-ws%d.focused%s" % (i, h) for h in ("", ":hover") for i in range(1, 11)] +
+                      ["window#waybar #workspaces button.%s%s" % (c, h) for h in ("", ":hover") for c in ("active", "focused")])
+WAYBAR_TASK = "window#waybar #taskbar button.active, window#waybar #taskbar button.active:hover"
+WAYBAR_FOCUS = WAYBAR_WS + ", " + WAYBAR_TASK
 
 def sgr(h): return "38;2;%d;%d;%d" % hex2rgb(h) if h else ""
 
@@ -423,7 +424,12 @@ def write_ui(slug, m, conf):
         own = conf["ui"]
         if slug != MASTER and own.get("select_bg"):
             f.write("/* selected / focused items: select_bg / select_fg (window#waybar wins over style.css) */\n")
-            f.write("%s { background: #%s; color: #%s; }\n" % (WAYBAR_FOCUS, ui["select_bg"], ui.get("select_fg") or ui.get("fg", "000000")))
+            sel = (ui["select_bg"], ui.get("select_fg") or ui.get("fg", "000000"))
+            if own.get("ws_fg"):   # ws_fg set: focused workspace = plain text in ws_fg, no highlight
+                f.write("%s { background: transparent; color: #%s; }\n" % (WAYBAR_WS, own["ws_fg"]))
+                f.write("%s { background: #%s; color: #%s; }\n" % ((WAYBAR_TASK,) + sel))
+            else:
+                f.write("%s { background: #%s; color: #%s; }\n" % ((WAYBAR_FOCUS,) + sel))
             f.write("window#waybar #workspaces button.active label, window#waybar #workspaces button.focused label { color: inherit; }\n")
 
 FOOT_KEYS = ["background", "foreground", "selection-background", "selection-foreground"] + \

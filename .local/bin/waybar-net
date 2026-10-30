@@ -218,6 +218,23 @@ def render(rows, markup):
             out.append(l.ljust(width) + v)
     return '\n'.join(out)
 
+SKIP_IFACES = ('lo', 'docker', 'br-', 'veth', 'virbr', 'p2p')
+
+def ip_list(primary):
+    """'<iface> <ipv4> | <iface> <ipv4>' for every up interface with IPv4 (incl. WireGuard), primary first."""
+    seen = []
+    for line in run('ip', '-o', '-4', 'addr', 'show').splitlines():
+        m = re.match(r'\d+:\s+(\S+)\s+inet (\S+)', line)
+        if not m: continue
+        dev, addr = m.group(1).split('@')[0], m.group(2)
+        if dev.startswith(SKIP_IFACES): continue
+        if rd('/sys/class/net/%s/operstate' % dev) not in ('up', 'unknown'): continue
+        seen.append((dev, addr))
+    seen.sort(key=lambda x: x[0] != primary)
+    if not seen: seen = [(primary, 'no IPv4')]
+    sep = " <span color='%s'>|</span> " % DIM
+    return sep.join("<span color='%s'>%s</span> <span color='%s'>%s</span>" % (DIM, esc(d), TXT, esc(a)) for d, a in seen)
+
 def main():
     global RISE
     args = [a for a in sys.argv[1:] if a != '--no-rise']
@@ -236,7 +253,10 @@ def main():
     icon, kind, title, rows = build(iface)
     if mode == '--polybar': print('%%{F%s}%%{T3}%s%%{T-}%%{F-}' % (ICON, icon)); return
     if mode == '--text': print(render(rows, False)); return
-    print(json.dumps({'text': "<span %scolor='%s' size='10pt'>%s</span>" % (RISE, ICON, icon),
+    text = "<span %scolor='%s' size='10pt'>%s</span>" % (RISE, ICON, icon)
+    if os.path.exists(os.path.expanduser('~/.local/state/waybar-net.showip')):
+        text += ' ' + ip_list(iface)   # right-click toggle
+    print(json.dumps({'text': text,
                       'tooltip': render(rows, True), 'class': ['connected', 'wifi' if kind == 'Wi-Fi' else 'ethernet'],
                       'alt': 'wifi' if kind == 'Wi-Fi' else 'ethernet'}, ensure_ascii=False))
 

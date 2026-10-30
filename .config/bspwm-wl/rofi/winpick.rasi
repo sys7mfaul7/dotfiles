@@ -1,0 +1,24 @@
+/* wl-winpick (Super+Shift+G current / Super+Alt+Shift+G all) theme. Tweak colours here; last 2 hex digits = alpha (e6 = 90%, same as foot). */
+* {
+  bg:      #010409e6;
+  bg-alt:  #0d1117e6;
+  fg:      #f5f7fc;
+  fg-dim:  #848ea4;
+  sel:     #4a8cff;
+  sel-fg:  #010409;
+  border:  #4a8cff;
+  font: "DejaVu Sans Mono 13";
+  background-color: transparent;
+  text-color: @fg;
+}
+window   { width: 900px; background-color: @bg; border: 2px; border-color: @border; }
+mainbox, inputbar, prompt, entry, listview, message, textbox { background-color: transparent; }
+prompt   { text-color: @sel; }
+inputbar { padding: 6px; }
+listview { padding: 4px 0; }
+element { padding: 2px 6px; }
+element normal.normal, element normal.active   { background-color: transparent; text-color: @fg; }
+element alternate.normal, element alternate.active { background-color: @bg-alt; text-color: @fg; }
+element normal.urgent, element alternate.urgent { background-color: transparent; text-color: @fg-dim; }
+element selected.normal, element selected.active, element selected.urgent { background-color: @sel; text-color: @sel-fg; }
+element-text, element-icon { background-color: transparent; text-color: inherit; }

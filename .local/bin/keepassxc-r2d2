@@ -1,0 +1,8 @@
+#!/bin/sh
+# keepassxc-r2d2: start KeePassXC with the qt5ct rice colours and both databases.
+# With file arguments it opens those instead. If KeePassXC is already running,
+# this just brings up the running window (single instance).
+export QT_QPA_PLATFORMTHEME=qt5ct
+export QT_PLUGIN_PATH="$HOME/.guix-profile/lib/qt5/plugins${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}"
+[ $# -eq 0 ] && set -- "$HOME/.keepassxc/Personal-Passwords.kdbx" "$HOME/.keepassxc/Work-Passwords.kdbx"
+exec "$HOME/.guix-profile/bin/keepassxc" "$@"

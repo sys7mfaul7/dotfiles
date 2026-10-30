@@ -1,23 +1,37 @@
 #!/bin/sh
-# wl-wintitle : focused window title for waybar (like polybar xwindow); empty when none.
-# Prints only on change; exits (and stops bspc subscribe) when waybar closes the pipe.
+# wl-wintitle : focused window as "App: title" for waybar (custom/wintitle, centre); empty when none.
+# Format and app names: wintitle.jq. Prints only on change; exits when waybar closes the pipe.
+# Titles change without a bspc event (page loads, programs started in a shell), so it also
+# re-checks once a second.
+# Truncation: the module is centred, so it may use the monitor width minus the right-hand
+# modules on BOTH sides: max chars = (monitor width - 2*WINTITLE_RESERVE px) / WINTITLE_CHAR_PX,
+# never below 20. Defaults fit DejaVu Sans Mono 11pt (about 9 px/char) and the ~1000 px of
+# right-hand modules: 3440 px -> 137 chars, 2560 -> 40, smaller -> 20.
+Q="$HOME/.config/bspwm-wl/bin/wintitle.jq"
+RES=${WINTITLE_RESERVE:-1100}; CW=${WINTITLE_CHAR_PX:-9}
 F=$(mktemp -u "${XDG_RUNTIME_DIR:-/tmp}/wl-wintitle.XXXXXX"); mkfifo "$F" || exit 1
-bspc subscribe node_focus desktop_focus node_remove node_transfer node_flag >"$F" 2>/dev/null & SP=$!
-trap 'kill $SP 2>/dev/null; rm -f "$F"; exit 0' EXIT INT TERM PIPE HUP
+exec 3<>"$F"
+bspc subscribe node_focus desktop_focus node_remove node_transfer node_flag >&3 2>/dev/null & SP=$!
+( while sleep 1; do echo tick; done ) >&3 & TP=$!
+trap 'kill $SP $TP 2>/dev/null; rm -f "$F"; exit 0' EXIT INT TERM PIPE HUP
 last=__none__
 show() {
+  w=$(bspc query -T -m focused 2>/dev/null | jq -r '.rectangle.width // 1920' 2>/dev/null)
+  max=$(( (${w:-1920} - 2 * RES) / CW )); [ "$max" -lt 20 ] && max=20
   j=$(bspc query -T -n focused.window 2>/dev/null)
-  t=$(printf '%s' "$j" | jq -r '(.title // "") as $t | if $t == "" then .client.className else $t end' 2>/dev/null)
   # Chromium: prefix the profile ("client") name, see chromium-profile
+  pre=""
   case $(printf '%s' "$j" | jq -r '.client.className // ""' 2>/dev/null) in
     chromium-browser|chrome-*)
       p=$("$HOME/.local/bin/chromium-profile" name "$(bspc query -N -n focused.window)" 2>/dev/null)
-      [ -n "$p" ] && t="[$p] $t" ;;
+      [ -n "$p" ] && pre="[$p] " ;;
   esac
-  t=$(printf '%s' "$t" | cut -c1-80 | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
+  t=""; [ -n "$j" ] && t=$(printf '%s' "$j" | jq -r --argjson m $((max - ${#pre})) "$(cat "$Q") wintitle(\$m)" 2>/dev/null)
+  t="$pre$t"
+  t=$(printf '%s' "$t" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
   [ "$t" = "$last" ] && return 0
   last=$t
   printf '%s\n' "$t" || exit 0
 }
 show
-while read -r _; do show; kill -0 $PPID 2>/dev/null || exit 0; done <"$F"
+while read -r _ <&3; do show; kill -0 $PPID 2>/dev/null || exit 0; done

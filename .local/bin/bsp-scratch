@@ -1,4 +1,15 @@
 #!/bin/sh
+# --- keep floating geometry across hide/show (no auto-centering) ---
+G="${XDG_RUNTIME_DIR:-/tmp}/scratch-geo"; mkdir -p "$G"
+geo_get() { bspc query -T -n "$1" 2>/dev/null | jq -r ".client.floatingRectangle | \"\(.x) \(.y) \(.width) \(.height)\""; }
+geo_save() { r=$(geo_get "$1") && [ -n "$r" ] && echo "$r" >"$G/$1"; return 0; }
+geo_restore() {
+  [ -s "$G/$1" ] || return 0
+  set -- "$1" $(cat "$G/$1") $(geo_get "$1")
+  [ $# -eq 9 ] || return 0
+  bspc node "$1" -v $(($2-$6)) $(($3-$7)) 2>/dev/null
+  bspc node "$1" -z bottom_right $(($4-$8)) $(($5-$9)) 2>/dev/null; return 0
+}
 # Hyprland-style scratchpad for bspwm
 # add: send focused window to scratchpad | toggle: show/hide | remove: take focused out
 L="${XDG_RUNTIME_DIR:-/tmp}/bsp-scratchpad"; touch "$L"
@@ -10,7 +21,7 @@ add)
   id=$(bspc query -N -n focused.window) || exit 0
   grep -qx "$id" "$L" || echo "$id" >>"$L"
   bspc node "$id" -t floating
-  bspc node "$id" -g hidden=on ;;
+  geo_save "$id"; bspc node "$id" -g hidden=on ;;
 remove)
   id=$(bspc query -N -n focused.window) || exit 0
   sed -i "/^$id\$/d" "$L"; bspc node "$id" -t tiled ;;
@@ -19,12 +30,12 @@ toggle)
   here=$(bspc query -N -d focused -n '.!hidden.window')   # shown on THIS desktop?
   shown=0; while read -r id; do printf '%s\n' "$here" | grep -qx "$id" && shown=1; done <"$L"
   if [ $shown = 1 ]; then
-    while read -r id; do bspc node "$id" -g hidden=on; done <"$L"
+    while read -r id; do geo_save "$id"; bspc node "$id" -g hidden=on; done <"$L"
   else
     d=$(bspc query -D -d focused)
     while read -r id; do
       bspc node "$id" -d "$d"; bspc node "$id" -g hidden=off
-      bspc node "$id" -t floating; bspc node -f "$id"; ~/.local/bin/bsp-center >/dev/null 2>&1 || true
+      bspc node "$id" -t floating; bspc node -f "$id"; geo_restore "$id"
       bspc node -f "$id"
     done <"$L"
   fi ;;

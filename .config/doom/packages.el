@@ -54,3 +54,7 @@
 
 ;; Display-only alignment of markdown/org tables (added 2026-10-27)
 (package! valign)
+
+(package! auto-dim-other-buffers)
+
+(package! org-super-agenda)
